@@ -28,6 +28,22 @@ services:
       POSTGRES_DB: Access_control_logging # Replace with your desired database name
       POSTGRES_USER: admin # Replace with your desired username
       POSTGRES_PASSWORD: admin # Replace with your desired strong password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  db-migrator:
+    build: ./backend/db/migrations
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    environment:
+      POSTGRES_DB: Access_control_logging
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    restart: on-failure
 
   pg-adminer:
     image: adminer
