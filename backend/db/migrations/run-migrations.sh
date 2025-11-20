@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PGPASSWORD="$POSTGRES_PASSWORD"
+
 # Wait for the database to be ready
 until pg_isready -h postgres-db -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do
   >&2 echo "Postgres is unavailable - sleeping"
