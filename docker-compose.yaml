@@ -23,13 +23,11 @@ services:
     # set shared memory limit when using docker compose
     shm_size: 128mb
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: Access_control_logging # Replace with your desired database name
-      POSTGRES_USER: admin # Replace with your desired username
-      POSTGRES_PASSWORD: admin # Replace with your desired strong password
+      - pgdata:/var/lib/postgresql
+    env_file:
+      - ./backend/.env
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -39,10 +37,8 @@ services:
     depends_on:
       postgres-db:
         condition: service_healthy
-    environment:
-      POSTGRES_DB: Access_control_logging
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
+    env_file:
+      - ./backend/.env
     restart: on-failure
 
   pg-adminer:
@@ -52,7 +48,7 @@ services:
       - 8080:8080
 
   flinkjobmanager:
-    image: flink:2.2
+    image: flink:2.1.1-scala_2.12-java21
     ports:
       - "8081:8081"
     command: ["jobmanager"]
@@ -62,7 +58,7 @@ services:
         jobmanager.rpc.address: flinkjobmanager
 
   flinktaskmanager:
-    image: flink:2.2
+    image: flink:2.1.1-scala_2.12-java21
     depends_on:
       - flinkjobmanager
     command: ["taskmanager"]
