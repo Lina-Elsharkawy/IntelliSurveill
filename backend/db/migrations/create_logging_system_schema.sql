@@ -95,3 +95,22 @@ CREATE TABLE logs (
   processing_time INTERVAL,
   model_version TEXT
 );
+
+-- ==========================
+-- Indexes
+-- ==========================
+
+CREATE INDEX IF NOT EXISTS idx_employees_department_id ON employees(department_id);
+CREATE INDEX IF NOT EXISTS idx_detected_people_employee_id ON detected_people(employee_id);
+CREATE INDEX IF NOT EXISTS idx_detected_people_visitor_id ON detected_people(visitor_id);
+CREATE INDEX IF NOT EXISTS idx_cameras_lab_id ON cameras(lab_id);
+CREATE INDEX IF NOT EXISTS idx_department_lab_access_department_id ON department_lab_access(department_id);
+CREATE INDEX IF NOT EXISTS idx_department_lab_access_lab_id ON department_lab_access(lab_id);
+CREATE INDEX IF NOT EXISTS idx_department_lab_access_schedule_id ON department_lab_access(schedule_id);
+CREATE INDEX IF NOT EXISTS idx_employee_lab_access_employee_id ON employee_lab_access(employee_id);
+CREATE INDEX IF NOT EXISTS idx_employee_lab_access_lab_id ON employee_lab_access(lab_id);
+CREATE INDEX IF NOT EXISTS idx_employee_lab_access_schedule_id ON employee_lab_access(schedule_id);
+CREATE INDEX IF NOT EXISTS idx_logs_detected_id ON logs(detected_id);
+CREATE INDEX IF NOT EXISTS idx_logs_camera_id ON logs(camera_id);
+CREATE INDEX IF NOT EXISTS idx_logs_anomaly_id ON logs(anomaly_id);
+
