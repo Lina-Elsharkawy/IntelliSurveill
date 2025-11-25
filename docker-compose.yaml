@@ -29,7 +29,7 @@ x-airflow-common: &airflow-common
   deploy:
     resources:
       limits:
-        cpus: '1'
+        cpus: "1"
         memory: 2G
   logging:
     driver: "json-file"
@@ -52,7 +52,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.5'
+          cpus: "1.5"
           memory: 2G
     logging:
       driver: "json-file"
@@ -77,7 +77,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 1G
     logging:
       driver: "json-file"
@@ -98,7 +98,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
     logging:
       driver: "json-file"
@@ -120,7 +120,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
     logging:
       driver: "json-file"
@@ -131,7 +131,7 @@ services:
       - data-platform-net
 
   flinkjobmanager:
-    image: flink:1.18.1-scala_2.12-java17
+    image: flink:2.1.1-scala_2.12-java21
     ports:
       - "8081:8081"
     command: ["jobmanager"]
@@ -140,7 +140,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 2G
     logging:
       driver: "json-file"
@@ -151,7 +151,7 @@ services:
       - data-platform-net
 
   flinktaskmanager:
-    image: flink:1.18.1-scala_2.12-java17
+    image: flink:2.1.1-scala_2.12-java21
     depends_on:
       - flinkjobmanager
     command: ["taskmanager"]
@@ -159,7 +159,7 @@ services:
       replicas: 1
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 2G
     env_file:
       - ./streaming/flink/.env
@@ -185,7 +185,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
     logging:
       driver: "json-file"
@@ -378,7 +378,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
     logging:
       driver: "json-file"
@@ -404,7 +404,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
     logging:
       driver: "json-file"
@@ -435,7 +435,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
     logging:
       driver: "json-file"
@@ -463,7 +463,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 1G
     logging:
       driver: "json-file"
@@ -489,7 +489,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
     logging:
       driver: "json-file"
@@ -514,7 +514,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
+          cpus: "2"
           memory: 4G
     logging:
       driver: "json-file"
@@ -533,7 +533,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
     logging:
       driver: "json-file"
@@ -550,14 +550,14 @@ services:
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
     logging:
       driver: "json-file"
