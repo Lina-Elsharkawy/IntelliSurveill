@@ -2,17 +2,17 @@
 -- Core entity tables
 -- ==========================
 
-CREATE TABLE departments (
+CREATE TABLE IF NOT EXISTS departments (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   name TEXT NOT NULL
 );
 
-CREATE TABLE labs (
+CREATE TABLE IF NOT EXISTS labs (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   name TEXT NOT NULL
 );
 
-CREATE TABLE schedules (
+CREATE TABLE IF NOT EXISTS schedules (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   name TEXT NOT NULL,
   access_start_time TIME,
@@ -22,13 +22,13 @@ CREATE TABLE schedules (
   specific_dates DATE[]
 );
 
-CREATE TABLE employees (
+CREATE TABLE IF NOT EXISTS employees (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   name TEXT NOT NULL,
   department_id BIGINT REFERENCES departments(id)
 );
 
-CREATE TABLE visitors (
+CREATE TABLE IF NOT EXISTS visitors (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   name TEXT NOT NULL,
   visit_date DATE,
@@ -37,7 +37,7 @@ CREATE TABLE visitors (
 );
 
 -- Final version of detected_people
-CREATE TABLE detected_people (
+CREATE TABLE IF NOT EXISTS detected_people (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   name TEXT,
   additional_info TEXT,
@@ -47,14 +47,14 @@ CREATE TABLE detected_people (
 );
 
 -- anomalies table (unchanged except final form)
-CREATE TABLE anomalies (
+CREATE TABLE IF NOT EXISTS anomalies (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   description TEXT,
   severity_level TEXT
 );
 
 -- cameras table with final columns
-CREATE TABLE cameras (
+CREATE TABLE IF NOT EXISTS cameras (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   name TEXT,
   location TEXT,
@@ -62,14 +62,14 @@ CREATE TABLE cameras (
 );
 
 -- join tables with schedules applied
-CREATE TABLE department_lab_access (
+CREATE TABLE IF NOT EXISTS department_lab_access (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   department_id BIGINT REFERENCES departments(id),
   lab_id BIGINT REFERENCES labs(id),
   schedule_id BIGINT REFERENCES schedules(id)
 );
 
-CREATE TABLE employee_lab_access (
+CREATE TABLE IF NOT EXISTS employee_lab_access (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   employee_id BIGINT REFERENCES employees(id),
   lab_id BIGINT REFERENCES labs(id),
@@ -80,7 +80,7 @@ CREATE TABLE employee_lab_access (
 -- Logs table (final version)
 -- ==========================
 
-CREATE TABLE logs (
+CREATE TABLE IF NOT EXISTS logs (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   "timestamp" TIMESTAMPTZ NOT NULL DEFAULT now(),
   detected_id BIGINT REFERENCES detected_people(id),
