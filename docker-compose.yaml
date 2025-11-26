@@ -135,17 +135,16 @@ services:
       - data-platform-net
 
   # flinkjobmanager:
-  #   image: flink:2.1.1-scala_2.12-java21
-  #   ports:
-  #     - "8081:8081"
-  #   command: ["jobmanager"]
-  #   env_file:
-  #     - ./streaming/flink/.env
+  #     - flinkjobmanager
+  #   command: ["taskmanager"]
   #   deploy:
+  #     replicas: 1
   #     resources:
   #       limits:
   #         cpus: "1"
   #         memory: 2G
+  #   env_file:
+  #     - ./streaming/flink/.env
   #   logging:
   #     driver: "json-file"
   #     options:
