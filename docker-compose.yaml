@@ -40,27 +40,27 @@
 #     - data-platform-net
 
 services:
-  # kafka:
-  #   image: apache/kafka:4.1.1
-  #   container_name: kafka
-  #   ports:
-  #     - "9092:9092"
-  #   env_file:
-  #     - ./streaming/kafka/.env
-  #   volumes:
-  #     - kafka-data:/var/lib/kafka/data
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: "1.5"
-  #         memory: 2G
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   networks:
-  #     - data-platform-net
+  kafka:
+    image: apache/kafka:4.1.1
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    env_file:
+      - ./streaming/kafka/.env
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - data-platform-net
 
   postgres-db:
     image: postgres:18
@@ -134,45 +134,45 @@ services:
     networks:
       - data-platform-net
 
-  # flinkjobmanager:
-  #     - flinkjobmanager
-  #   command: ["taskmanager"]
-  #   deploy:
-  #     replicas: 1
-  #     resources:
-  #       limits:
-  #         cpus: "1"
-  #         memory: 2G
-  #   env_file:
-  #     - ./streaming/flink/.env
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   networks:
-  #     - data-platform-net
+  flinkjobmanager:
+      - flinkjobmanager
+    command: ["taskmanager"]
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+    env_file:
+      - ./streaming/flink/.env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - data-platform-net
 
-  # flinktaskmanager:
-  #   image: flink:2.1.1-scala_2.12-java21
-  #   depends_on:
-  #     - flinkjobmanager
-  #   command: ["taskmanager"]
-  #   deploy:
-  #     replicas: 1
-  #     resources:
-  #       limits:
-  #         cpus: "1"
-  #         memory: 2G
-  #   env_file:
-  #     - ./streaming/flink/.env
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   networks:
-  #     - data-platform-net
+  flinktaskmanager:
+    image: flink:2.1.1-scala_2.12-java21
+    depends_on:
+      - flinkjobmanager
+    command: ["taskmanager"]
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+    env_file:
+      - ./streaming/flink/.env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - data-platform-net
 
   # redis:
   #   image: redis:7.2-bookworm
