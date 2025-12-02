@@ -16,7 +16,7 @@ const Log = sequelize.define('Log', {
   location: DataTypes.TEXT,
   device_status: DataTypes.TEXT,
   image_video_ref: DataTypes.TEXT,
-  processing_time: DataTypes.INTERVAL,
+  processing_time: DataTypes.FLOAT,
   model_version: DataTypes.TEXT
 }, { tableName: 'logs', timestamps: false });
 
