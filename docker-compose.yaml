@@ -104,6 +104,8 @@ services:
         limits:
           cpus: "0.5"
           memory: 512M
+    volumes:
+      - ./backend/seeds/seed.sql:/app/seed.sql
     logging:
       driver: "json-file"
       options:
@@ -115,10 +117,8 @@ services:
   pgadmin:
     image: dpage/pgadmin4:9
     restart: always
-    # Use the repo-root pgadmin.env (pgadmin.env) — the referenced
-    # backend/db/.env.pgadmin path doesn't exist in this workspace.
     env_file:
-      - ./pgadmin.env
+      - ./backend/db/.env.pgadmin
     ports:
       - "5050:80"
     depends_on:
