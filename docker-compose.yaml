@@ -135,8 +135,10 @@ services:
       - data-platform-net
 
   flinkjobmanager:
-      - flinkjobmanager
-    command: ["taskmanager"]
+    image: flink:2.1.1-scala_2.12-java21
+    command: ["jobmanager"]
+    ports:
+      - "8081:8081"
     deploy:
       replicas: 1
       resources:
