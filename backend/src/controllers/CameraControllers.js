@@ -9,7 +9,6 @@ exports.getCameras = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
-
 // Get a single camera by ID (ADDED - optional but useful)
 exports.getCameraById = async (req, res) => {
     try {
@@ -61,4 +60,5 @@ exports.deleteCamera = async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+
 };
