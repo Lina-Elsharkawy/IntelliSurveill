@@ -9,7 +9,6 @@ exports.getAnomalies = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
-
 // Get a single anomaly by ID
 exports.getAnomalyById = async (req, res) => {
     try {
@@ -34,4 +33,5 @@ exports.deleteAnomaly = async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+
 };
