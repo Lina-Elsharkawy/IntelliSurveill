@@ -65,8 +65,6 @@ services:
   postgres-db:
     image: postgres:18
     restart: always
-    ports:
-      - "5432:5432"
     shm_size: 128mb
     ports:
       - "5432:5432"
