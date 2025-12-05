@@ -14,8 +14,11 @@ const schedulesRouter = require('./routes/schedulesRoutes');
 const visitorsRouter = require('./routes/visitorsRoutes');
 
 
+const checkJwt = require('./middleware/auth');
+
 app.use(express.json());
 
+// Public route
 app.get('/health', async (req, res) => {
   try {
     await sequelize.authenticate();
@@ -24,6 +27,9 @@ app.get('/health', async (req, res) => {
     res.status(500).json({ status: 'db error', error: err.message });
   }
 });
+
+// Protect all API routes below
+app.use('/api', checkJwt);
 
 // Example: GET all cameras
 app.get('/cameras', async (req, res) => {
