@@ -1,4 +1,4 @@
-const Visitors = require('../models/Visitors');
+const Visitors = require('../models/visitor');
 
 // Get all visitors
 exports.getVisitors = async (req, res) => {
@@ -26,11 +26,11 @@ exports.getVisitorById = async (req, res) => {
 exports.createVisitor = async (req, res) => {
     try {
         const { name, visit_date, purpose, contact_info } = req.body;
-        const newVisitor = await Visitors.create({ 
-            name, 
-            visit_date, 
+        const newVisitor = await Visitors.create({
+            name,
+            visit_date,
             purpose,
-            contact_info 
+            contact_info
         });
         res.status(201).json(newVisitor);
     } catch (err) {
@@ -46,12 +46,12 @@ exports.updateVisitor = async (req, res) => {
 
         const visitor = await Visitors.findByPk(id);
         if (!visitor) return res.status(404).json({ error: 'Visitor not found' });
-        
-        await visitor.update({ 
-            name, 
-            visit_date, 
+
+        await visitor.update({
+            name,
+            visit_date,
             purpose,
-            contact_info 
+            contact_info
         });
         res.status(200).json(visitor);
     } catch (err) {
@@ -65,7 +65,7 @@ exports.deleteVisitor = async (req, res) => {
         const { id } = req.params;
         const visitor = await Visitors.findByPk(id);
         if (!visitor) return res.status(404).json({ error: 'Visitor not found' });
-        
+
         await visitor.destroy();
         res.status(200).json({ message: 'Visitor deleted successfully' });
     } catch (err) {

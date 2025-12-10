@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const visitorsController = require('../controllers/VisitorsController');
+const visitorsController = require('../controllers/visitorsController');
 // Route to get all visitors
 router.get('/get_all_visitors', visitorsController.getVisitors);
 // Route to get a single visitor by ID

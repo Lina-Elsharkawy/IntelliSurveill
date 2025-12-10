@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const employeesController = require('../controllers/employeesController');
+const employeesController = require('../controllers/EmployeeControllers');
 // Route to get all employees
 router.get('/get_all_employees', employeesController.getEmployees);
 // Route to get a single employee by ID
