@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const schedulesController = require('../controllers/SchedulesController');
+const schedulesController = require('../controllers/schedulesController');
 // Route to get all schedules
 router.get('/get_all_schedules', schedulesController.getSchedules);
 // Route to get a single schedule by ID
