@@ -1,2 +1,5 @@
 CREATE DATABASE airflow;
 CREATE DATABASE logging_db;
+ALTER SCHEMA public OWNER TO lina;
+GRANT ALL ON SCHEMA public TO lina;
+GRANT CREATE ON SCHEMA public TO lina;
