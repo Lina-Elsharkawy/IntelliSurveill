@@ -36,8 +36,8 @@ const Analytics = () => {
     { zone: "Building A", incidents: 24 },
     { zone: "Building B", incidents: 18 },
     { zone: "Parking", incidents: 32 },
-    { zone: "Library", incidents: 12 },
-    { zone: "Sports", incidents: 15 },
+    { zone: "Lab", incidents: 12 },
+    
   ];
 
   return (

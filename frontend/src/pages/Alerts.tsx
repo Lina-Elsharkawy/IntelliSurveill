@@ -9,15 +9,15 @@ import { Badge } from "@/components/ui/badge";
 
 const Alerts = () => {
   const alerts = [
-    { title: "Unusual Activity Detected", location: "Library - Zone 3", timestamp: "2 min ago", severity: "high" as const, status: "new" as const },
+    { title: "Unusual Activity Detected", location: "Lab - Zone 3", timestamp: "2 min ago", severity: "high" as const, status: "new" as const },
     { title: "Unauthorized Access Attempt", location: "Lab Building - Room 302", timestamp: "8 min ago", severity: "high" as const, status: "new" as const },
     { title: "Camera Offline", location: "Parking Lot B - CAM-045", timestamp: "15 min ago", severity: "medium" as const, status: "acknowledged" as const },
     { title: "Motion After Hours", location: "Building C - Floor 2", timestamp: "1 hour ago", severity: "high" as const, status: "acknowledged" as const },
     { title: "Loitering Detected", location: "Main Entrance - East Wing", timestamp: "2 hours ago", severity: "medium" as const, status: "acknowledged" as const },
     { title: "Low Battery Alert", location: "Camera CAM-015", timestamp: "3 hours ago", severity: "low" as const, status: "resolved" as const },
     { title: "Network Connectivity Issue", location: "Building D - Floor 1", timestamp: "5 hours ago", severity: "medium" as const, status: "resolved" as const },
-    { title: "Perimeter Breach", location: "North Fence - Section 4", timestamp: "6 hours ago", severity: "high" as const, status: "resolved" as const },
-    { title: "Smoke Detector Triggered", location: "Cafeteria Kitchen", timestamp: "8 hours ago", severity: "high" as const, status: "resolved" as const },
+    { title: "Lab", location: "Section 4", timestamp: "6 hours ago", severity: "high" as const, status: "resolved" as const },
+    { title: "Unusual Spots ", location: "Parking", timestamp: "8 hours ago", severity: "high" as const, status: "resolved" as const },
     { title: "Maintenance Required", location: "Camera CAM-088", timestamp: "12 hours ago", severity: "low" as const, status: "resolved" as const },
   ];
 

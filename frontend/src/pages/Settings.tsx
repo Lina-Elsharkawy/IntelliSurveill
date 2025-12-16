@@ -39,7 +39,7 @@ const Settings = () => {
                   <Label htmlFor="system-name">System Name</Label>
                   <Input
                     id="system-name"
-                    defaultValue="UniGuard AI Security System"
+                    defaultValue="Survelliance System"
                     className="bg-secondary border-border"
                   />
                 </div>
@@ -288,10 +288,7 @@ const Settings = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-3">
-                  <Button variant="outline" className="flex-1">Check for Updates</Button>
-                  <Button variant="outline" className="flex-1">Export Logs</Button>
-                </div>
+                
               </CardContent>
             </Card>
           </TabsContent>

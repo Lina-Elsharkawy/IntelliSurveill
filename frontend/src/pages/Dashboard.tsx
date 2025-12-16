@@ -13,14 +13,14 @@ const Dashboard = () => {
   const cameras = [
     { id: "cam-001", name: "Main Entrance", location: "Building A", status: "active" as const, thumbnail: cameraFeed1 },
     { id: "cam-002", name: "Parking Lot", location: "West Wing", status: "active" as const, thumbnail: cameraFeed2 },
-    { id: "cam-003", name: "Library", location: "Central Campus", status: "alert" as const, thumbnail: cameraFeed3 },
+    { id: "cam-003", name: "Lab", location: "Central Lab", status: "alert" as const, thumbnail: cameraFeed3 },
     { id: "cam-004", name: "Corridor 2B", location: "Building B", status: "active" as const, thumbnail: cameraFeed4 },
     { id: "cam-005", name: "Cafeteria", location: "Student Center", status: "inactive" as const, thumbnail: cameraFeed1 },
     { id: "cam-006", name: "Sports Complex", location: "East Campus", status: "active" as const, thumbnail: cameraFeed2 },
   ];
 
   const alerts = [
-    { title: "Unusual Activity Detected", location: "Library - Zone 3", timestamp: "2 min ago", severity: "high" as const, status: "new" as const },
+    { title: "Unusual Activity Detected", location: "Lab - Zone 3", timestamp: "2 min ago", severity: "high" as const, status: "new" as const },
     { title: "Camera Offline", location: "Parking Lot B", timestamp: "15 min ago", severity: "medium" as const, status: "acknowledged" as const },
     { title: "Motion After Hours", location: "Building C - Floor 2", timestamp: "1 hour ago", severity: "high" as const, status: "new" as const },
     { title: "Low Battery Alert", location: "Camera CAM-015", timestamp: "3 hours ago", severity: "low" as const, status: "resolved" as const },
@@ -30,7 +30,7 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard Overview</h1>
-        <p className="text-muted-foreground">Real-time monitoring of university security systems</p>
+        <p className="text-muted-foreground">Real-time monitoring security systems</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
