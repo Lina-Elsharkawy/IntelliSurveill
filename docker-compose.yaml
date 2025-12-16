@@ -136,49 +136,49 @@ services:
     networks:
       - data-platform-net
 
-  # flinkjobmanager:
-  #   image: apache/flink:2.1.1-scala_2.12-java21
-  #   command: ["jobmanager"]
-  #   ports:
-  #     - "8081:8081"
-  #   volumes:
-  #     - ./streaming/flink/frequency_anomaly_job.py:/opt/flink/usrlib/frequency_anomaly_job.py
-  #   deploy:
-  #     replicas: 1
-  #     resources:
-  #       limits:
-  #         cpus: "1"
-  #         memory: 2G
-  #   env_file:
-  #     - ./streaming/flink/.env
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   networks:
-  #     - data-platform-net
+  flinkjobmanager:
+    image: apache/flink:2.1.1-scala_2.12-java21
+    command: ["jobmanager"]
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./streaming/flink/frequency_anomaly_job.py:/opt/flink/usrlib/frequency_anomaly_job.py
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+    env_file:
+      - ./streaming/flink/.env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - data-platform-net
 
-  # flinktaskmanager:
-  #   image: apache/flink:2.1.1-scala_2.12-java21
-  #   depends_on:
-  #     - flinkjobmanager
-  #   command: ["taskmanager"]
-  #   deploy:
-  #     replicas: 1
-  #     resources:
-  #       limits:
-  #         cpus: "1"
-  #         memory: 2G
-  #   env_file:
-  #     - ./streaming/flink/.env
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   networks:
-  #     - data-platform-net
+  flinktaskmanager:
+    image: apache/flink:2.1.1-scala_2.12-java21
+    depends_on:
+      - flinkjobmanager
+    command: ["taskmanager"]
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+    env_file:
+      - ./streaming/flink/.env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - data-platform-net
 
   # redis:
   #   image: redis:7.2-bookworm
