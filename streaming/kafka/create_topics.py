@@ -29,7 +29,8 @@ def create_topics():
     topics_to_create = [
         NewTopic(name="logs", num_partitions=3, replication_factor=1),
         NewTopic(name="anomalies", num_partitions=3, replication_factor=1),
-        NewTopic(name="frequency_alerts", num_partitions=3, replication_factor=1)
+        NewTopic(name="frequency_alerts", num_partitions=3, replication_factor=1),
+        NewTopic(name="anomaly-config", num_partitions=3, replication_factor=1)
     ]
 
     existing_topics = admin_client.list_topics()

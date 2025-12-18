@@ -1,73 +1,58 @@
-# Welcome to your Lovable project
+# Frontend Dashboard
 
-## Project info
+This directory contains the frontend application for the Graduation Project. It allows users to visualize streaming data, configure anomaly detection rules, and view system logs.
 
-**URL**: https://lovable.dev/projects/58f1c298-4a9b-4d69-910e-e48cf24e76a9
+## Tech Stack
 
-## How can I edit this code?
+*   **Framework**: [React](https://react.dev/) + [Vite](https://vitejs.dev/)
+*   **Language**: [TypeScript](https://www.typescriptlang.org/)
+*   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+*   **UI Library**: [Shadcn UI](https://ui.shadcn.com/)
+*   **Icons**: [Lucide React](https://lucide.dev/)
+*   **Data Fetching**: [TanStack Query](https://tanstack.com/query/latest)
 
-There are several ways of editing your application.
+## Prerequisites
 
-**Use Lovable**
+*   Node.js (v18+ recommended)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/58f1c298-4a9b-4d69-910e-e48cf24e76a9) and start prompting.
+## Setup
 
-Changes made via Lovable will be committed automatically to this repo.
+1.  **Navigate to the frontend directory**:
+    ```bash
+    cd frontend
+    ```
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
 
-**Use your preferred IDE**
+## Running the Application
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### Development Server
+Starts the local development server at `http://localhost:8080` (or similar port).
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Production Build
+Builds the application for production deployment.
+```bash
+npm run build
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Linting
+Runs ESLint to check for code quality issues.
+```bash
+npm run lint
+```
 
-**Use GitHub Codespaces**
+## Project Structure
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/58f1c298-4a9b-4d69-910e-e48cf24e76a9) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+*   `src/main.tsx`: Entry point of the React application.
+*   `src/App.tsx`: Main component setup.
+*   `src/pages/`: Contains page components corresponding to routes (e.g., Dashboard, Settings).
+*   `src/components/`: Reusable UI components.
+    *   `src/components/ui/`: Primitive components from Shadcn UI.
+*   `src/hooks/`: Custom React hooks for logic reuse.
+*   `src/lib/`: Utility functions and helper classes (e.g., `utils.ts`).
+*   `src/assets/`: Static assets like images and fonts.
