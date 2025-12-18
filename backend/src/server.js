@@ -12,7 +12,7 @@ const labsRouter = require('./routes/labsRoutes');
 const logsRouter = require('./routes/logsRoutes');
 const schedulesRouter = require('./routes/schedulesRoutes');
 const visitorsRouter = require('./routes/visitorsRoutes');
-const ragRouter = require('./routes/ragRoutes');
+const ragRouter = require('./rag/routes');
 
 
 const checkJwt = require('./middleware/auth');

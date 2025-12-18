@@ -1,9 +1,6 @@
-const express = require('express');
-const router = express.Router();
-const ragService = require('../services/ragService');
+const ragService = require('./service');
 
-// POST /api/rag/query
-router.post('/query', async (req, res) => {
+exports.query = async (req, res) => {
     try {
         const { text } = req.body;
         if (!text) {
@@ -26,6 +23,4 @@ router.post('/query', async (req, res) => {
             message: error.message
         });
     }
-});
-
-module.exports = router;
+};
