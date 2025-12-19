@@ -18,14 +18,31 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
-    if (username === "admin" && password === "admin123") {
+    try {
+      const response = await fetch("http://localhost:3000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed");
+      }
+
+      // Store tokens
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("id_token", data.id_token_token); // Auth0 sometimes returns id_token
       localStorage.setItem("loggedIn", "true");
+
       navigate("/dashboard");
-    } else {
-      setError("Invalid username or password.");
+    } catch (err: any) {
+      setError(err.message || "Invalid username or password.");
     }
   };
 

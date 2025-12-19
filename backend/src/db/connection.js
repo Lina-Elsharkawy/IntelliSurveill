@@ -16,8 +16,12 @@ if (!POSTGRES_USER || !POSTGRES_PASSWORD || !POSTGRES_DB) {
   process.exit(1);
 }
 
+// Provide defaults for host and port
+const host = POSTGRES_HOST || 'localhost';
+const port = POSTGRES_PORT || 5432;
+
 const sequelize = new Sequelize(
-  `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`,
+  `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${host}:${port}/${POSTGRES_DB}`,
   { dialect: 'postgres', logging: false }
 );
 

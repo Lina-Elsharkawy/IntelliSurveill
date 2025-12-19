@@ -1,4 +1,4 @@
-const DetectedPeople = require('../models/detectedPeople');
+const DetectedPeople = require('../models/detected_person');
 
 // Get all detected people
 exports.getDetectedPeople = async (req, res) => {

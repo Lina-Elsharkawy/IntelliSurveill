@@ -3,6 +3,8 @@ const sequelize = require('./db/connection');
 const models = require('./models'); // import model index
 
 const app = express();
+const cors = require('cors');
+app.use(cors());
 const anomaliesRouter = require('./routes/anomaliesRoutes');
 const camerasRouter = require('./routes/camerasRoutes');
 const departmentsRouter = require('./routes/departmentsRoutes');
@@ -16,8 +18,10 @@ const ragRouter = require('./rag/routes');
 
 
 const checkJwt = require('./middleware/auth');
+const authRouter = require('./routes/authRoutes');
 
 app.use(express.json());
+app.use('/auth', authRouter); // Public access for login
 
 // Public route
 app.get('/health', async (req, res) => {
