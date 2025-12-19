@@ -136,6 +136,8 @@ services:
       - "5050:80"
     depends_on:
       - postgres-db
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin  
     deploy:
       resources:
         limits:
@@ -594,6 +596,7 @@ services:
 
 volumes:
   pgdata:
+  pgadmin-data:
   kafka-data:
   postgres-db-volume:
   minio-data:
