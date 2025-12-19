@@ -42,7 +42,7 @@ const Dashboard = () => {
           trend={{ value: "+5% from yesterday", isPositive: true }}
         />
         <StatsCard
-          title="Active Alerts"
+          title="Active Anomalies"
           value="8"
           icon={AlertTriangle}
           variant="destructive"
@@ -91,7 +91,7 @@ const Dashboard = () => {
         <div>
           <Card className="shadow-card border-border">
             <CardHeader>
-              <CardTitle className="text-foreground">Recent Alerts</CardTitle>
+              <CardTitle className="text-foreground">Recent Anomalies</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {alerts.map((alert, index) => (

@@ -30,8 +30,8 @@ const Alerts = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Security Alerts</h1>
-            <p className="text-muted-foreground">Monitor and manage all security alerts and incidents</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Anomalies</h1>
+            <p className="text-muted-foreground">Monitor and manage all Anomaly alerts and incidents</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline">
@@ -47,7 +47,7 @@ const Alerts = () => {
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">New Alerts</p>
+                  <p className="text-sm text-muted-foreground mb-1">New Anomalies</p>
                   <p className="text-3xl font-bold text-foreground">{newAlerts.length}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-destructive/10">
@@ -89,7 +89,7 @@ const Alerts = () => {
         <Card className="shadow-card border-border">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-foreground">All Alerts</CardTitle>
+              <CardTitle className="text-foreground">All Anomalies</CardTitle>
               <Select defaultValue="all">
                 <SelectTrigger className="w-48 bg-secondary border-border">
                   <SelectValue placeholder="Filter by severity" />

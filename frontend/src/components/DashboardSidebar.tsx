@@ -16,7 +16,7 @@ import {
 const menuItems = [
  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Live Cameras", url: "/cameras", icon: Camera },
-  { title: "Alerts", url: "/alerts", icon: AlertTriangle },
+  { title: "Anomalies", url: "/alerts", icon: AlertTriangle },
  
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Settings", url: "/settings", icon: Settings },

@@ -189,7 +189,7 @@ const Analytics = () => {
 
           <Card className="shadow-card border-border">
             <CardHeader>
-              <CardTitle className="text-foreground">Incidents by Zone</CardTitle>
+              <CardTitle className="text-foreground">Anomalies by Zone</CardTitle>
               <CardDescription className="text-muted-foreground">
                 Most active surveillance areas
               </CardDescription>

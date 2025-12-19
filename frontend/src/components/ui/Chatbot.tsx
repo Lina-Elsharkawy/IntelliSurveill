@@ -1,29 +1,37 @@
-import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send } from 'lucide-react';
+import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { MessageCircle, X, Send } from "lucide-react";
 
 interface Message {
   id: string;
   text: string;
-  sender: 'user' | 'bot';
+  sender: "user" | "bot";
   timestamp: Date;
 }
 
 export default function Chatbot() {
+  const location = useLocation();
+
+  // ⛔ Hide chatbot on login page
+  if (location.pathname === "/login") {
+    return null;
+  }
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
-      text: 'Hey! 👋 How can I help you with the surveillance system today?',
-      sender: 'bot',
+      id: "1",
+      text: "Hey! 👋 How can I help you with the surveillance system today?",
+      sender: "bot",
       timestamp: new Date(),
     },
   ]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -32,24 +40,26 @@ export default function Chatbot() {
 
   const getBotResponse = (userMessage: string): string => {
     const msg = userMessage.toLowerCase();
-    if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
+
+    if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey")) {
       return "Hey there! 😊 How can I assist you with the surveillance system today?";
     }
-    if (msg.includes('how are you')) {
+    if (msg.includes("how are you")) {
       return "I'm running smoothly! How can I help with the monitoring tasks?";
     }
-    if (msg.includes('help')) {
+    if (msg.includes("help")) {
       return "I'm here to help! Ask me anything about the surveillance system or its features.";
     }
-    if (msg.includes('campus')) {
+    if (msg.includes("campus")) {
       return "Regarding the surveillance system, I can provide info on cameras, alerts, and monitoring setup.";
     }
-    if (msg.includes('course') || msg.includes('class')) {
+    if (msg.includes("course") || msg.includes("class")) {
       return "I can guide you through the system usage or features, instead of courses.";
     }
-    if (msg.includes('bye') || msg.includes('goodbye')) {
+    if (msg.includes("bye") || msg.includes("goodbye")) {
       return "Goodbye! Feel free to chat anytime about the surveillance system. 👋";
     }
+
     return "That's interesting! Tell me more, or ask me something about the surveillance system. I'm here to help! 💬";
   };
 
@@ -59,28 +69,29 @@ export default function Chatbot() {
     const userMessage: Message = {
       id: Date.now().toString(),
       text: input,
-      sender: 'user',
+      sender: "user",
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput('');
+    setInput("");
     setIsTyping(true);
 
     setTimeout(() => {
       const botResponse: Message = {
         id: (Date.now() + 1).toString(),
         text: getBotResponse(input),
-        sender: 'bot',
+        sender: "bot",
         timestamp: new Date(),
       };
+
       setMessages((prev) => [...prev, botResponse]);
       setIsTyping(false);
     }, 1000);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
@@ -114,20 +125,37 @@ export default function Chatbot() {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${
+                  message.sender === "user" ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
                   className={`max-w-[75%] rounded-2xl px-4 py-2 ${
-                    message.sender === 'user'
-                      ? 'bg-gradient-to-r from-green-600 to-emerald-600'
-                      : 'bg-white border border-gray-200'
+                    message.sender === "user"
+                      ? "bg-gradient-to-r from-green-600 to-emerald-600"
+                      : "bg-white border border-gray-200"
                   }`}
                 >
-                  <p className={`${message.sender === 'user' ? 'text-black' : 'text-green-800'} text-sm`}>
+                  <p
+                    className={`${
+                      message.sender === "user"
+                        ? "text-black"
+                        : "text-green-800"
+                    } text-sm`}
+                  >
                     {message.text}
                   </p>
-                  <p className={`text-xs mt-1 ${message.sender === 'user' ? 'text-black/70' : 'text-green-500'}`}>
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <p
+                    className={`text-xs mt-1 ${
+                      message.sender === "user"
+                        ? "text-black/70"
+                        : "text-green-500"
+                    }`}
+                  >
+                    {message.timestamp.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </p>
                 </div>
               </div>
@@ -137,13 +165,20 @@ export default function Chatbot() {
               <div className="flex justify-start">
                 <div className="bg-white text-green-800 border border-gray-200 rounded-2xl px-4 py-3">
                   <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" />
+                    <div
+                      className="w-2 h-2 bg-green-400 rounded-full animate-bounce"
+                      style={{ animationDelay: "150ms" }}
+                    />
+                    <div
+                      className="w-2 h-2 bg-green-400 rounded-full animate-bounce"
+                      style={{ animationDelay: "300ms" }}
+                    />
                   </div>
                 </div>
               </div>
             )}
+
             <div ref={messagesEndRef} />
           </div>
 
@@ -156,12 +191,12 @@ export default function Chatbot() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Type your message..."
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-600"
               />
               <button
                 onClick={handleSend}
                 disabled={!input.trim()}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-2 rounded-full hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-2 rounded-full hover:shadow-lg transition-all disabled:opacity-50"
               >
                 <Send className="w-5 h-5" />
               </button>
