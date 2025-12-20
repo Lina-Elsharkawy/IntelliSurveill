@@ -1,4 +1,5 @@
-import { Bell, Shield, Users, Database, Wifi, Moon } from "lucide-react";
+import { Bell, Shield, Users, Database, Wifi, Moon, Lock } from "lucide-react";
+import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -213,6 +214,71 @@ const Settings = () => {
                 </div>
 
                 <Button className="w-full">Change Password</Button>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-card border-border">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-primary" />
+                  <CardTitle className="text-foreground">Anomaly Detection Rules</CardTitle>
+                </div>
+                <CardDescription className="text-muted-foreground">
+                  Configure real-time brute force detection thresholds
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="max-attempts">Max Attempts</Label>
+                    <Input
+                      id="max-attempts"
+                      type="number"
+                      defaultValue="5"
+                      className="bg-secondary border-border"
+                    />
+                    <p className="text-xs text-muted-foreground">Threshold before alert</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="window-seconds">Time Window (Seconds)</Label>
+                    <Input
+                      id="window-seconds"
+                      type="number"
+                      defaultValue="30"
+                      className="bg-secondary border-border"
+                    />
+                    <p className="text-xs text-muted-foreground">Sliding window duration</p>
+                  </div>
+                </div>
+                <Button 
+                  className="w-full"
+                  onClick={async () => {
+                    const threshold = (document.getElementById('max-attempts') as HTMLInputElement).value;
+                    const windowSeconds = (document.getElementById('window-seconds') as HTMLInputElement).value;
+                    
+                    try {
+                      const response = await fetch('/api/anomalies/config', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                          threshold: parseInt(threshold), 
+                          windowSeconds: parseInt(windowSeconds) 
+                        })
+                      });
+                      
+                      if (response.ok) {
+                        alert('Rules updated successfully!');
+                      } else {
+                        alert('Failed to update rules');
+                      }
+                    } catch (e) {
+                      console.error(e);
+                      alert('Error updating rules');
+                    }
+                  }}
+                >
+                  Update Security Rules
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
