@@ -91,6 +91,23 @@ services:
     networks:
       - data-platform-net
 
+  # backend:
+  #   build: ./backend
+  #   restart: always
+  #   ports:
+  #     - "3000:3000"
+  #   env_file:
+  #     - ./backend/.env
+  #   environment:
+  #     - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+  #   depends_on:
+  #     postgres-db:
+  #       condition: service_healthy
+  #     kafka:
+  #       condition: service_started
+  #   networks:
+  #     - data-platform-net
+
   db-migrator:
     build: ./backend/db/migrations
     depends_on:
