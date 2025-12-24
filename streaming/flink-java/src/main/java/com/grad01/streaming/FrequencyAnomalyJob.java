@@ -1,195 +1,242 @@
 package com.grad01.streaming;
 
+import com.grad01.streaming.model.AnomalyAlert;
+import com.grad01.streaming.model.LogEvent;
+import com.grad01.streaming.model.RuleConfig;
+import com.grad01.streaming.processor.DynamicAnomalyDetector;
+
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.state.BroadcastState;
-import org.apache.flink.api.common.state.ListState;
-import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.base.DeliveryGuarantee;
+import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
+import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
+import org.apache.flink.connector.jdbc.JdbcSink;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.formats.json.JsonDeserializationSchema;
 import org.apache.flink.formats.json.JsonSerializationSchema;
+import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
-import org.apache.flink.util.Collector;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Flink Job for Frequency Anomaly Detection.
- * <p>
- * This job detects "brute force" style attacks by counting access attempts for
- * each camera
- * within a sliding time window.
- * <p>
+ * Production-ready Flink Job for Frequency Anomaly Detection.
+ * 
  * Features:
- * 1. Consumes 'logs' topic (Access Logs).
- * 2. Consumes 'anomaly-config' topic (Broadcast Stream for dynamic rules).
- * 3. Uses Broadcast State Pattern to update detection rules (threshold, window)
- * at runtime.
- * 4. Sinks alerts to 'frequency_alerts' topic.
+ * - Consumes access logs from Kafka 'logs' topic
+ * - Detects brute-force style attacks (high frequency access)
+ * - Dynamic rule configuration via 'anomaly-config' broadcast stream
+ * - Writes entry logs to PostgreSQL 'entry_logs' table
+ * - Writes anomaly alerts to PostgreSQL 'anomalies_logs' table
+ * - Publishes alerts to Kafka 'frequency_alerts' topic
+ * - Checkpointing for fault tolerance
+ * - Prometheus metrics integration
  */
 public class FrequencyAnomalyJob {
+    private static final Logger LOG = LoggerFactory.getLogger(FrequencyAnomalyJob.class);
 
-        // Kafka Topics and Groups
-        private static final String TOPIC_LOGS = "logs";
-        private static final String TOPIC_ALERTS = "frequency_alerts";
-        private static final String TOPIC_CONFIG = "anomaly-config";
-        private static final String GROUP_ID_JOB = "flink_frequency_detector_java";
-        private static final String GROUP_ID_CONFIG = "flink_config_reader";
+    // Kafka Topics
+    private static final String TOPIC_LOGS = "logs";
+    private static final String TOPIC_ALERTS = "frequency_alerts";
+    private static final String TOPIC_CONFIG = "anomaly-config";
 
-        // State Descriptor Names
-        private static final String STATE_RULES = "RulesBroadcastState";
-        private static final String STATE_EVENTS = "RecentEvents";
+    // Consumer Groups
+    private static final String GROUP_ID_LOGS = "flink_frequency_detector";
+    private static final String GROUP_ID_CONFIG = "flink_config_reader";
 
-        public static void main(String[] args) throws Exception {
-                StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-                env.setParallelism(1);
+    // State Descriptor Name
+    public static final String STATE_RULES = "RulesBroadcastState";
 
-                String boostrapServers = System.getenv().getOrDefault("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092");
+    public static void main(String[] args) throws Exception {
+        LOG.info("Starting Frequency Anomaly Detection Job");
 
-                // 1. Logs Source
-                JsonDeserializationSchema<LogEvent> logFormat = new JsonDeserializationSchema<>(LogEvent.class);
-                KafkaSource<LogEvent> logsSource = KafkaSource.<LogEvent>builder()
-                                .setBootstrapServers(boostrapServers)
-                                .setTopics(TOPIC_LOGS)
-                                .setGroupId(GROUP_ID_JOB)
-                                .setStartingOffsets(OffsetsInitializer.latest())
-                                .setValueOnlyDeserializer(logFormat)
-                                .build();
+        // Environment configuration from env vars
+        String bootstrapServers = getEnvOrDefault("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092");
+        String jdbcUrl = getEnvOrDefault("JDBC_URL", "jdbc:postgresql://postgres-db:5432/logging_db");
+        String jdbcUser = getEnvOrDefault("JDBC_USER", "postgres");
+        String jdbcPassword = getEnvOrDefault("JDBC_PASSWORD", "postgres");
+        int parallelism = Integer.parseInt(getEnvOrDefault("FLINK_PARALLELISM", "1"));
+        long checkpointInterval = Long.parseLong(getEnvOrDefault("CHECKPOINT_INTERVAL_MS", "60000"));
 
-                DataStream<LogEvent> logsStream = env.fromSource(logsSource, WatermarkStrategy.noWatermarks(),
-                                "Logs Source");
+        LOG.info("Configuration: bootstrapServers={}, jdbcUrl={}, parallelism={}, checkpointInterval={}ms",
+                bootstrapServers, jdbcUrl, parallelism, checkpointInterval);
 
-                // 2. Config Source (Broadcast)
-                JsonDeserializationSchema<RuleConfig> configFormat = new JsonDeserializationSchema<>(RuleConfig.class);
-                KafkaSource<RuleConfig> configSource = KafkaSource.<RuleConfig>builder()
-                                .setBootstrapServers(boostrapServers)
-                                .setTopics(TOPIC_CONFIG)
-                                .setGroupId(GROUP_ID_CONFIG)
-                                .setStartingOffsets(OffsetsInitializer.latest())
-                                .setValueOnlyDeserializer(configFormat)
-                                .build();
+        // Create execution environment
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(parallelism);
 
-                DataStream<RuleConfig> configStream = env.fromSource(configSource, WatermarkStrategy.noWatermarks(),
-                                "Config Source");
+        // Enable checkpointing for fault tolerance
+        configureCheckpointing(env, checkpointInterval);
 
-                // 3. Define Broadcast State
-                MapStateDescriptor<String, RuleConfig> ruleStateDescriptor = new MapStateDescriptor<>(
-                                STATE_RULES,
-                                BasicTypeInfo.STRING_TYPE_INFO,
-                                TypeInformation.of(new TypeHint<RuleConfig>() {
-                                }));
+        // 1. Logs Source (Kafka)
+        DataStream<LogEvent> logsStream = createLogsSource(env, bootstrapServers);
 
-                BroadcastStream<RuleConfig> broadcastConfigStream = configStream.broadcast(ruleStateDescriptor);
+        // 2. Config Source (Kafka Broadcast)
+        BroadcastStream<RuleConfig> configBroadcast = createConfigBroadcast(env, bootstrapServers);
 
-                // 4. Connect and Process
-                DataStream<Alert> alerts = logsStream
-                                .keyBy(event -> event.cameraId)
-                                .connect(broadcastConfigStream)
-                                .process(new DynamicAnomalyDetector());
+        // 3. Process: Connect logs with config and detect anomalies
+        MapStateDescriptor<String, RuleConfig> ruleStateDescriptor = new MapStateDescriptor<>(
+                STATE_RULES,
+                BasicTypeInfo.STRING_TYPE_INFO,
+                TypeInformation.of(new TypeHint<RuleConfig>() {})
+        );
 
-                // 5. Sink
-                JsonSerializationSchema<Alert> jsonSerializer = new JsonSerializationSchema<>();
-                KafkaSink<Alert> sink = KafkaSink.<Alert>builder()
-                                .setBootstrapServers(boostrapServers)
-                                .setRecordSerializer(KafkaRecordSerializationSchema.builder()
-                                                .setTopic(TOPIC_ALERTS)
-                                                .setValueSerializationSchema(jsonSerializer)
-                                                .build())
-                                .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
-                                .build();
+        SingleOutputStreamOperator<AnomalyAlert> alerts = logsStream
+                .keyBy(LogEvent::getCameraId)
+                .connect(configBroadcast)
+                .process(new DynamicAnomalyDetector(ruleStateDescriptor))
+                .name("Anomaly Detection")
+                .uid("anomaly-detector");
 
-                alerts.sinkTo(sink);
+        // 4. Sink: Write ALL logs to entry_logs table
+        logsStream.addSink(createEntryLogsSink(jdbcUrl, jdbcUser, jdbcPassword))
+                .name("JDBC Sink: entry_logs")
+                .uid("jdbc-entry-logs");
 
-                env.execute("Frequency Anomaly Detection (Dynamic)");
-        }
+        // 5. Sink: Write anomaly alerts to anomalies_logs table
+        alerts.addSink(createAnomaliesLogsSink(jdbcUrl, jdbcUser, jdbcPassword))
+                .name("JDBC Sink: anomalies_logs")
+                .uid("jdbc-anomalies-logs");
 
-        /**
-         * Process Function that handles the connection between the high-volume Log
-         * stream
-         * and the low-volume Config broadcast stream.
-         */
-        public static class DynamicAnomalyDetector
-                        extends KeyedBroadcastProcessFunction<String, LogEvent, RuleConfig, Alert> {
+        // 6. Sink: Publish alerts to Kafka for downstream consumers
+        alerts.sinkTo(createKafkaAlertsSink(bootstrapServers))
+                .name("Kafka Sink: frequency_alerts")
+                .uid("kafka-alerts");
 
-                // State to hold the current rule (Broadcast State)
-                private final MapStateDescriptor<String, RuleConfig> ruleStateDescriptor = new MapStateDescriptor<>(
-                                STATE_RULES,
-                                BasicTypeInfo.STRING_TYPE_INFO,
-                                TypeInformation.of(new TypeHint<RuleConfig>() {
-                                }));
+        LOG.info("Job graph created, executing...");
+        env.execute("Frequency Anomaly Detection");
+    }
 
-                // State to hold recent event timestamps for the specific camera (Keyed State)
-                private final ListStateDescriptor<Long> eventsStateDescriptor = new ListStateDescriptor<>(
-                                STATE_EVENTS,
-                                BasicTypeInfo.LONG_TYPE_INFO);
+    private static void configureCheckpointing(StreamExecutionEnvironment env, long interval) {
+        env.enableCheckpointing(interval, CheckpointingMode.EXACTLY_ONCE);
 
-                @Override
-                public void processBroadcastElement(RuleConfig value, Context ctx, Collector<Alert> out)
-                                throws Exception {
-                        // Update the global rule in the broadcast state
-                        BroadcastState<String, RuleConfig> state = ctx.getBroadcastState(ruleStateDescriptor);
-                        state.put("global_rule", value);
-                        System.out.println("Updated Rule: " + value);
-                }
+        CheckpointConfig checkpointConfig = env.getCheckpointConfig();
+        checkpointConfig.setCheckpointTimeout(120000);
+        checkpointConfig.setMinPauseBetweenCheckpoints(30000);
+        checkpointConfig.setMaxConcurrentCheckpoints(1);
+        checkpointConfig.setExternalizedCheckpointCleanup(
+                CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION
+        );
 
-                @Override
-                public void processElement(LogEvent value, ReadOnlyContext ctx, Collector<Alert> out) throws Exception {
-                        // 1. Get current rule (or default)
-                        RuleConfig rule = ctx.getBroadcastState(ruleStateDescriptor).get("global_rule");
-                        if (rule == null) {
-                                rule = new RuleConfig(5, 30); // Default: 5 attempts in 30 seconds
-                        }
+        LOG.info("Checkpointing enabled with interval={}ms, mode=EXACTLY_ONCE", interval);
+    }
 
-                        // 2. Add current event time to history
-                        ListState<Long> history = getRuntimeContext().getListState(eventsStateDescriptor);
-                        // Robust timestamp parsing (assuming source sends string seconds/postgres
-                        // default)
-                        long currentTime;
-                        try {
-                                // Try to parse as double first just in case, then cast to long seconds
-                                currentTime = (long) Double.parseDouble(value.timestamp) * 1000;
-                        } catch (Exception e) {
-                                // Fallback or skip
-                                return;
-                        }
-                        history.add(currentTime);
+    private static DataStream<LogEvent> createLogsSource(StreamExecutionEnvironment env, String bootstrapServers) {
+        KafkaSource<LogEvent> source = KafkaSource.<LogEvent>builder()
+                .setBootstrapServers(bootstrapServers)
+                .setTopics(TOPIC_LOGS)
+                .setGroupId(GROUP_ID_LOGS)
+                .setStartingOffsets(OffsetsInitializer.latest())
+                .setValueOnlyDeserializer(new JsonDeserializationSchema<>(LogEvent.class))
+                .build();
 
-                        // 3. Prune old events and count
-                        // We use a manual windowing logic here because standard Window operators
-                        // are hard to combine with dynamic timeouts from Broadcast state.
-                        List<Long> recentEvents = new ArrayList<>();
-                        int count = 0;
-                        long windowStart = currentTime - (rule.windowSeconds * 1000L);
+        return env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source: logs")
+                .uid("kafka-logs-source");
+    }
 
-                        for (Long timestamp : history.get()) {
-                                if (timestamp >= windowStart) {
-                                        recentEvents.add(timestamp);
-                                        count++;
-                                }
-                        }
+    private static BroadcastStream<RuleConfig> createConfigBroadcast(StreamExecutionEnvironment env, String bootstrapServers) {
+        KafkaSource<RuleConfig> configSource = KafkaSource.<RuleConfig>builder()
+                .setBootstrapServers(bootstrapServers)
+                .setTopics(TOPIC_CONFIG)
+                .setGroupId(GROUP_ID_CONFIG)
+                .setStartingOffsets(OffsetsInitializer.latest())
+                .setValueOnlyDeserializer(new JsonDeserializationSchema<>(RuleConfig.class))
+                .build();
 
-                        // Update state: remove old events to keep state size small
-                        history.update(recentEvents);
+        MapStateDescriptor<String, RuleConfig> ruleStateDescriptor = new MapStateDescriptor<>(
+                STATE_RULES,
+                BasicTypeInfo.STRING_TYPE_INFO,
+                TypeInformation.of(new TypeHint<RuleConfig>() {})
+        );
 
-                        // 4. Check threshold
-                        if (count > rule.threshold) {
-                                out.collect(new Alert(
-                                                value.cameraId,
-                                                "Frequency",
-                                                String.format("High frequency access detected: %d attempts in %ds (Threshold: %d)",
-                                                                count, rule.windowSeconds, rule.threshold)));
-                        }
-                }
-        }
+        return env.fromSource(configSource, WatermarkStrategy.noWatermarks(), "Kafka Source: config")
+                .uid("kafka-config-source")
+                .broadcast(ruleStateDescriptor);
+    }
+
+    private static org.apache.flink.streaming.api.functions.sink.SinkFunction<LogEvent> createEntryLogsSink(
+            String jdbcUrl, String user, String password) {
+        
+        return JdbcSink.sink(
+                "INSERT INTO entry_logs (timestamp, detected_id, camera_id, authorized, event_type, " +
+                        "location, device_status, image_video_ref, processing_time, model_version) " +
+                        "VALUES (to_timestamp(?::numeric), ?, ?, ?, ?, ?, ?, ?, ?::interval, ?)",
+                (statement, event) -> {
+                    statement.setString(1, event.getTimestamp());
+                    statement.setObject(2, event.getDetectedId());
+                    statement.setObject(3, event.getCameraId());
+                    statement.setObject(4, event.getAuthorized());
+                    statement.setString(5, event.getEventType());
+                    statement.setString(6, event.getLocation());
+                    statement.setString(7, event.getDeviceStatus());
+                    statement.setString(8, event.getImageVideoRef());
+                    statement.setString(9, event.getProcessingTime());
+                    statement.setString(10, event.getModelVersion());
+                },
+                JdbcExecutionOptions.builder()
+                        .withBatchSize(100)
+                        .withBatchIntervalMs(1000)
+                        .withMaxRetries(3)
+                        .build(),
+                new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+                        .withUrl(jdbcUrl)
+                        .withDriverName("org.postgresql.Driver")
+                        .withUsername(user)
+                        .withPassword(password)
+                        .build()
+        );
+    }
+
+    private static org.apache.flink.streaming.api.functions.sink.SinkFunction<AnomalyAlert> createAnomaliesLogsSink(
+            String jdbcUrl, String user, String password) {
+        
+        return JdbcSink.sink(
+                "INSERT INTO anomalies_logs (timestamp, detected_id, camera_id, anomaly_id) " +
+                        "VALUES (to_timestamp(?::numeric), ?, ?, ?)",
+                (statement, alert) -> {
+                    statement.setString(1, alert.getTimestamp());
+                    statement.setObject(2, alert.getDetectedId());
+                    statement.setObject(3, alert.getCameraId());
+                    statement.setObject(4, alert.getAnomalyId());
+                },
+                JdbcExecutionOptions.builder()
+                        .withBatchSize(50)
+                        .withBatchIntervalMs(500)
+                        .withMaxRetries(3)
+                        .build(),
+                new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+                        .withUrl(jdbcUrl)
+                        .withDriverName("org.postgresql.Driver")
+                        .withUsername(user)
+                        .withPassword(password)
+                        .build()
+        );
+    }
+
+    private static KafkaSink<AnomalyAlert> createKafkaAlertsSink(String bootstrapServers) {
+        return KafkaSink.<AnomalyAlert>builder()
+                .setBootstrapServers(bootstrapServers)
+                .setRecordSerializer(KafkaRecordSerializationSchema.<AnomalyAlert>builder()
+                        .setTopic(TOPIC_ALERTS)
+                        .setValueSerializationSchema(new JsonSerializationSchema<AnomalyAlert>())
+                        .build())
+                .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
+                .build();
+    }
+
+    private static String getEnvOrDefault(String key, String defaultValue) {
+        String value = System.getenv(key);
+        return (value != null && !value.isEmpty()) ? value : defaultValue;
+    }
 }
