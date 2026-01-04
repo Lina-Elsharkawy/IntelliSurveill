@@ -30,3 +30,7 @@ yarn-error.log*
 target/
 *.class
 *.jar
+
+# Python Test Cache
+.pytest_cache/
+__pycache__/
