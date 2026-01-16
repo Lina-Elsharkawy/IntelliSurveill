@@ -153,6 +153,11 @@ CREATE INDEX face_embeddings_authoritative_idx
 ON face_embeddings (detected_id)
 WHERE is_authoritative = TRUE;
 
+-- Speeds up auto-learn cooldown checks
+CREATE INDEX face_embeddings_autolearn_idx
+ON face_embeddings (detected_id, created_at)
+WHERE notes = 'auto_learned';
+
 
 CREATE TABLE unknown_face_events (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,

@@ -30,3 +30,7 @@ yarn-error.log*
 target/
 *.class
 *.jar
+
+# Backend
+__pycache__/
+*.pyc
