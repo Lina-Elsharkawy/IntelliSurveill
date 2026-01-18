@@ -36,12 +36,6 @@ app.get('/health', async (req, res) => {
 // Protect all API routes below
 app.use('/api', checkJwt);
 
-// Example: GET all cameras
-app.get('/cameras', async (req, res) => {
-  const cameras = await models.Camera.findAll();
-  res.json(cameras);
-});
-
 app.use('/api/anomalies', anomaliesRouter);
 app.use('/api/cameras', camerasRouter);
 app.use('/api/departments', departmentsRouter);
