@@ -90,7 +90,7 @@ export default function AdminPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-green-400 mb-2">Admin Database Management</h1>
+            <h1 className="text-3xl font-bold text-white-400 mb-2">Admin Database Management</h1>
             <p className="text-gray-400">Manage identities, monitor anomalies, and control access</p>
           </div>
           <div className="flex gap-2">
@@ -174,7 +174,7 @@ export default function AdminPage() {
           <TabsContent value="unknown" className="space-y-4">
             <Card className="bg-gray-900/95 border-green-500/30">
               <CardHeader>
-                <CardTitle className="text-green-400 flex items-center gap-2">
+                <CardTitle className="text-white-400 flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5" />
                   Unknown Identities Detected
                 </CardTitle>
