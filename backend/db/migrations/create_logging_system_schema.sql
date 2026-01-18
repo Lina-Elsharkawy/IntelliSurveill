@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS vector;
+
 -- 1. Departments
 CREATE TABLE departments (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -114,3 +116,67 @@ SELECT
 FROM
     anomalies_logs al
     JOIN anomalies a ON al.anomaly_id = a.id;
+
+
+-- Face embeddings linked to identities (detected_people)
+CREATE TABLE face_embeddings (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+
+    detected_id BIGINT NOT NULL REFERENCES detected_people(id) ON DELETE CASCADE,
+    entry_log_id BIGINT NULL REFERENCES entry_logs(id) ON DELETE SET NULL,
+
+    embedding vector(512) NOT NULL,
+
+    embedding_model TEXT NOT NULL DEFAULT 'unknown',
+    is_authoritative BOOLEAN NOT NULL DEFAULT FALSE,
+    quality_score REAL NULL,
+    match_confidence REAL NULL,
+    notes TEXT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
+
+
+CREATE INDEX face_embeddings_embedding_hnsw_cosine
+ON face_embeddings
+USING hnsw (embedding vector_cosine_ops);     
+
+CREATE INDEX face_embeddings_detected_id_idx
+ON face_embeddings (detected_id);
+
+CREATE INDEX face_embeddings_entry_log_id_idx
+ON face_embeddings (entry_log_id);
+
+CREATE INDEX face_embeddings_authoritative_idx
+ON face_embeddings (detected_id)
+WHERE is_authoritative = TRUE;
+
+-- Speeds up auto-learn cooldown checks
+CREATE INDEX face_embeddings_autolearn_idx
+ON face_embeddings (detected_id, created_at)
+WHERE notes = 'auto_learned';
+
+
+CREATE TABLE unknown_face_events (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    entry_log_id BIGINT NOT NULL REFERENCES entry_logs(id) ON DELETE CASCADE,
+
+    embedding vector(512) NOT NULL,     -- normalized
+    embedding_model TEXT NOT NULL DEFAULT 'unknown',
+
+    status TEXT NOT NULL DEFAULT 'pending'
+      CHECK (status IN ('pending','assigned','discarded')),
+
+    assigned_detected_id BIGINT NULL REFERENCES detected_people(id) ON DELETE SET NULL,
+
+    notes TEXT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX unknown_face_events_status_idx ON unknown_face_events(status);
+
+CREATE INDEX unknown_face_events_embedding_hnsw_cosine
+ON unknown_face_events USING hnsw (embedding vector_cosine_ops);
+

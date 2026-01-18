@@ -31,6 +31,6 @@ target/
 *.class
 *.jar
 
-# Python Test Cache
-.pytest_cache/
+# Backend
 __pycache__/
+*.pyc
