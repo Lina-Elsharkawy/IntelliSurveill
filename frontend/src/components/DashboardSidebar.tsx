@@ -1,4 +1,4 @@
-import { LayoutDashboard, Camera, AlertTriangle, Map, Settings, BarChart3, Shield, ListCheck } from "lucide-react";
+import { LayoutDashboard, Camera, AlertTriangle, Map, Settings, BarChart3, Shield, ListCheck, UserCog} from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -17,7 +17,7 @@ const menuItems = [
  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Live Cameras", url: "/cameras", icon: Camera },
   { title: "Anomalies", url: "/alerts", icon: AlertTriangle },
- 
+  { title: "Admin", url: "/admin", icon: UserCog }, //
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Activity Log", url: "/activity-log", icon: ListCheck }, // new
