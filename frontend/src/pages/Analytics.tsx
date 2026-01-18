@@ -36,8 +36,8 @@ const Analytics = () => {
     { zone: "Building A", incidents: 24 },
     { zone: "Building B", incidents: 18 },
     { zone: "Parking", incidents: 32 },
-    { zone: "Library", incidents: 12 },
-    { zone: "Sports", incidents: 15 },
+    { zone: "Lab", incidents: 12 },
+    
   ];
 
   return (
@@ -189,7 +189,7 @@ const Analytics = () => {
 
           <Card className="shadow-card border-border">
             <CardHeader>
-              <CardTitle className="text-foreground">Incidents by Zone</CardTitle>
+              <CardTitle className="text-foreground">Anomalies by Zone</CardTitle>
               <CardDescription className="text-muted-foreground">
                 Most active surveillance areas
               </CardDescription>

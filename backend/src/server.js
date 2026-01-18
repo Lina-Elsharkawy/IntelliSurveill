@@ -14,7 +14,7 @@ const labsRouter = require('./routes/labsRoutes');
 const logsRouter = require('./routes/logsRoutes');
 const schedulesRouter = require('./routes/schedulesRoutes');
 const visitorsRouter = require('./routes/visitorsRoutes');
-const ragRouter = require('./rag/routes');
+const llmRouter = require('./services/llm/llmRoutes');
 
 
 const checkJwt = require('./middleware/auth');
@@ -36,12 +36,6 @@ app.get('/health', async (req, res) => {
 // Protect all API routes below
 app.use('/api', checkJwt);
 
-// Example: GET all cameras
-app.get('/cameras', async (req, res) => {
-  const cameras = await models.Camera.findAll();
-  res.json(cameras);
-});
-
 app.use('/api/anomalies', anomaliesRouter);
 app.use('/api/cameras', camerasRouter);
 app.use('/api/departments', departmentsRouter);
@@ -51,6 +45,8 @@ app.use('/api/labs', labsRouter);
 app.use('/api/logs', logsRouter);
 app.use('/api/schedules', schedulesRouter);
 app.use('/api/visitors', visitorsRouter);
-app.use('/api/rag', ragRouter);
+app.use('/api/llm', llmRouter);
+app.use('/llm', llmRouter);
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));

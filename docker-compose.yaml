@@ -40,11 +40,55 @@
 #     - data-platform-net
 
 services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    env_file:
+      - ./backend/.env
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9093
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres-db
+    networks:
+      - data-platform-net
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+
+    ports:
+      - "11434:11434"
+
+    volumes:
+      - ollama-data:/root/.ollama
+
+    environment:
+      - OLLAMA_KEEP_ALIVE=5m
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_MAX_LOADED_MODELS=1 #llm only
+
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 4G
+
+    networks:
+      - data-platform-net
+
   kafka:
-    image: apache/kafka:3.8.1
+    image: apache/kafka:4.1.1
     container_name: kafka
     ports:
-      - "9093:9092"
+      - "9093:9093"
+    environment:
+      - KAFKA_LISTENERS=PLAINTEXT://:9093,CONTROLLER://:9094
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9093
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9094
     env_file:
       - ./streaming/kafka/.env
     volumes:
@@ -63,15 +107,14 @@ services:
       - data-platform-net
 
   postgres-db:
-    image: postgres:18
+    image: pgvector/pgvector:pg16
     restart: always
     ports:
       - "5432:5432"
     shm_size: 128mb
     volumes:
-      - pgdata:/var/lib/postgresql
+      - pgdata:/var/lib/postgresql/data
       - ./backend/db/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-
     env_file:
       - ./backend/.env
     healthcheck:
@@ -88,23 +131,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    networks:
-      - data-platform-net
-
-  backend:
-    build: ./backend
-    restart: always
-    ports:
-      - "3000:3000"
-    env_file:
-      - ./backend/.env
-    environment:
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      kafka:
-        condition: service_started
     networks:
       - data-platform-net
 
@@ -138,10 +164,10 @@ services:
       - ./backend/db/pgadmin.env
     ports:
       - "5050:80"
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
     depends_on:
       - postgres-db
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
     deploy:
       resources:
         limits:
@@ -172,7 +198,7 @@ services:
           cpus: "1"
           memory: 2G
     environment:
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9093
       - JOB_MANAGER_RPC_ADDRESS=flinkjobmanager
       - JDBC_URL=jdbc:postgresql://postgres-db:5432/logging_db
       - JDBC_USER=mohamed
@@ -186,6 +212,30 @@ services:
         max-file: "3"
     networks:
       - data-platform-net
+
+  # prometheus:
+  #   image: prom/prometheus:v3.7.3
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+  #   command:
+  #     - "--config.file=/etc/prometheus/prometheus.yml"
+  #     - "--storage.tsdb.path=/prometheus"
+  #     - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+  #     - "--web.console.templates=/usr/share/prometheus/consoles"
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: "0.5"
+  #         memory: 512M
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #   networks:
+  #     - data-platform-net
 
   flinktaskmanager:
     build: ./streaming/flink-java
@@ -202,7 +252,7 @@ services:
           cpus: "1"
           memory: 2G
     environment:
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9093
       - JOB_MANAGER_RPC_ADDRESS=flinkjobmanager
       - JDBC_URL=jdbc:postgresql://postgres-db:5432/logging_db
       - JDBC_USER=mohamed
@@ -240,388 +290,14 @@ services:
   #   networks:
   #     - data-platform-net
 
-  # airflow-apiserver:
-  #   <<: *airflow-common
-  #   command: api-server
-  #   ports:
-  #     - "8080:8080"
-  #   healthcheck:
-  #     test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/version"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
-  #     start_period: 30s
-  #   restart: always
-  #   depends_on:
-  #     <<: *airflow-common-depends-on
-  #     airflow-init:
-  #       condition: service_completed_successfully
-
-  # airflow-scheduler:
-  #   <<: *airflow-common
-  #   command: scheduler
-  #   healthcheck:
-  #     test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
-  #     start_period: 30s
-  #   restart: always
-  #   depends_on:
-  #     <<: *airflow-common-depends-on
-  #     airflow-init:
-  #       condition: service_completed_successfully
-
-  # airflow-dag-processor:
-  #   <<: *airflow-common
-  #   command: dag-processor
-  #   healthcheck:
-  #     test:
-  #       [
-  #         "CMD-SHELL",
-  #         'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"',
-  #       ]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
-  #     start_period: 30s
-  #   restart: always
-  #   depends_on:
-  #     <<: *airflow-common-depends-on
-  #     airflow-init:
-  #       condition: service_completed_successfully
-
-  # airflow-worker:
-  #   <<: *airflow-common
-  #   command: celery worker
-  #   healthcheck:
-  #     test:
-  #       - "CMD-SHELL"
-  #       - 'celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}" || celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"'
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
-  #     start_period: 30s
-  #   environment:
-  #     <<: *airflow-common-env
-  #     DUMB_INIT_SETSID: "0"
-  #   restart: always
-  #   depends_on:
-  #     <<: *airflow-common-depends-on
-  #     airflow-apiserver:
-  #       condition: service_healthy
-  #     airflow-init:
-  #       condition: service_completed_successfully
-
-  # airflow-triggerer:
-  #   <<: *airflow-common
-  #   command: triggerer
-  #   healthcheck:
-  #     test:
-  #       [
-  #         "CMD-SHELL",
-  #         'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"',
-  #       ]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
-  #     start_period: 30s
-  #   restart: always
-  #   depends_on:
-  #     <<: *airflow-common-depends-on
-  #     airflow-init:
-  #       condition: service_completed_successfully
-
-  # airflow-init:
-  #   <<: *airflow-common
-  #   entrypoint: /bin/bash
-  #   command:
-  #     - -c
-  #     - |
-  #       if [[ -z "${AIRFLOW_UID}" ]]; then
-  #         echo
-  #         echo -e "\033[1;33mWARNING!!!: AIRFLOW_UID not set!\e[0m"
-  #         echo "If you are on Linux, you SHOULD follow the instructions below to set "
-  #         echo "AIRFLOW_UID environment variable, otherwise files will be owned by root."
-  #         echo "For other operating systems you can get rid of the warning with manually created .env file:"
-  #         echo "    See: https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html#setting-the-right-airflow-user"
-  #         echo
-  #         export AIRFLOW_UID=$$(id -u)
-  #       fi
-  #       one_meg=1048576
-  #       mem_available=$$(($$(getconf _PHYS_PAGES) * $$(getconf PAGE_SIZE) / one_meg))
-  #       cpus_available=$$(grep -cE 'cpu[0-9]+' /proc/stat)
-  #       disk_available=$$(df / | tail -1 | awk '{print $$4}')
-  #       warning_resources="false"
-  #       if (( mem_available < 4000 )) ; then
-  #         echo
-  #         echo -e "\033[1;33mWARNING!!!: Not enough memory available for Docker.\e[0m"
-  #         echo "At least 4GB of memory required. You have $$(numfmt --to iec $$((mem_available * one_meg)))"
-  #         echo
-  #         warning_resources="true"
-  #       fi
-  #       if (( cpus_available < 2 )); then
-  #         echo
-  #         echo -e "\033[1;33mWARNING!!!: Not enough CPUS available for Docker.\e[0m"
-  #         echo "At least 2 CPUs recommended. You have $${cpus_available}"
-  #         echo
-  #         warning_resources="true"
-  #       fi
-  #       if (( disk_available < one_meg * 10 )); then
-  #         echo
-  #         echo -e "\033[1;33mWARNING!!!: Not enough Disk space available for Docker.\e[0m"
-  #         echo "At least 10 GBs recommended. You have $$(numfmt --to iec $$((disk_available * 1024 )))"
-  #         echo
-  #         warning_resources="true"
-  #       fi
-  #       if [[ $${warning_resources} == "true" ]]; then
-  #         echo
-  #         echo -e "\033[1;33mWARNING!!!: You have not enough resources to run Airflow (see above)!\e[0m"
-  #         echo "Please follow the instructions to increase amount of resources available:"
-  #         echo "   https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html#before-you-begin"
-  #         echo
-  #       fi
-  #       echo
-  #       echo "Creating missing opt dirs if missing:"
-  #       echo
-  #       mkdir -v -p /opt/airflow/{logs,dags,plugins,config}
-  #       echo
-  #       echo "Airflow version:"
-  #       /entrypoint airflow version
-  #       echo
-  #       echo "Files in shared volumes:"
-  #       echo
-  #       ls -la /opt/airflow/{logs,dags,plugins,config}
-  #       echo
-  #       echo "Running airflow config list to create default config file if missing."
-  #       echo
-  #       /entrypoint airflow config list >/dev/null
-  #       echo
-  #       echo "Files in shared volumes:"
-  #       echo
-  #       ls -la /opt/airflow/{logs,dags,plugins,config}
-  #       echo
-  #       echo "Change ownership of files in /opt/airflow to ${AIRFLOW_UID}:0"
-  #       echo
-  #       chown -R "${AIRFLOW_UID}:0" /opt/airflow/
-  #       echo
-  #       echo "Change ownership of files in shared volumes to ${AIRFLOW_UID}:0"
-  #       echo
-  #       chown -v -R "${AIRFLOW_UID}:0" /opt/airflow/{logs,dags,plugins,config}
-  #       echo
-  #       echo "Files in shared volumes:"
-  #       echo
-  #       ls -la /opt/airflow/{logs,dags,plugins,config}
-  #   environment:
-  #     <<: *airflow-common-env
-  #     _AIRFLOW_DB_MIGRATE: "true"
-  #     _AIRFLOW_WWW_USER_CREATE: "true"
-  #     _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
-  #     _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
-  #     _PIP_ADDITIONAL_REQUIREMENTS: ""
-  #   user: "0:0"
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: "0.5"
-  #         memory: 512M
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   networks:
-  #     - data-platform-net
-
-  # airflow-cli:
-  #   <<: *airflow-common
-  #   profiles:
-  #     - debug
-  #   environment:
-  #     <<: *airflow-common-env
-  #     CONNECTION_CHECK_MAX_COUNT: "0"
-  #   command:
-  #     - bash
-  #     - -c
-  #     - airflow
-  #   depends_on:
-  #     <<: *airflow-common-depends-on
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: "0.5"
-  #         memory: 512M
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   networks:
-  #     - data-platform-net
-
-  # flower:
-  #   <<: *airflow-common
-  #   command: celery flower
-  #   profiles:
-  #     - flower
-  #   ports:
-  #     - "5555:5555"
-  #   healthcheck:
-  #     test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
-  #     start_period: 30s
-  #   restart: always
-  #   depends_on:
-  #     <<: *airflow-common-depends-on
-  #     airflow-init:
-  #       condition: service_completed_successfully
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: "0.5"
-  #         memory: 512M
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   networks:
-  #     - data-platform-net
-
-  # minio:
-  #   image: minio/minio:RELEASE.2024-01-31T20-20-33Z
-  #   ports:
-  #     - "9000:9000"
-  #     - "9001:9001"
-  #   volumes:
-  #     - minio-data:/data
-  #   environment:
-  #     MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-  #     MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-  #   command: server /data --console-address ":9001"
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-I", "http://localhost:9000/minio/health/live"]
-  #     interval: 30s
-  #     timeout: 20s
-  #     retries: 3
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: "1"
-  #         memory: 1G
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   networks:
-  #     - data-platform-net
-
-  # create-buckets:
-  #   image: minio/mc:RELEASE.2024-01-31T15-56-17Z
-  #   depends_on:
-  #     minio:
-  #       condition: service_healthy
-  #   # Reuse the root-level minio.env here as well.
-  #   environment:
-  #     MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-  #     MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-  #   entrypoint: /bin/sh
-  #   command: -c "
-  #     /usr/bin/mc config host add myminio http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD;
-  #     /usr/bin/mc mb myminio/airflow;
-  #     /usr/bin/mc policy set public myminio/airflow;
-  #     "
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: "0.5"
-  #         memory: 256M
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   networks:
-  #     - data-platform-net
-
-  # clickhouse-server:
-  #   image: clickhouse/clickhouse-server:24.3.2.23
-  #   ports:
-  #     - "8123:8123"
-  #     - "9009:9000"
-  #   volumes:
-  #     - clickhouse-data:/var/lib/clickhouse
-  #   healthcheck:
-  #     test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: "2"
-  #         memory: 4G
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   networks:
-  #     - data-platform-net
-
-  # clickhouse-client:
-  #   image: clickhouse/clickhouse-server:24.3.2.23
-  #   depends_on:
-  #     - clickhouse-server
-  #   entrypoint: /usr/bin/clickhouse-client
-  #   command: [--host, clickhouse-server]
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: "0.5"
-  #         memory: 256M
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   networks:
-  #     - data-platform-net
-
-  # prometheus:
-  #   image: prom/prometheus:v3.7.3
-  #   ports:
-  #     - "9090:9090"
-  #   volumes:
-  #     - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-  #   command:
-  #     - "--config.file=/etc/prometheus/prometheus.yml"
-  #     - "--storage.tsdb.path=/prometheus"
-  #     - "--web.console.libraries=/usr/share/prometheus/console_libraries"
-  #     - "--web.console.templates=/usr/share/prometheus/consoles"
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: "0.5"
-  #         memory: 512M
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   networks:
-  #     - data-platform-net
-
 volumes:
   pgdata:
+  pgadmin-data:
   kafka-data:
   postgres-db-volume:
   minio-data:
   clickhouse-data:
-  pgadmin-data:
+  ollama-data:
 
 
 networks:

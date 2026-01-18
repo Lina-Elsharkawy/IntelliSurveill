@@ -53,6 +53,47 @@ docker exec graduation-project-flinkjobmanager-1 flink list
 | `frequency_alerts` | Output: Anomaly alerts |
 | `anomaly-config` | Input: Dynamic rule updates |
 
+### Creating Kafka Topics
+
+Topics must be created before running the Flink job. Use the provided Python script.
+
+#### Using the Python Script (Recommended)
+
+The `create_topics.py` script is idempotent and includes retry logic for waiting until Kafka is ready.
+
+```bash
+# 1. Start Kafka first
+docker compose up -d kafka
+
+# 2. Create topics (from streaming/kafka directory)
+cd streaming/kafka
+pip install -r requirements.txt
+python create_topics.py --bootstrap-servers localhost:9092
+```
+
+#### Manual Topic Creation (Alternative)
+
+```bash
+docker exec kafka /opt/kafka/bin/kafka-topics.sh --create --topic logs --partitions 3 --replication-factor 1 --bootstrap-server localhost:9092
+docker exec kafka /opt/kafka/bin/kafka-topics.sh --create --topic frequency_alerts --partitions 3 --replication-factor 1 --bootstrap-server localhost:9092
+docker exec kafka /opt/kafka/bin/kafka-topics.sh --create --topic anomaly-config --partitions 1 --replication-factor 1 --bootstrap-server localhost:9092
+```
+
+#### Verify Topics Were Created
+
+```bash
+docker exec kafka /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+```
+
+Expected output:
+```
+anomaly-config
+frequency_alerts
+logs
+```
+
+
+
 ## Input Schema (logs topic)
 
 ```json

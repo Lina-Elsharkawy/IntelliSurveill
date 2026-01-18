@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const anomaliesController = require('../controllers/AnomaliesController');
+const anomaliesController = require('../controllers/AnomalyControllers');
 const configController = require('../controllers/configController');
 
 // Route to get all anomalies
