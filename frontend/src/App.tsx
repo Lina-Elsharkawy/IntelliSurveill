@@ -7,7 +7,7 @@
   import Index from "./pages/Index";
   import Cameras from "./pages/Cameras";
   import Alerts from "./pages/Alerts";
-  
+  import Admin from "./pages/Admin"; 
   import Analytics from "./pages/Analytics";
   import Settings from "./pages/Settings";
   import NotFound from "./pages/NotFound";
@@ -38,13 +38,14 @@
           <Route path="/dashboard" element={<Index />} />
 
           {/* Other dashboard routes */}
+          
           <Route path="/cameras" element={<Cameras />} />
           <Route path="/alerts" element={<Alerts />} />
         
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/activity-log" element={<ActivityLog />} />
-
+          <Route path="/admin" element={<Admin />} />
           {/* 404 handler */}
           <Route path="*" element={<NotFound />} />
         </Routes>

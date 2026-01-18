@@ -1,73 +1,152 @@
-# Welcome to your Lovable project
+# Lab Access Control Frontend
 
-## Project info
+A React-based web application for the Lab Access Control system.
 
-**URL**: https://lovable.dev/projects/58f1c298-4a9b-4d69-910e-e48cf24e76a9
+## Tech Stack
 
-## How can I edit this code?
+- **Build Tool**: [Vite](https://vitejs.dev/)
+- **Framework**: [React 18](https://react.dev/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components**: [shadcn/ui](https://ui.shadcn.com/)
+- **State Management**: [TanStack Query](https://tanstack.com/query)
+- **Forms**: [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
+- **Routing**: [React Router](https://reactrouter.com/)
+- **Testing**: [Vitest](https://vitest.dev/)
 
-There are several ways of editing your application.
+## Prerequisites
 
-**Use Lovable**
+- Node.js v18+ ([install with nvm](https://github.com/nvm-sh/nvm))
+- npm or bun
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/58f1c298-4a9b-4d69-910e-e48cf24e76a9) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-**Use your preferred IDE**
+2. **Configure environment**:
+   Create a `.env` file in the frontend root:
+   ```env
+   VITE_API_BASE_URL=http://localhost:3000
+   ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+3. **Start development server**:
+   ```bash
+   npm run dev
+   ```
+   The app will be available at `http://localhost:8080`
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Available Scripts
 
-Follow these steps:
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server with hot-reload |
+| `npm run build` | Build production bundle |
+| `npm run build:dev` | Build development bundle |
+| `npm run preview` | Preview production build locally |
+| `npm run lint` | Run ESLint |
+| `npm run test` | Run tests in watch mode |
+| `npm run test:run` | Run tests once |
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Project Structure
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+frontend/
+├── src/
+│   ├── __tests__/          # Test files
+│   │   ├── mocks/          # Mock utilities for testing
+│   │   ├── services/       # Service test files
+│   │   └── setup.ts        # Global test setup
+│   ├── components/         # React components
+│   │   └── ui/             # shadcn/ui components
+│   ├── hooks/              # Custom React hooks
+│   ├── lib/                # Utility functions
+│   │   ├── api.ts          # Centralized API client
+│   │   └── utils.ts        # General utilities
+│   ├── pages/              # Page components
+│   ├── services/           # API service functions
+│   │   ├── anomalies.ts    # Anomalies API
+│   │   ├── cameras.ts      # Cameras API
+│   │   ├── departments.ts  # Departments API
+│   │   ├── detected-people.ts # Detected People API
+│   │   ├── employees.ts    # Employees API
+│   │   ├── health.ts       # Health check API
+│   │   ├── labs.ts         # Labs API
+│   │   ├── logs.ts         # Logs API
+│   │   ├── rag.ts          # RAG query API
+│   │   ├── schedules.ts    # Schedules API
+│   │   ├── visitors.ts     # Visitors API
+│   │   └── index.ts        # Barrel export
+│   ├── types/              # TypeScript type definitions
+│   │   └── types.ts        # All API entity types
+│   ├── App.tsx             # Root component
+│   └── main.tsx            # Entry point
+├── public/                 # Static assets
+├── vitest.config.ts        # Vitest configuration
+├── vite.config.ts          # Vite configuration
+└── tailwind.config.ts      # Tailwind configuration
 ```
 
-**Edit a file directly in GitHub**
+## API Services
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+All API calls are centralized through `src/lib/api.ts` which handles:
+- JWT authentication (token from `localStorage`)
+- Base URL configuration via `VITE_API_BASE_URL`
+- Error handling
 
-**Use GitHub Codespaces**
+### Usage Example
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```typescript
+import { getAllCameras, createCamera } from '@/services';
 
-## What technologies are used for this project?
+// Fetch all cameras
+const cameras = await getAllCameras();
 
-This project is built with:
+// Create a new camera
+const newCamera = await createCamera({
+  name: 'Lobby Camera',
+  location: 'Main Entrance',
+  lab_id: 1
+});
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Available Services
 
-## How can I deploy this project?
+| Service | Endpoints |
+|---------|-----------|
+| `anomalies` | getAll, getById, delete |
+| `cameras` | getAll, getById, create, update, delete |
+| `departments` | getAll, getById, create, update, delete |
+| `detected-people` | getAll, getById |
+| `employees` | getAll, getById, create, update, delete |
+| `health` | checkHealth |
+| `labs` | getAll, getById, create, update, delete |
+| `logs` | getAll, getById, byCamera, byEventType, byAuthorization, byLocation, byAnomaly |
+| `rag` | queryRAG |
+| `schedules` | getAll, getById, create, update, delete |
+| `visitors` | getAll, getById, create, update, delete |
 
-Simply open [Lovable](https://lovable.dev/projects/58f1c298-4a9b-4d69-910e-e48cf24e76a9) and click on Share -> Publish.
+## Testing
 
-## Can I connect a custom domain to my Lovable project?
+Tests are written using Vitest with mocked fetch calls.
 
-Yes, you can!
+```bash
+# Run tests in watch mode
+npm run test
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+# Run tests once
+npm run test:run
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Test files are located in `src/__tests__/services/` and follow the naming convention `*.test.ts`.
+
+## Adding New Components
+
+This project uses [shadcn/ui](https://ui.shadcn.com/). To add a new component:
+
+```bash
+npx shadcn@latest add <component-name>
+```
+

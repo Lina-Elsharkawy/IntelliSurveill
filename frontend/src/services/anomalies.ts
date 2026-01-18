@@ -1,17 +1,27 @@
-export async function getAllAnomalies() {
-  const token = localStorage.getItem("access_token"); // get token from login
-  if (!token) throw new Error("User is not authenticated");
+/**
+ * Anomalies API service.
+ */
 
-  const res = await fetch("http://localhost:3000/api/anomalies/get_all_anomalies", {
-    headers: {
-      Authorization: `Bearer ${token}`, // send JWT to backend
-    },
-  });
+import { apiGet, apiDelete } from '@/lib/api';
+import type { Anomaly, SuccessMessage } from '@/types/types';
 
-  if (!res.ok) {
-    const errData = await res.json();
-    throw new Error(errData.error || "Failed to fetch anomalies");
-  }
+/**
+ * Get all anomalies.
+ */
+export async function getAllAnomalies(): Promise<Anomaly[]> {
+  return apiGet<Anomaly[]>('/api/anomalies/get_all_anomalies');
+}
 
-  return res.json();
+/**
+ * Get a single anomaly by ID.
+ */
+export async function getAnomalyById(id: number): Promise<Anomaly> {
+  return apiGet<Anomaly>(`/api/anomalies/get_anomaly/${id}`);
+}
+
+/**
+ * Delete an anomaly by ID.
+ */
+export async function deleteAnomaly(id: number): Promise<SuccessMessage> {
+  return apiDelete<SuccessMessage>(`/api/anomalies/delete_anomaly/${id}`);
 }

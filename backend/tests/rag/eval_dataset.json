@@ -1,0 +1,50 @@
+[
+    {
+        "id": "q1",
+        "question": "How many visitors are here today?",
+        "gold_sql": "SELECT COUNT(*) FROM visitors WHERE visit_date = CURRENT_DATE",
+        "difficulty": "easy"
+    },
+    {
+        "id": "q2",
+        "question": "Show me all high severity anomalies.",
+        "gold_sql": "SELECT * FROM anomalies WHERE severity_level = 'High'",
+        "difficulty": "easy"
+    },
+    {
+        "id": "q3",
+        "question": "Who entered the Robotics Lab?",
+        "gold_sql": "SELECT d.name, e.timestamp FROM entry_logs e JOIN detected_people d ON e.detected_id = d.id WHERE e.location ILIKE '%Robotics%'",
+        "difficulty": "medium"
+    },
+    {
+        "id": "q4",
+        "question": "List all unauthorized entries sorted by time.",
+        "gold_sql": "SELECT * FROM entry_logs WHERE authorized = false ORDER BY timestamp DESC",
+        "difficulty": "medium"
+    },
+    {
+        "id": "q5",
+        "question": "Which employees are in the Computer Science department?",
+        "gold_sql": "SELECT e.name FROM employees e JOIN departments d ON e.department_id = d.id WHERE d.name ILIKE '%Computer Science%'",
+        "difficulty": "medium"
+    },
+    {
+        "id": "q6",
+        "question": "Count the number of anomalies detected in the last 24 hours.",
+        "gold_sql": "SELECT COUNT(*) FROM anomalies_logs WHERE timestamp >= NOW() - INTERVAL '24 hours'",
+        "difficulty": "hard"
+    },
+    {
+        "id": "q7",
+        "question": "What is the severity of the 'Tailgating' anomaly?",
+        "gold_sql": "SELECT severity_level FROM anomalies WHERE description ILIKE '%Tailgating%'",
+        "difficulty": "easy"
+    },
+    {
+        "id": "q8",
+        "question": "Show me the logs for camera 3.",
+        "gold_sql": "SELECT * FROM entry_logs WHERE camera_id = (SELECT id FROM cameras WHERE name ILIKE '%Cam-03%' OR id = 3)",
+        "difficulty": "hard"
+    }
+]
