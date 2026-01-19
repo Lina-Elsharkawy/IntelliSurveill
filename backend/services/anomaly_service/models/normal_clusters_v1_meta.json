@@ -1,0 +1,7 @@
+{
+  "embedding_dim": 512,
+  "pca_dim": 128,
+  "n_clusters": 100,
+  "radius_percentile": 95,
+  "metric": "cosine_distance_on_l2_normalized_pca"
+}
