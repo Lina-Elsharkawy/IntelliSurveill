@@ -1,0 +1,14 @@
+{
+  "total_windows": 118,
+  "ground_truth_anomalies": 118,
+  "baseline_detected_anomalies_before_llm": 118,
+  "baseline_missed_before_llm": 0,
+  "llm_alert_yes_after": 82,
+  "llm_alert_no_after": 33,
+  "llm_alert_unknown_after": 0,
+  "baseline_normals_no_candidate": 0,
+  "notes": {
+    "baseline_is_anomaly": "baseline_is_anomaly = (scene_window_embeddings.is_normal == false)",
+    "llm_alert": "parsed from exported ollama_jobs JSON for job_type=llm_reason decision text"
+  }
+}
