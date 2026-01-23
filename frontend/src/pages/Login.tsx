@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom"; // AuthContext handles navigation
 import {
   Card,
   CardHeader,
@@ -15,8 +15,11 @@ import { Lock, User, Shield, AlertCircle } from "lucide-react";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
+import { useAuth } from "@/context/AuthContext";
+
 export default function Login() {
-  const navigate = useNavigate();
+  const { login } = useAuth();
+  // const navigate = useNavigate(); // handled by login
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -42,11 +45,11 @@ export default function Login() {
         throw new Error(data.error || "Login failed");
       }
 
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("id_token", data.id_token);
-      localStorage.setItem("loggedIn", "true");
+      login(data.access_token);
+      // localStorage.setItem("id_token", data.id_token); // handled inside context or ignored if not needed
+      // localStorage.setItem("loggedIn", "true");
 
-      navigate("/dashboard");
+      // navigate("/dashboard");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
       setError(message);
@@ -58,7 +61,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-background text-foreground">
-      
+
       {/* LEFT SIDE – Branding */}
       <div className="hidden lg:flex flex-col justify-center items-center px-10">
         <div className="text-center space-y-6">

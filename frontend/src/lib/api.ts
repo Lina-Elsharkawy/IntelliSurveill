@@ -31,6 +31,10 @@ function getAuthHeaders(): HeadersInit {
  * Handles API response and throws on error.
  */
 async function handleResponse<T>(response: Response): Promise<T> {
+    if (response.status === 401) {
+        window.dispatchEvent(new Event('auth:unauthorized'));
+        throw new Error('Unauthorized');
+    }
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `Request failed with status ${response.status}`);
