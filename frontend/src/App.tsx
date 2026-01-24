@@ -9,7 +9,6 @@ import Index from "./pages/Index";
 import Cameras from "./pages/Cameras";
 import Alerts from "./pages/Alerts";
 import Admin from "./pages/Admin";
-
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -20,6 +19,8 @@ import PrivateRoute from "./PrivateRoute";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Departments from "./pages/Departments";
 import Labs from "./pages/Labs";
+import Schedules from "./pages/Schedules"; // ← Import Schedules page
+
 const queryClient = new QueryClient();
 
 // Create a wrapper component to use the hook
@@ -28,7 +29,12 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
+      <Route
+        path="/"
+        element={
+          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+        }
+      />
       <Route path="/login" element={<Login />} />
 
       {/* Dashboard main */}
@@ -41,11 +47,12 @@ const AppRoutes = () => {
       <Route path="/admin" element={<PrivateRoute element={<Admin />} />} />
       <Route path="/departments" element={<PrivateRoute element={<Departments />} />} />
       <Route path="/labs" element={<PrivateRoute element={<Labs />} />} />
+      <Route path="/schedules" element={<PrivateRoute element={<Schedules />} />} /> {/* ← Added */}
 
       <Route path="*" element={<NotFound />} />
     </Routes>
-  )
-}
+  );
+};
 
 const App = () => {
   return (
@@ -63,4 +70,3 @@ const App = () => {
 };
 
 export default App;
-
