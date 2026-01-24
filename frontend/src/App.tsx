@@ -16,6 +16,7 @@ import Chatbot from "./components/ui/Chatbot";
 import Login from "./pages/Login";
 import ActivityLog from "./pages/ActivityLog";
 import PrivateRoute from "./PrivateRoute";
+import PublicRoute from "./PublicRoute";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Departments from "./pages/Departments";
 import Labs from "./pages/Labs";
@@ -29,13 +30,8 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
-        }
-      />
-      <Route path="/login" element={<Login />} />
+      <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
+      <Route path="/login" element={<PublicRoute element={<Login />} />} />
 
       {/* Dashboard main */}
       <Route path="/dashboard" element={<PrivateRoute element={<Index />} />} />

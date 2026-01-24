@@ -11,18 +11,20 @@ const Lab = require('./lab');
 const DepartmentLabAccess = require('./department_lab_access');
 const EmployeeLabAccess = require('./employee_lab_access');
 const Visitor = require('./visitor');
+const Notification = require('./notification');
 
 module.exports = {
   sequelize,
   Department,
   Camera,
   Employee,
-    Anomaly,
-    Log,
-    Schedule,
-    DetectedPerson,
-    Lab,
-    DepartmentLabAccess,
-    EmployeeLabAccess,
-    Visitor,
+  Anomaly,
+  Log,
+  Schedule,
+  DetectedPerson,
+  Lab,
+  DepartmentLabAccess,
+  EmployeeLabAccess,
+  Visitor,
+  Notification,
 };

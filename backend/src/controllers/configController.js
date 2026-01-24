@@ -6,17 +6,30 @@ const kafka = new Kafka({
 });
 
 const producer = kafka.producer();
+let isConnected = false;
 
-const connectProducer = async () => {
-    try {
-        await producer.connect();
-        console.log('Connected to Kafka for config updates');
-    } catch (error) {
-        console.error('Error connecting to Kafka:', error);
+/**
+ * Ensure the producer is connected before sending messages.
+ * Uses lazy initialization with automatic reconnection.
+ */
+const ensureConnected = async () => {
+    if (!isConnected) {
+        try {
+            await producer.connect();
+            isConnected = true;
+            console.log('Connected to Kafka for config updates');
+
+            // Handle disconnection events
+            producer.on('producer.disconnect', () => {
+                console.log('Kafka producer disconnected');
+                isConnected = false;
+            });
+        } catch (error) {
+            console.error('Error connecting to Kafka:', error.message);
+            throw new Error('Failed to connect to Kafka');
+        }
     }
 };
-
-connectProducer();
 
 exports.updateConfig = async (req, res) => {
     const { threshold, windowSeconds } = req.body;
@@ -26,6 +39,9 @@ exports.updateConfig = async (req, res) => {
     }
 
     try {
+        // Ensure connection before sending
+        await ensureConnected();
+
         const config = {
             threshold: parseInt(threshold),
             windowSeconds: parseInt(windowSeconds),
@@ -43,6 +59,9 @@ exports.updateConfig = async (req, res) => {
         res.json({ message: 'Configuration updated successfully', config });
     } catch (error) {
         console.error('Error sending config to Kafka:', error);
-        res.status(500).json({ error: 'Failed to update configuration' });
+        // Reset connection state on error so next request will try to reconnect
+        isConnected = false;
+        res.status(500).json({ error: 'Failed to update configuration. Kafka may be unavailable.' });
     }
 };
+
