@@ -8,7 +8,7 @@ import joblib
 import numpy as np
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-
+from fastapi.middleware.cors import CORSMiddleware
 from config import (
     MODEL_TYPE,
     MODEL_PATH,
@@ -56,6 +56,14 @@ class FeedbackPayload(BaseModel):
 
 
 app = FastAPI(title="Anomaly Service")
+# ADD THIS - CORS Configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 db = DB()
 
 _MODEL_LOADED = False
@@ -314,17 +322,39 @@ def submit_feedback(candidate_id: int, fb: FeedbackPayload) -> dict[str, Any]:
     }
 
 
-@app.get("/retrain/status")
-def retrain_status() -> dict[str, Any]:
-    """How many false positives are pending for the next retrain batch."""
+@app.get("/anomaly-candidates")
+def list_anomaly_candidates(limit: int = 50, offset: int = 0):
     with db.connect() as conn:
-        try:
-            pending_fp = db.count_pending_false_positives(conn)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+        rows = conn.execute(
+            """
+            SELECT
+                ac.id,
+                ac.status,
+                ac.created_at,
+                s.camera_id,
+                oj.response_json->>'narrative' AS narrative,
+                ac.image_ref
+            FROM anomaly_candidates ac
+            LEFT JOIN scene_window_embeddings s
+                ON s.id = ac.scene_window_embedding_id
+            LEFT JOIN ollama_jobs oj
+                ON oj.anomaly_candidate_id = ac.id
+               AND oj.status = 'succeeded'
+               AND oj.request_json->>'job_type' = 'vlm_describe'
+            ORDER BY ac.created_at DESC
+            LIMIT %s OFFSET %s
+            """,
+            (limit, offset),
+        ).fetchall()
 
-    return {
-        "pending_false_positives": pending_fp,
-        "threshold": RETRAIN_FALSE_POSITIVE_THRESHOLD,
-        "retrain_recommended": bool(pending_fp >= RETRAIN_FALSE_POSITIVE_THRESHOLD),
-    }
+    return [
+        {
+            "id": r[0],
+            "status": r[1],
+            "createdAt": r[2],
+            "cameraId": r[3],
+            "narrative": r[4],
+            "imageRef": r[5],
+        }
+        for r in rows
+    ]

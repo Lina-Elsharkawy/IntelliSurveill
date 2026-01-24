@@ -273,3 +273,255 @@ BEGIN
             (now() - interval '30 minutes', det_unknown_id, cam_01_id, anom_unauth_id);
     END IF;
 END $$;
+-- 13) Seed Anomaly Candidates for Testing
+DO $$
+DECLARE
+    cam_01_id BIGINT;
+    cam_02_id BIGINT;
+    model_id BIGINT;
+    device_id BIGINT;
+    scene_id_1 BIGINT;
+    scene_id_2 BIGINT;
+    scene_id_3 BIGINT;
+    candidate_id_1 BIGINT;
+    candidate_id_2 BIGINT;
+    candidate_id_3 BIGINT;
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM anomaly_candidates) THEN
+        -- Get camera IDs
+        SELECT id INTO cam_01_id FROM cameras WHERE name = 'Cam-01';
+        SELECT id INTO cam_02_id FROM cameras WHERE name = 'Cam-02';
+        
+        -- Get or create active model with ALL required columns
+        SELECT id INTO model_id 
+        FROM normal_behavior_models 
+        WHERE is_active = true 
+        LIMIT 1;
+        
+        -- If no active model exists, create one with all required fields
+        IF model_id IS NULL THEN
+            INSERT INTO normal_behavior_models (
+                name,
+                version,
+                embedding_model,
+                embedding_dim,
+                pca_dim,
+                n_clusters,
+                window_size,
+                stride,
+                sample_frames,
+                radius_percentile,
+                is_active,
+                notes
+            ) VALUES (
+                'scene_anomaly_model',
+                'v1.0-seed',
+                'resnet18',
+                512,
+                128,
+                10,
+                8,
+                16,
+                8,
+                95,
+                true,
+                'Seed test model for anomaly candidates'
+            )
+            RETURNING id INTO model_id;
+        END IF;
+        
+        -- Create edge device
+        INSERT INTO edge_devices (device_key, name, location)
+        VALUES ('test-device-001', 'Test Device', 'Main Lab')
+        ON CONFLICT (device_key) DO UPDATE 
+        SET name = EXCLUDED.name
+        RETURNING id INTO device_id;
+        
+        -- Create scene embeddings with anomalies
+        
+        -- Anomaly 1: Unauthorized access attempt
+        INSERT INTO scene_window_embeddings (
+            model_id,
+            device_id,
+            camera_id,
+            window_start_ts,
+            window_end_ts,
+            event_key,
+            embedding_pca,
+            embedding_model,
+            is_normal,
+            score,
+            cosine_distance,
+            radius_threshold
+        ) VALUES (
+            model_id,
+            device_id,
+            cam_01_id,
+            now() - interval '2 hours',
+            now() - interval '2 hours' + interval '30 seconds',
+            'test-event-001',
+            (SELECT ('[' || string_agg(to_char((random() * 0.5)::float8, 'FM0.000000'), ',') || ']')::vector 
+             FROM generate_series(1,128) AS s(i)),
+            'resnet18',
+            false,
+            0.35,
+            0.85,
+            0.70
+        )
+        RETURNING id INTO scene_id_1;
+        
+        -- Anomaly 2: Loitering detected
+        INSERT INTO scene_window_embeddings (
+            model_id,
+            device_id,
+            camera_id,
+            window_start_ts,
+            window_end_ts,
+            event_key,
+            embedding_pca,
+            embedding_model,
+            is_normal,
+            score,
+            cosine_distance,
+            radius_threshold
+        ) VALUES (
+            model_id,
+            device_id,
+            cam_02_id,
+            now() - interval '1 hour',
+            now() - interval '1 hour' + interval '45 seconds',
+            'test-event-002',
+            (SELECT ('[' || string_agg(to_char((random() * 0.5)::float8, 'FM0.000000'), ',') || ']')::vector 
+             FROM generate_series(1,128) AS s(i)),
+            'resnet18',
+            false,
+            0.28,
+            0.92,
+            0.70
+        )
+        RETURNING id INTO scene_id_2;
+        
+        -- Anomaly 3: Unattended object
+        INSERT INTO scene_window_embeddings (
+            model_id,
+            device_id,
+            camera_id,
+            window_start_ts,
+            window_end_ts,
+            event_key,
+            embedding_pca,
+            embedding_model,
+            is_normal,
+            score,
+            cosine_distance,
+            radius_threshold
+        ) VALUES (
+            model_id,
+            device_id,
+            cam_01_id,
+            now() - interval '30 minutes',
+            now() - interval '30 minutes' + interval '60 seconds',
+            'test-event-003',
+            (SELECT ('[' || string_agg(to_char((random() * 0.5)::float8, 'FM0.000000'), ',') || ']')::vector 
+             FROM generate_series(1,128) AS s(i)),
+            'resnet18',
+            false,
+            0.42,
+            0.78,
+            0.70
+        )
+        RETURNING id INTO scene_id_3;
+        
+        -- Create anomaly candidates
+        INSERT INTO anomaly_candidates (
+            scene_window_embedding_id,
+            reason,
+            status,
+            image_ref,
+            video_ref
+        ) VALUES 
+        (
+            scene_id_1,
+            'outside_cluster_radius',
+            'pending',
+            'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400',
+            NULL
+        )
+        RETURNING id INTO candidate_id_1;
+        
+        INSERT INTO anomaly_candidates (
+            scene_window_embedding_id,
+            reason,
+            status,
+            image_ref,
+            video_ref
+        ) VALUES 
+        (
+            scene_id_2,
+            'outside_cluster_radius',
+            'resolved',
+            'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
+            NULL
+        )
+        RETURNING id INTO candidate_id_2;
+        
+        INSERT INTO anomaly_candidates (
+            scene_window_embedding_id,
+            reason,
+            status,
+            image_ref,
+            video_ref
+        ) VALUES 
+        (
+            scene_id_3,
+            'outside_cluster_radius',
+            'pending',
+            'https://images.unsplash.com/photo-1560179406-bb726f54a3df?w=400',
+            NULL
+        )
+        RETURNING id INTO candidate_id_3;
+        
+        -- Create ollama jobs with narratives
+        INSERT INTO ollama_jobs (
+            anomaly_candidate_id,
+            model_name,
+            prompt,
+            request_json,
+            status,
+            response_json,
+            started_at,
+            finished_at
+        ) VALUES 
+        (
+            candidate_id_1,
+            'llava:latest',
+            'Describe the scene',
+            '{"job_type": "vlm_describe"}'::jsonb,
+            'succeeded',
+            '{"narrative": "Person entering restricted area without proper credentials at entrance"}'::jsonb,
+            now() - interval '2 hours',
+            now() - interval '2 hours' + interval '30 seconds'
+        ),
+        (
+            candidate_id_2,
+            'llava:latest',
+            'Describe the scene',
+            '{"job_type": "vlm_describe"}'::jsonb,
+            'succeeded',
+            '{"narrative": "Individual loitering near sensitive equipment area for extended period"}'::jsonb,
+            now() - interval '1 hour',
+            now() - interval '1 hour' + interval '30 seconds'
+        ),
+        (
+            candidate_id_3,
+            'llava:latest',
+            'Describe the scene',
+            '{"job_type": "vlm_describe"}'::jsonb,
+            'succeeded',
+            '{"narrative": "Unattended bag detected in high-security zone"}'::jsonb,
+            now() - interval '30 minutes',
+            now() - interval '30 minutes' + interval '30 seconds'
+        );
+        
+    END IF;
+END $$;
