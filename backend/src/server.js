@@ -15,6 +15,9 @@ const logsRouter = require('./routes/logsRoutes');
 const schedulesRouter = require('./routes/schedulesRoutes');
 const visitorsRouter = require('./routes/visitorsRoutes');
 const llmRouter = require('./services/llm/llmRoutes');
+const anomalyCandidatesRouter = require('./routes/anomalyCandidate.routes');
+const anomalyFeedbackRouter = require('./routes/anomalyCandidateFeedback.routes');
+const ollamaJobsRouter = require('./routes/ollamaJob.routes');
 
 
 const checkJwt = require('./middleware/auth');
@@ -47,6 +50,10 @@ app.use('/api/schedules', schedulesRouter);
 app.use('/api/visitors', visitorsRouter);
 app.use('/api/llm', llmRouter);
 app.use('/llm', llmRouter);
+app.use('/api/anomaly-candidates', anomalyCandidatesRouter);
+app.use('/api/anomaly-feedback', anomalyFeedbackRouter);
+app.use('/api/ollama-jobs', ollamaJobsRouter);
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
