@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { 
-  Users, 
-  UserPlus, 
-  AlertTriangle, 
-  Search, 
+import {
+  Users,
+  UserPlus,
+  AlertTriangle,
+  Search,
   Filter,
   Download,
   Upload,
@@ -58,7 +58,7 @@ export default function AdminPage() {
   ];
 
   const getTypeIcon = (type) => {
-    switch(type) {
+    switch (type) {
       case "employee": return <Building className="w-4 h-4" />;
       case "student": return <GraduationCap className="w-4 h-4" />;
       case "external": return <UserCog className="w-4 h-4" />;
@@ -67,7 +67,7 @@ export default function AdminPage() {
   };
 
   const getTypeColor = (type) => {
-    switch(type) {
+    switch (type) {
       case "employee": return "bg-blue-500/10 text-blue-400 border-blue-500/30";
       case "student": return "bg-green-500/10 text-green-400 border-green-500/30";
       case "external": return "bg-purple-500/10 text-purple-400 border-purple-500/30";
@@ -76,7 +76,7 @@ export default function AdminPage() {
   };
 
   const getSeverityColor = (severity) => {
-    switch(severity) {
+    switch (severity) {
       case "high": return "bg-red-500/10 text-red-400 border-red-500/30";
       case "medium": return "bg-yellow-500/10 text-yellow-400 border-yellow-500/30";
       case "low": return "bg-blue-500/10 text-blue-400 border-blue-500/30";
