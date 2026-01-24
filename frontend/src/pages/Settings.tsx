@@ -1,4 +1,4 @@
-import { Bell, Shield, Users, Database, Wifi, Moon, Lock } from "lucide-react";
+import { Bell, Shield, Users, Database, Wifi, Moon, Lock, Info, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,8 +9,54 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Slider } from "@/components/ui/slider";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
+import { updateAnomalyConfig } from "@/services";
 
 const Settings = () => {
+  // Anomaly Detection Configuration State
+  const [threshold, setThreshold] = useState<number>(5);
+  const [windowSeconds, setWindowSeconds] = useState<number>(30);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  // Handle anomaly config update
+  const handleUpdateAnomalyConfig = async () => {
+    // Validation
+    if (threshold < 1 || threshold > 50) {
+      toast.error("Invalid Threshold", {
+        description: "Threshold must be between 1 and 50 attempts.",
+      });
+      return;
+    }
+    if (windowSeconds < 5 || windowSeconds > 300) {
+      toast.error("Invalid Time Window", {
+        description: "Time window must be between 5 and 300 seconds.",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+
+    try {
+      const response = await updateAnomalyConfig({ threshold, windowSeconds });
+      setLastUpdated(new Date().toLocaleTimeString());
+      toast.success("Configuration Updated", {
+        description: `Anomaly detection rules updated successfully. Threshold: ${threshold}, Window: ${windowSeconds}s`,
+        icon: <CheckCircle2 className="w-4 h-4 text-green-500" />,
+      });
+    } catch (error) {
+      console.error("Failed to update anomaly config:", error);
+      toast.error("Update Failed", {
+        description: error instanceof Error ? error.message : "Failed to update anomaly detection configuration. Please try again.",
+        icon: <AlertTriangle className="w-4 h-4 text-red-500" />,
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -217,67 +263,142 @@ const Settings = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-card border-border">
+            {/* Anomaly Detection Rules Card - Enhanced UI */}
+            <Card className="shadow-card border-border bg-gradient-to-br from-card to-card/80">
               <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-primary" />
-                  <CardTitle className="text-foreground">Anomaly Detection Rules</CardTitle>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <AlertTriangle className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-foreground">Anomaly Detection Rules</CardTitle>
+                      <CardDescription className="text-muted-foreground">
+                        Configure real-time brute force detection thresholds
+                      </CardDescription>
+                    </div>
+                  </div>
+                  {lastUpdated && (
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary px-2.5 py-1 rounded-full">
+                      <CheckCircle2 className="w-3 h-3 text-green-500" />
+                      <span>Last updated: {lastUpdated}</span>
+                    </div>
+                  )}
                 </div>
-                <CardDescription className="text-muted-foreground">
-                  Configure real-time brute force detection thresholds
-                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="max-attempts">Max Attempts</Label>
-                    <Input
-                      id="max-attempts"
-                      type="number"
-                      defaultValue="5"
-                      className="bg-secondary border-border"
-                    />
-                    <p className="text-xs text-muted-foreground">Threshold before alert</p>
+              <CardContent className="space-y-8">
+                {/* Threshold Setting */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="threshold-slider" className="text-base font-medium">
+                        Detection Threshold
+                      </Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-4 h-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs">
+                          <p>Maximum number of failed access attempts before triggering an anomaly alert. Lower values are more sensitive but may cause false positives.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-primary">{threshold}</span>
+                      <span className="text-sm text-muted-foreground">attempts</span>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="window-seconds">Time Window (Seconds)</Label>
-                    <Input
-                      id="window-seconds"
-                      type="number"
-                      defaultValue="30"
-                      className="bg-secondary border-border"
+
+                  <div className="px-1">
+                    <Slider
+                      id="threshold-slider"
+                      value={[threshold]}
+                      onValueChange={(values) => setThreshold(values[0])}
+                      min={1}
+                      max={20}
+                      step={1}
+                      className="cursor-pointer"
                     />
-                    <p className="text-xs text-muted-foreground">Sliding window duration</p>
+                    <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                      <span>1 (Very Sensitive)</span>
+                      <span>10 (Balanced)</span>
+                      <span>20 (Relaxed)</span>
+                    </div>
                   </div>
                 </div>
-                <Button 
-                  className="w-full"
-                  onClick={async () => {
-                    const threshold = (document.getElementById('max-attempts') as HTMLInputElement).value;
-                    const windowSeconds = (document.getElementById('window-seconds') as HTMLInputElement).value;
-                    
-                    try {
-                      const response = await fetch('/api/anomalies/config', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                          threshold: parseInt(threshold), 
-                          windowSeconds: parseInt(windowSeconds) 
-                        })
-                      });
-                      
-                      if (response.ok) {
-                        alert('Rules updated successfully!');
-                      } else {
-                        alert('Failed to update rules');
-                      }
-                    } catch (e) {
-                      console.error(e);
-                      alert('Error updating rules');
-                    }
-                  }}
+
+                <Separator className="bg-border" />
+
+                {/* Window Seconds Setting */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="window-slider" className="text-base font-medium">
+                        Time Window
+                      </Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-4 h-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs">
+                          <p>The sliding time window for counting failed attempts. Shorter windows detect rapid attacks, while longer windows catch distributed attacks.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-primary">{windowSeconds}</span>
+                      <span className="text-sm text-muted-foreground">seconds</span>
+                    </div>
+                  </div>
+
+                  <div className="px-1">
+                    <Slider
+                      id="window-slider"
+                      value={[windowSeconds]}
+                      onValueChange={(values) => setWindowSeconds(values[0])}
+                      min={5}
+                      max={120}
+                      step={5}
+                      className="cursor-pointer"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                      <span>5s (Quick)</span>
+                      <span>60s (Standard)</span>
+                      <span>120s (Extended)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Current Config Preview */}
+                <div className="p-4 rounded-lg bg-secondary/50 border border-border/50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Lock className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-foreground">Current Rule Preview</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    An anomaly will be triggered when <span className="font-semibold text-foreground">{threshold} or more</span> failed
+                    access attempts occur within a <span className="font-semibold text-foreground">{windowSeconds}-second</span> window
+                    for the same identity or access point.
+                  </p>
+                </div>
+
+                {/* Update Button */}
+                <Button
+                  className="w-full h-12 text-base font-medium transition-all duration-200 hover:scale-[1.01]"
+                  onClick={handleUpdateAnomalyConfig}
+                  disabled={isUpdating}
                 >
-                  Update Security Rules
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Updating Configuration...
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="w-5 h-5 mr-2" />
+                      Save Detection Rules
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>
@@ -354,7 +475,7 @@ const Settings = () => {
                   </div>
                 </div>
 
-                
+
               </CardContent>
             </Card>
           </TabsContent>

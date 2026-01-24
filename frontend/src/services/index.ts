@@ -5,6 +5,9 @@
 // Anomalies
 export * from './anomalies';
 
+// Anomaly Config
+export * from './anomaly-config';
+
 // Cameras
 export * from './cameras';
 

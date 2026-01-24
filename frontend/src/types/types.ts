@@ -176,3 +176,17 @@ export interface RAGQueryResponse {
     data?: unknown;
     message?: string;
 }
+
+// ========================
+// Anomaly Config Types
+// ========================
+
+export interface AnomalyConfig {
+    threshold: number;
+    windowSeconds: number;
+}
+
+export interface AnomalyConfigResponse {
+    message: string;
+    config: AnomalyConfig & { updatedAt: string };
+}
