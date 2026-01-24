@@ -190,6 +190,23 @@ export interface AnomalyConfigResponse {
     message: string;
     config: AnomalyConfig & { updatedAt: string };
 }
+
+// ========================
+// Notification Types
+// ========================
+
+export interface Notification {
+    id: number;
+    title: string;
+    message?: string;
+    type?: string;          // e.g., 'motion', 'camera_offline', 'low_battery', 'anomaly'
+    source?: string;        // e.g., 'camera', 'system', 'anomaly'
+    source_id?: number;
+    severity?: 'high' | 'medium' | 'low';
+    is_read: boolean;
+    created_at: string;
+}
+
 // ========================
 // Candidates Types
 // ========================

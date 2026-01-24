@@ -37,3 +37,6 @@ export * from './schedules';
 
 // Visitors
 export * from './visitors';
+
+// Notifications
+export * from './notifications';
