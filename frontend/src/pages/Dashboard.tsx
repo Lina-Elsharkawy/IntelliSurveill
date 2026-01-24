@@ -8,7 +8,11 @@ import cameraFeed1 from "@/assets/camera-feed-1.jpg";
 import cameraFeed2 from "@/assets/camera-feed-2.jpg";
 import cameraFeed3 from "@/assets/camera-feed-3.jpg";
 import cameraFeed4 from "@/assets/camera-feed-4.jpg";
-
+import { Link } from "react-router-dom";
+<div className="flex gap-4 mt-4">
+  <Link to="/departments" className="underline text-primary">Manage Departments</Link>
+  <Link to="/labs" className="underline text-primary">Manage Labs</Link>
+</div>
 const Dashboard = () => {
   const cameras = [
     { id: "cam-001", name: "Main Entrance", location: "Building A", status: "active" as const, thumbnail: cameraFeed1 },
