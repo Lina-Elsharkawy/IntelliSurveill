@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import Index from "./pages/Index";
 import Cameras from "./pages/Cameras";
@@ -25,17 +25,17 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/login" element={<Login />} />
+      <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
+      <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
 
       {/* Dashboard main */}
-      <Route path="/dashboard" element={<PrivateRoute element={<Index />} isAuthenticated={isAuthenticated} />} />
-      <Route path="/cameras" element={<PrivateRoute element={<Cameras />} isAuthenticated={isAuthenticated} />} />
-      <Route path="/alerts" element={<PrivateRoute element={<Alerts />} isAuthenticated={isAuthenticated} />} />
-      <Route path="/analytics" element={<PrivateRoute element={<Analytics />} isAuthenticated={isAuthenticated} />} />
-      <Route path="/settings" element={<PrivateRoute element={<Settings />} isAuthenticated={isAuthenticated} />} />
-      <Route path="/activity-log" element={<PrivateRoute element={<ActivityLog />} isAuthenticated={isAuthenticated} />} />
-      <Route path="/admin" element={<PrivateRoute element={<Admin />} isAuthenticated={isAuthenticated} />} />
+      <Route path="/dashboard" element={<PrivateRoute element={<Index />} />} />
+      <Route path="/cameras" element={<PrivateRoute element={<Cameras />} />} />
+      <Route path="/alerts" element={<PrivateRoute element={<Alerts />} />} />
+      <Route path="/analytics" element={<PrivateRoute element={<Analytics />} />} />
+      <Route path="/settings" element={<PrivateRoute element={<Settings />} />} />
+      <Route path="/activity-log" element={<PrivateRoute element={<ActivityLog />} />} />
+      <Route path="/admin" element={<PrivateRoute element={<Admin />} />} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
