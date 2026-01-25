@@ -176,3 +176,103 @@ export interface RAGQueryResponse {
     data?: unknown;
     message?: string;
 }
+
+// ========================
+// Anomaly Config Types
+// ========================
+
+export interface AnomalyConfig {
+    threshold: number;
+    windowSeconds: number;
+}
+
+export interface AnomalyConfigResponse {
+    message: string;
+    config: AnomalyConfig & { updatedAt: string };
+}
+
+// ========================
+// Notification Types
+// ========================
+
+export interface Notification {
+    id: number;
+    title: string;
+    message?: string;
+    type?: string;          // e.g., 'motion', 'camera_offline', 'low_battery', 'anomaly'
+    source?: string;        // e.g., 'camera', 'system', 'anomaly'
+    source_id?: number;
+    severity?: 'high' | 'medium' | 'low';
+    is_read: boolean;
+    created_at: string;
+}
+
+// ========================
+// Candidates Types
+// ========================
+
+export type AnomalyCandidate = {
+    id: number;
+    scene_window_embedding_id: number;
+    reason?: string;
+    status?: string;
+    image_ref?: string;
+    video_ref?: string;
+    created_at?: string;
+    updated_at?: string;
+    jobs?: OllamaJob[];      // optional array of jobs
+    feedback?: Feedback[];   // optional array of feedback
+};
+
+export type AnomalyCandidateInput = {
+    scene_window_embedding_id: number;
+    reason?: string;
+    status?: string;
+    image_ref?: string;
+    video_ref?: string;
+};
+
+/* ----------------- Feedback ----------------- */
+export type Feedback = {
+    id: number;
+    anomaly_candidate_id: number;
+    label?: string;
+    reviewer?: string;
+    notes?: string;
+    system_decision?: any;
+    created_at?: string;
+    used_for_retrain?: boolean;
+};
+
+export type FeedbackInput = {
+    anomaly_candidate_id: number;
+    label?: string;
+    reviewer?: string;
+    notes?: string;
+    system_decision?: any;
+};
+
+/* ----------------- Jobs ----------------- */
+export type OllamaJob = {
+    id: number;
+    anomaly_candidate_id: number;
+    model_name?: string;
+    prompt?: string;
+    request_json?: any;
+    status?: string;
+    response_text?: string;
+    response_json?: any;
+    error?: string;
+    created_at?: string;
+    started_at?: string;
+    finished_at?: string;
+};
+
+export type OllamaJobInput = {
+    anomaly_candidate_id: number;
+    model_name?: string;
+    prompt?: string;
+    request_json?: any;
+};
+
+

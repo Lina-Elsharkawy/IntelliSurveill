@@ -1,4 +1,4 @@
-import { LayoutDashboard, Camera, AlertTriangle, Map, Settings, BarChart3, Shield, ListCheck, UserCog} from "lucide-react";
+import { LayoutDashboard, Camera, AlertTriangle, Map, BarChart3, Shield, ListCheck, UserCog, Building, GraduationCap, Calendar } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -12,15 +12,17 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
-// Add Activity Log to menu items
+// Add Departments, Labs, and Schedules to menu items
 const menuItems = [
- { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Live Cameras", url: "/cameras", icon: Camera },
   { title: "Anomalies", url: "/alerts", icon: AlertTriangle },
-  { title: "Admin", url: "/admin", icon: UserCog }, //
+  { title: "Departments", url: "/departments", icon: Building },
+  { title: "Labs", url: "/labs", icon: GraduationCap },
+  { title: "Admin", url: "/admin", icon: UserCog },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
-  { title: "Settings", url: "/settings", icon: Settings },
-  { title: "Activity Log", url: "/activity-log", icon: ListCheck }, // new
+  { title: "Activity Log", url: "/activity-log", icon: ListCheck },
+  { title: "Schedules", url: "/schedules", icon: Calendar },
 ];
 
 export function DashboardSidebar() {
@@ -67,3 +69,5 @@ export function DashboardSidebar() {
     </Sidebar>
   );
 }
+
+

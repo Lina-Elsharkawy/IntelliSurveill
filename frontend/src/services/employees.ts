@@ -29,8 +29,8 @@ export async function createEmployee(data: EmployeeInput): Promise<Employee> {
 /**
  * Update an existing employee.
  */
-export async function updateEmployee(id: number, data: EmployeeInput): Promise<Employee> {
-    return apiPut<Employee, EmployeeInput>(`/api/employees/update_employee/${id}`, data);
+export async function updateEmployee(id: number, data: Partial<EmployeeInput>): Promise<Employee> {
+    return apiPut<Employee, Partial<EmployeeInput>>(`/api/employees/update_employee/${id}`, data);
 }
 
 /**

@@ -5,6 +5,9 @@
 // Anomalies
 export * from './anomalies';
 
+// Anomaly Config
+export * from './anomaly-config';
+
 // Cameras
 export * from './cameras';
 
@@ -34,3 +37,6 @@ export * from './schedules';
 
 // Visitors
 export * from './visitors';
+
+// Notifications
+export * from './notifications';

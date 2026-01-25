@@ -29,8 +29,8 @@ export async function createVisitor(data: VisitorInput): Promise<Visitor> {
 /**
  * Update an existing visitor.
  */
-export async function updateVisitor(id: number, data: VisitorInput): Promise<Visitor> {
-    return apiPut<Visitor, VisitorInput>(`/api/visitors/update_visitor/${id}`, data);
+export async function updateVisitor(id: number, data: Partial<VisitorInput>): Promise<Visitor> {
+    return apiPut<Visitor, Partial<VisitorInput>>(`/api/visitors/update_visitor/${id}`, data);
 }
 
 /**
