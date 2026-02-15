@@ -5,6 +5,16 @@ const models = require('./models'); // import model index
 const app = express();
 const cors = require('cors');
 app.use(cors());
+
+// Global logging middleware
+app.use((req, res, next) => {
+  console.log(`[REQUEST] ${req.method} ${req.url}`);
+  res.on('finish', () => {
+    console.log(`[RESPONSE] ${req.method} ${req.url} ${res.statusCode}`);
+  });
+  next();
+});
+
 const anomaliesRouter = require('./routes/anomaliesRoutes');
 const camerasRouter = require('./routes/camerasRoutes');
 const departmentsRouter = require('./routes/departmentsRoutes');
@@ -23,6 +33,7 @@ const notificationsRouter = require('./routes/notificationsRoutes');
 
 const checkJwt = require('./middleware/auth');
 const authRouter = require('./routes/authRoutes');
+const adminRouter = require('./routes/adminRoutes');
 
 app.use(express.json());
 app.use('/auth', authRouter); // Public access for login
@@ -38,7 +49,13 @@ app.get('/health', async (req, res) => {
 });
 
 // Protect all API routes below
-app.use('/api', checkJwt);
+app.use('/api', (req, res, next) => {
+  console.log(`🔒 [AUTH-CHECK] ${req.method} ${req.url}`);
+  next();
+}, checkJwt);
+
+// ADMIN ROUTES - Moved up for priority
+app.use('/api/admin', adminRouter);
 
 app.use('/api/anomalies', anomaliesRouter);
 app.use('/api/cameras', camerasRouter);
@@ -54,7 +71,14 @@ app.use('/llm', llmRouter);
 app.use('/api/anomaly-candidates', anomalyCandidatesRouter);
 app.use('/api/anomaly-feedback', anomalyFeedbackRouter);
 app.use('/api/ollama-jobs', ollamaJobsRouter);
+// app.use('/api/admin', adminRouter); // Moved up
 app.use('/api/notifications', notificationsRouter);
+
+// DIAGNOSTIC ROUTE
+app.post('/api/diag-test', (req, res) => {
+  console.log('🔴 DIAGNOSTIC POST SUCCESS');
+  res.json({ message: 'Backend reached successfully', body: req.body });
+});
 
 
 const PORT = process.env.PORT || 3000;
