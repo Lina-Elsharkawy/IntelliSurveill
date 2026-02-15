@@ -1,0 +1,57 @@
+camera:
+  type: csi          # usb / csi / rtsp
+  device_index: 0
+  width: 640
+  height: 480
+  fps: 10
+  # for RTSP:
+  # rtsp_url: "rtsp://user:pass@ip/stream"
+  # for CSI:
+  sensor_id: 0
+  flip_method: 0
+
+# REQUIRED for anomaly-service payload
+device_key: "jetson_orin_01"
+camera_id: 1
+
+kafka:
+  bootstrap_servers: "kafka:9093"
+  topic_anomaly: "anomaly_events"
+
+evidence_gateway:
+  # If edge runs OUTSIDE docker, use http://<BACKEND_IP>:8010/evidence/upload
+  upload_url: "http://evidence-gateway:8010/evidence/upload"
+
+anomaly:
+  mog2_history: 200
+  mog2_var_threshold: 30
+  mog2_detect_shadows: true
+  learning_rate: 0.02
+
+  min_object_area: 8000
+  fast_pass_area: 25000
+  min_motion_frames: 20
+  cooldown_sec: 2.0
+
+  buffer_seconds: 4.0
+
+  motion_downscale_width: 640
+  morph_kernel: 5
+  dilate_iters: 2
+
+  # evidence upload
+  evidence_frames: 8
+  jpg_quality: 85
+
+  # metadata
+  threshold: 1.0
+  model_version: "edge-motion-resnet-v0.1"
+
+  print_every_sec: 5.0
+
+embedding:
+  embedding_model: "resnet18"
+  sample_count: 8
+  use_cuda_if_available: true
+  use_fp16_on_cuda: true
+  warmup_batches: 2

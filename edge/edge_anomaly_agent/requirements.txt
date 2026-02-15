@@ -1,0 +1,13 @@
+opencv-python
+numpy
+pyyaml
+psutil
+
+# Kafka/HTTP will be used later (keep them)
+kafka-python
+requests
+
+# IMPORTANT (Jetson): install torch/torchvision matching your JetPack build.
+# Many Jetson setups require NVIDIA-provided wheels (not default pip).
+torch
+torchvision
