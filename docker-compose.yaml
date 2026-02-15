@@ -99,15 +99,42 @@ services:
       - postgres-db
     networks:
       - data-platform-net
+  anomaly-service:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./backend/services:/app/services
+    environment:
+      DB_DSN: postgresql://lina:123@postgres-db:5432/lina
+      DATABASE_URL: postgresql://lina:123@postgres-db:5432/lina
+      OLLAMA_BASE_URL: http://ollama:11434
+      MINIO_ENDPOINT: http://minio:9000
+      S3_BUCKET: evidence
+    env_file:
+      - ./backend/.env
+    command: >
+      sh -c "pip install -r /app/services/anomaly_service/requirements.txt &&
+             python -m uvicorn services.anomaly_service.service:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8002:8000"
+    depends_on:
+      - postgres-db
+      - minio
+      - ollama
+    networks:
+      - data-platform-net
 
   kafka:
     image: apache/kafka:4.1.1
     container_name: kafka
     ports:
       - "9093:9093"
+      - "9092:9092"
     environment:
-      - KAFKA_LISTENERS=PLAINTEXT://:9093,CONTROLLER://:9094
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9093
+      - KAFKA_LISTENERS=INTERNAL://:9093,EXTERNAL://:9092,CONTROLLER://:9094
+      - KAFKA_ADVERTISED_LISTENERS=INTERNAL://kafka:9093,EXTERNAL://localhost:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL
       - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9094
     env_file:
       - ./streaming/kafka/.env
@@ -138,7 +165,26 @@ services:
     - kafka
    networks:
     - data-platform-net
-    
+  face-consumer:
+   build:
+    context: ./streaming/kafka
+    dockerfile: Dockerfile.face-consumer
+   environment:
+    KAFKA_BOOTSTRAP_SERVERS: kafka:9093
+    KAFKA_TOPICS: face_events,anomaly_events
+    KAFKA_GROUP_ID: backend-consumer
+    BACKEND_MATCH_URL: http://vector-match:8000/match
+    EVIDENCE_GATEWAY_UPLOAD: http://evidence-gateway:8010/evidence/upload
+    S3_BUCKET: evidence
+   depends_on:
+    - kafka
+    - evidence-gateway
+    - vector-match
+    - anomaly-service
+   networks:
+    - default
+    - data-platform-net
+  
   minio:
     image: minio/minio:latest
     container_name: minio
@@ -152,7 +198,23 @@ services:
      - minio-data:/data
     networks:
       - data-platform-net
-
+  evidence-gateway:
+   build: 
+    context: ./edge/services/evidence_gateway
+   working_dir: /app
+   env_file:
+    - ./streaming/minio/.env
+   environment:
+    MINIO_ENDPOINT: http://minio:9000
+    S3_BUCKET: evidence
+    PORT: 8010
+   depends_on:
+    - minio
+   ports:
+    - "8010:8010"
+   networks:
+    - data-platform-net
+    - default
 
   postgres-db:
     image: pgvector/pgvector:pg16

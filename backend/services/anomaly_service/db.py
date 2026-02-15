@@ -6,7 +6,7 @@ import json
 import psycopg
 from pgvector.psycopg import register_vector
 
-from config import DB_DSN
+from .config import DB_DSN
 
 
 class DB:

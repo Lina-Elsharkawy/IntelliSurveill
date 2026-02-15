@@ -9,7 +9,7 @@ import numpy as np
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
-from config import (
+from .config import (
     MODEL_TYPE,
     MODEL_PATH,
     MODEL_META_PATH,
@@ -19,7 +19,7 @@ from config import (
     LLM_MODEL,
     RETRAIN_FALSE_POSITIVE_THRESHOLD,
 )
-from db import DB
+from .db import DB
 
 
 def l2_normalize(x: np.ndarray, eps: float = 1e-12) -> np.ndarray:
