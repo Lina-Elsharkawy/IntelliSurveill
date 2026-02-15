@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import Index from "./pages/Index";
 import Cameras from "./pages/Cameras";
@@ -60,12 +60,16 @@ const AppRoutes = () => {
 };
 
 const App = () => {
+  const location = useLocation();
+  // Hide chatbot on admin users page
+  const showChatbot = location.pathname !== '/admin-users';
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <Chatbot />
+        {showChatbot && <Chatbot />}
         <AuthProvider>
           <AppRoutes />
         </AuthProvider>
