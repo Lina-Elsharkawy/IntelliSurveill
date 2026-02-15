@@ -79,6 +79,26 @@ services:
 
     networks:
       - data-platform-net
+  vector-match:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./backend/services:/app/services
+    environment:
+      DB_DSN: postgresql://lina:123@postgres-db:5432/lina
+      DATABASE_URL: postgresql://lina:123@postgres-db:5432/lina
+  
+    env_file:
+      - ./backend/.env
+    command: >
+      sh -c "pip install -r /app/services/vector_match/requirements.txt &&
+             python -m uvicorn services.vector_match.app:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres-db
+    networks:
+      - data-platform-net
 
   kafka:
     image: apache/kafka:4.1.1
@@ -105,6 +125,34 @@ services:
         max-file: "3"
     networks:
       - data-platform-net
+
+  kafka-topic-init:
+   image: python:3.11-slim
+   working_dir: /app
+   volumes:
+    - ./streaming/kafka:/app
+   env_file:
+    - ./streaming/kafka/.env
+   command: sh -c "pip install -r requirements.txt && python create_topics.py --bootstrap-servers kafka:9093"
+   depends_on:
+    - kafka
+   networks:
+    - data-platform-net
+    
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    command: server /data --console-address ":9001"
+    ports:
+     - "9000:9000"   # S3 API
+     - "9001:9001"   # Web console
+    env_file:
+     - ./streaming/minio/.env
+    volumes:
+     - minio-data:/data
+    networks:
+      - data-platform-net
+
 
   postgres-db:
     image: pgvector/pgvector:pg16

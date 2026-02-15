@@ -1,0 +1,23 @@
+camera:
+  type: "csi"          # "usb" | "csi" | "rtsp"
+  sensor_id: 0         # CSI port index (0 or 1)
+  width: 1280
+  height: 720
+  fps: 30
+  flip_method: 0       # 0..7 if you need rotation
+  rtsp_url: ""
+
+face:
+  det_size: [640, 640]
+  face_img_size: 160
+  jpeg_quality: 80
+  model_name: "buffalo_l"
+  min_face_size: 40
+
+kafka:
+  bootstrap_servers: "BACKEND_IP:9092"
+  topic: "face_events"
+  camera_id: "cam_01"
+
+runtime:
+  send_every_n_frames: 2

@@ -1,16 +1,26 @@
 from typing import Optional, Dict, Any, List
+import os
 
 import psycopg
 from psycopg.rows import dict_row
+from psycopg_pool import ConnectionPool
 
 from .config import DB_DSN
 
 print("VECTOR_MATCH USING DB_DSN =", DB_DSN)
 
+_pool = ConnectionPool(
+    conninfo=DB_DSN,
+    min_size=1,
+    max_size=int(os.getenv("DB_POOL_MAX", "10")),
+    kwargs={"row_factory": dict_row},
+)
 
-def get_conn() -> psycopg.Connection:
-    print("CONNECTING WITH =", DB_DSN)
-    return psycopg.connect(DB_DSN, row_factory=dict_row)
+
+def get_conn():
+    # returns a context manager; connection is returned to the pool automatically
+    return _pool.connection()
+
 
 
 def insert_entry_log(conn, *, detected_id: Optional[int], camera_id: Optional[int], authorized: Optional[bool],

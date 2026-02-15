@@ -1,6 +1,13 @@
 import os
 
-DB_DSN="postgresql://lina:123@127.0.0.1:5432/lina"
+DB_DSN = (
+    os.getenv("DB_DSN")
+    or os.getenv("DATABASE_URL")
+    or f"postgresql://{os.getenv('POSTGRES_USER','lina')}:{os.getenv('POSTGRES_PASSWORD','123')}@"
+       f"{os.getenv('POSTGRES_HOST','postgres-db')}:{os.getenv('POSTGRES_PORT','5432')}/"
+       f"{os.getenv('POSTGRES_DB','lina')}"
+)
+
 
 print("VECTOR_MATCH DB_DSN =", DB_DSN)
 

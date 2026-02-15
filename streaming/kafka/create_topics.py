@@ -22,13 +22,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Default topic configurations
 DEFAULT_TOPICS = [
+    {"name": "face_events", "partitions": 3, "replication_factor": 1},
+    {"name": "anomaly_events", "partitions": 3, "replication_factor": 1},
     {"name": "logs", "partitions": 3, "replication_factor": 1},
     {"name": "anomalies", "partitions": 3, "replication_factor": 1},
     {"name": "frequency_alerts", "partitions": 3, "replication_factor": 1},
     {"name": "anomaly-config", "partitions": 1, "replication_factor": 1},
 ]
+
 
 
 def create_admin_client(bootstrap_servers: str, max_retries: int = 10, retry_delay: int = 5) -> KafkaAdminClient:
@@ -85,7 +87,7 @@ def main():
     parser = argparse.ArgumentParser(description='Manage Kafka topics')
     parser.add_argument(
         '--bootstrap-servers',
-        default=os.environ.get('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092'),
+        default=os.environ.get('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9093'),
         help='Kafka bootstrap servers'
     )
     parser.add_argument(
