@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { getRecentNotifications, getUnreadCount, markAllAsRead } from "@/services/notifications";
 import type { Notification } from "@/types/types";
+import { useAuth } from "@/context/AuthContext";
 
 import {
   DropdownMenu,
@@ -44,6 +45,7 @@ function getNotificationEmoji(type?: string): string {
 
 export const DashboardHeader = () => {
   const navigate = useNavigate();
+  const { logout, user, roles } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -68,8 +70,7 @@ export const DashboardHeader = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();
-    navigate("/login");
+    logout();
   };
 
   const handleViewAll = () => {
@@ -166,8 +167,12 @@ export const DashboardHeader = () => {
 
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <p className="text-sm font-medium text-foreground">Admin User</p>
-            <p className="text-xs text-muted-foreground">Security Officer</p>
+            <p className="text-sm font-medium text-foreground">
+              {user?.name || user?.email || "User"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {roles.length > 0 ? roles.join(", ") : "User"}
+            </p>
           </div>
 
           <DropdownMenu>

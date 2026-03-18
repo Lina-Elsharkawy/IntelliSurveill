@@ -6,8 +6,16 @@ interface PublicRouteProps {
 }
 
 const PublicRoute = ({ element }: PublicRouteProps) => {
-    const { isAuthenticated } = useAuth();
-    return isAuthenticated ? <Navigate to="/dashboard" replace /> : element;
+    const { isAuthenticated, roles } = useAuth();
+
+    if (isAuthenticated) {
+        if (roles.includes('admin')) {
+            return <Navigate to="/admin-users" replace />;
+        }
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return element;
 };
 
 export default PublicRoute;

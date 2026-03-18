@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import time
 from typing import Any, Dict, List, Optional
@@ -28,18 +29,24 @@ def _get_ollama_client() -> ollama.Client:
 
 def ollama_generate(client: ollama.Client, model: str, prompt: str, images: Optional[List[bytes]] = None) -> str:
     """
-    VLM (e.g. llava): uses generate with images bytes.
+    VLM (e.g. moondream, llava): uses generate API instead of chat for better compatibility. 
+    Uses strict generation options to avoid hallucinating special tokens or getting stuck in loops.
     """
     kwargs: Dict[str, Any] = {
         "model": model,
         "prompt": prompt,
         "stream": False,
+        "options": {
+            "temperature": 0.1,
+            "top_p": 0.9,
+            "repeat_penalty": 1.1,
+            "num_predict": 150
+        }
     }
     if images:
         kwargs["images"] = images
 
     resp = client.generate(**kwargs)
-    # `resp` is dict-like
     return (resp.get("response") or "").strip()
 
 
@@ -51,6 +58,7 @@ def ollama_chat(client: ollama.Client, model: str, prompt: str) -> str:
         model=model,
         messages=[{"role": "user", "content": prompt}],
         stream=False,
+        options={"temperature": 0.0}
     )
     msg = (resp.get("message") or {})
     return (msg.get("content") or "").strip()
@@ -200,11 +208,13 @@ def main():
                         conn.execute("COMMIT")
                         continue
 
+                    # Use the specialized ollama_generate function which uses strict options 
+                    # (temperature, repeat_penalty, num_predict) to avoid loops and gibberish.
                     narrative = ollama_generate(
                         client=client,
                         model=(model_name or VLM_MODEL),
-                        prompt=prompt,
-                        images=images_bytes,
+                        prompt=(prompt or "Describe what is happening in this image. Focus on people, actions and movements. Be factual and concise."),
+                        images=images_bytes
                     )
 
                     resp_json = {

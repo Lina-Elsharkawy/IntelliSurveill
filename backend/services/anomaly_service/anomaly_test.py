@@ -1,15 +1,16 @@
 import json
+import os
 import requests
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
-SERVICE_URL = "http://127.0.0.1:8008"
+SERVICE_URL = os.environ.get("SERVICE_URL", "http://localhost:8000")
 DEVICE_KEY = "offline-fight-test"
 CAMERA_ID = 1
 
 # backend/services/anomaly_service/anomaly_test.py -> project root
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DATASETS_ROOT = PROJECT_ROOT / "datasets" / "anomaly_test"
+DATASETS_ROOT = Path(os.environ.get("DATASETS_ROOT", "/datasets/anomaly_test"))
 
 
 def run_fight(fight_dir: Path):
@@ -50,7 +51,7 @@ def run_fight(fight_dir: Path):
         frames = []
         frame_path_raw = w.get("frame_path")
         if frame_path_raw:
-            frame_name = Path(frame_path_raw).name  # win_XX.jpg
+            frame_name = Path(frame_path_raw.replace("\\", "/")).name  # win_XX.jpg
             frame_abs = (frames_dir / frame_name).resolve()
             if frame_abs.exists():
                 frames = [str(frame_abs)]

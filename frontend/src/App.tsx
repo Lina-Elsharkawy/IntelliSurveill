@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import Index from "./pages/Index";
 import Cameras from "./pages/Cameras";
@@ -21,16 +21,24 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Departments from "./pages/Departments";
 import Labs from "./pages/Labs";
 import Schedules from "./pages/Schedules"; // ← Import Schedules page
+import AdminUsers from "./pages/AdminUsers";
+import RoleBasedRoute from "@/components/RoleBasedRoute";
 
 const queryClient = new QueryClient();
 
 // Create a wrapper component to use the hook
 const AppRoutes = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, roles } = useAuth();
+
+  const getHomeElement = () => {
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    if (roles.includes('admin')) return <Navigate to="/admin-users" replace />;
+    return <Navigate to="/dashboard" replace />;
+  };
 
   return (
     <Routes>
-      <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
+      <Route path="/" element={getHomeElement()} />
       <Route path="/login" element={<PublicRoute element={<Login />} />} />
 
       {/* Dashboard main */}
@@ -44,6 +52,7 @@ const AppRoutes = () => {
       <Route path="/departments" element={<PrivateRoute element={<Departments />} />} />
       <Route path="/labs" element={<PrivateRoute element={<Labs />} />} />
       <Route path="/schedules" element={<PrivateRoute element={<Schedules />} />} /> {/* ← Added */}
+      <Route path="/admin-users" element={<RoleBasedRoute element={<AdminUsers />} allowedRoles={['admin']} />} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -51,12 +60,16 @@ const AppRoutes = () => {
 };
 
 const App = () => {
+  const location = useLocation();
+  // Hide chatbot on admin users page
+  const showChatbot = location.pathname !== '/admin-users';
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <Chatbot />
+        {showChatbot && <Chatbot />}
         <AuthProvider>
           <AppRoutes />
         </AuthProvider>

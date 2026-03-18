@@ -19,7 +19,7 @@ ALLOW_START_WITHOUT_MODEL = os.getenv("ALLOW_START_WITHOUT_MODEL", "1").strip() 
 OLLAMA_HOST = (os.getenv("OLLAMA_HOST") or os.getenv("OLLAMA_BASE_URL") or "http://localhost:11434").rstrip("/")
 
 # Model names (support both styles)
-VLM_MODEL = os.getenv("VLM_MODEL") or os.getenv("OLLAMA_VLM_MODEL") or "llava"
+VLM_MODEL = os.getenv("VLM_MODEL") or os.getenv("OLLAMA_VLM_MODEL") or "moondream"
 LLM_MODEL = os.getenv("LLM_MODEL") or os.getenv("OLLAMA_MODEL") or "llama3.2:1b"
 
 # For legacy behavior in your current service enqueue

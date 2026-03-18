@@ -45,8 +45,8 @@ export default function Login() {
         throw new Error(data.error || "Login failed");
       }
 
-      login(data.access_token);
-      // localStorage.setItem("id_token", data.id_token); // handled inside context or ignored if not needed
+      login(data.access_token, data.id_token);
+      // localStorage.setItem("id_token", data.id_token); // handled inside context
       // localStorage.setItem("loggedIn", "true");
 
       // navigate("/dashboard");
