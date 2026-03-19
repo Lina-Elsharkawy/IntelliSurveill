@@ -4,14 +4,14 @@ camera:
   width: 640
   height: 480
   fps: 10
-  # for RTSP:
-  # rtsp_url: "rtsp://user:pass@ip/stream"
-  # for CSI:
+  # for CSI (Arducam IMX219 8MP):
   sensor_id: 0
   flip_method: 0
+  # for RTSP:
+  # rtsp_url: "rtsp://user:pass@ip/stream"
 
-# REQUIRED for anomaly-service payload
-device_key: "jetson_orin_01"
+# Edge device identity
+device_key: "jetson_tx2_01"
 camera_id: 1
 
 kafka:
@@ -19,39 +19,44 @@ kafka:
   topic_anomaly: "anomaly_events"
 
 evidence_gateway:
-  # If edge runs OUTSIDE docker, use http://<BACKEND_IP>:8010/evidence/upload
   upload_url: "http://evidence-gateway:8010/evidence/upload"
 
 anomaly:
+  # --- Motion detection (MOG2) ---
   mog2_history: 200
   mog2_var_threshold: 30
   mog2_detect_shadows: true
   learning_rate: 0.02
-
   min_object_area: 8000
-  fast_pass_area: 25000
-  min_motion_frames: 20
-  cooldown_sec: 2.0
-
-  buffer_seconds: 4.0
-
   motion_downscale_width: 640
   morph_kernel: 5
   dilate_iters: 2
 
-  # evidence upload
-  evidence_frames: 8
+  # --- YOLO person detector ---
+  yolo_model: "/opt/anomaly/models/yolov8n.pt"   # absolute path for Jetson deployment
+  yolo_conf: 0.35
+  min_bbox_area: 1600.0
+
+  # --- IoU Tracker ---
+  tracker_iou_thresh: 0.3
+  tracker_max_missed: 8      # 0.8s at 10fps before track expires
+
+  # --- Tubelet windowing ---
+  window_stride: 8           # stride between windows (num_frames=16 from checkpoint)
+  crop_pad: 0.1              # padding around person bounding box
+
+  # --- Cooldown ---
+  cooldown_sec: 2.0          # min seconds between published events per track
+
+  # --- Evidence upload ---
   jpg_quality: 85
 
-  # metadata
-  threshold: 1.0
-  model_version: "edge-motion-resnet-v0.1"
-
+  # --- Logging ---
   print_every_sec: 5.0
 
-embedding:
-  embedding_model: "resnet18"
-  sample_count: 8
-  use_cuda_if_available: true
-  use_fp16_on_cuda: true
-  warmup_batches: 2
+student:
+  checkpoint: "/opt/anomaly/models/best_student.pt"
+  device: "cuda"             # cuda / cpu
+  use_fp16: true             # float16 inference on CUDA
+  model_version: "student-v3-multiscale"
+  # image_size and num_frames are read directly from checkpoint config

@@ -115,7 +115,9 @@ services:
     networks:
       - data-platform-net
   anomaly-service:
-    image: python:3.11-slim
+    build:
+      context: ./backend/services/anomaly_service
+      dockerfile: Dockerfile
     working_dir: /app
     volumes:
       - ./backend/services:/app/services
@@ -131,9 +133,6 @@ services:
       LLM_MODEL: llama3.2:1b
     env_file:
       - ./backend/.env
-    command: >
-      sh -c "pip install -r /app/services/anomaly_service/requirements.txt &&
-             python -m uvicorn services.anomaly_service.service:app --host 0.0.0.0 --port 8000"
     ports:
       - "8002:8000"
     depends_on:

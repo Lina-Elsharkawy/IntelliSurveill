@@ -1,13 +1,9 @@
-opencv-python
-numpy
-pyyaml
-psutil
+opencv-python==4.10.0.84
+numpy==2.1.3
+pyyaml==6.0.2
+requests==2.32.3
+kafka-python==2.0.2
+Pillow==10.4.0
+ultralytics==8.3.88
 
-# Kafka/HTTP will be used later (keep them)
-kafka-python
-requests
-
-# IMPORTANT (Jetson): install torch/torchvision matching your JetPack build.
-# Many Jetson setups require NVIDIA-provided wheels (not default pip).
-torch
-torchvision
+# On Jetson, install torch/torchvision from the NVIDIA JetPack wheels.

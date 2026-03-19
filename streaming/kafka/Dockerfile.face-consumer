@@ -2,8 +2,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Pin versions (stable + reproducible)
-RUN pip install --no-cache-dir kafka-python==2.3.0 requests==2.32.5
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY consumer_service.py /app/consumer_service.py
 
