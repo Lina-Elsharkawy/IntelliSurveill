@@ -309,6 +309,22 @@ services:
     networks:
       - data-platform-net
 
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:3000
+      - CHOKIDAR_USEPOLLING=true # Often needed for HMR inside Docker on Windows
+    depends_on:
+      - backend
+    networks:
+      - data-platform-net
+
   flinkjobmanager:
     build: ./streaming/flink-java
     image: graduation-project-flinkjobmanager
