@@ -1,10 +1,14 @@
 import os
 import json
+import logging
+import threading
 from typing import List, Optional, Dict, Any
 
 import cv2
 import requests
 from kafka import KafkaProducer
+
+log = logging.getLogger(__name__)
 
 
 class AnomalyEventProducer:
@@ -43,19 +47,67 @@ class AnomalyEventProducer:
             "EVIDENCE_GATEWAY_UPLOAD",
             "http://evidence-gateway:8010/evidence/upload",
         )
-
-        self.producer = KafkaProducer(
-            bootstrap_servers = self.bootstrap,
-            acks              = "all",
-            retries           = 10,
-            linger_ms         = 10,
-            value_serializer  = lambda v: json.dumps(
-                v, ensure_ascii=False
-            ).encode("utf-8"),
-            key_serializer    = lambda k: k.encode("utf-8"),
-            max_request_size  = 10_000_000,
-            request_timeout_ms= max(self.send_timeout_s, 10) * 1000,
-        )
+        
+        # Lazy initialization - don't create producer in __init__
+        self.producer = None
+        self._init_attempted = False
+        self._init_lock = threading.Lock()
+    
+    def _try_init_producer(self, timeout_sec=3.0):
+        # type: (float) -> bool
+        """
+        Attempt to initialize Kafka producer with timeout.
+        Returns True if successful, False otherwise.
+        Non-blocking - will not hang the calling thread.
+        """
+        with self._init_lock:
+            if self._init_attempted:
+                return self.producer is not None
+            
+            self._init_attempted = True
+            
+            result = [None]  # type: List[Optional[KafkaProducer]]
+            error = [None]   # type: List[Optional[Exception]]
+            
+            def _init():
+                try:
+                    result[0] = KafkaProducer(
+                        bootstrap_servers = self.bootstrap,
+                        acks              = 1,
+                        retries           = 0,
+                        linger_ms         = 10,
+                        value_serializer  = lambda v: json.dumps(
+                            v, ensure_ascii=False
+                        ).encode("utf-8"),
+                        key_serializer    = lambda k: k.encode("utf-8"),
+                        max_request_size  = 10_000_000,
+                        request_timeout_ms = 2000,
+                    )
+                except Exception as e:
+                    error[0] = e
+            
+            thread = threading.Thread(target=_init, daemon=True)
+            thread.start()
+            thread.join(timeout=timeout_sec)
+            
+            if thread.is_alive():
+                log.warning(
+                    "Kafka init timed out after {}s (bootstrap={})".format(
+                        timeout_sec, self.bootstrap
+                    )
+                )
+                return False
+            
+            if error[0] is not None:
+                log.warning("Kafka init failed: {}".format(error[0]))
+                return False
+            
+            self.producer = result[0]
+            if self.producer is not None:
+                log.info("Kafka producer initialized successfully")
+                return True
+            
+            return False
 
     # ------------------------------------------------------------------
     # Evidence upload
@@ -137,6 +189,14 @@ class AnomalyEventProducer:
             processing_time_ms : total edge processing time
             extra           : any additional metadata (image_size, infer_ms etc.)
         """
+        # Lazy init on first send
+        if self.producer is None and not self._init_attempted:
+            self._try_init_producer(timeout_sec=3.0)
+        
+        if self.producer is None:
+            log.debug("Kafka unavailable, skipping event: {}".format(event_key))
+            return
+        
         payload: Dict[str, Any] = {
             "device_key":      device_key,
             "event_key":       event_key,
@@ -158,22 +218,36 @@ class AnomalyEventProducer:
         if extra:
             payload["metadata"] = extra
 
-        future = self.producer.send(self.topic, key=event_key, value=payload)
-        future.get(timeout=self.send_timeout_s)
-        self._sent_since_flush += 1
-        if self.flush_every > 0 and self._sent_since_flush >= self.flush_every:
-            self.flush()
-            self._sent_since_flush = 0
+        try:
+            future = self.producer.send(self.topic, key=event_key, value=payload)
+            future.get(timeout=self.send_timeout_s)
+            
+            # Increment and flush only if send succeeds
+            self._sent_since_flush += 1
+            if self.flush_every > 0 and self._sent_since_flush >= self.flush_every:
+                self.flush()
+                self._sent_since_flush = 0
+                
+        except Exception as e:
+            log.error("Kafka send failed: {}".format(e))
+
+            # SIMPLE DISK FALLBACK (no heavy deps)
+            try:
+                os.makedirs("/tmp/kafka_backup", exist_ok=True)
+                with open("/tmp/kafka_backup/{}.json".format(event_key), "w") as f:
+                    json.dump(payload, f)
+                log.warning("Saved event locally: {}".format(event_key))
+            except Exception as e2:
+                log.error("Failed to save backup: {}".format(e2))
 
     # ------------------------------------------------------------------
     # Lifecycle
     # ------------------------------------------------------------------
 
-    def flush(self) -> None:
+    def flush(self):
+      if self.producer:
         self.producer.flush(timeout=5)
 
-    def close(self) -> None:
-        try:
-            self.flush()
-        finally:
-            self.producer.close()
+    def close(self):
+     if self.producer:
+        self.producer.close()

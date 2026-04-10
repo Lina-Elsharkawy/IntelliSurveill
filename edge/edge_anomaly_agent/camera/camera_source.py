@@ -9,25 +9,6 @@ def gstreamer_csi_pipeline(
     fps:         int,
     flip_method: int = 0,
 ) -> str:
-    """
-    Build a GStreamer pipeline string for Jetson CSI cameras via nvarguscamerasrc.
-
-    Compatible with:
-        - Arducam 8MP V2.3  (IMX219) — recommended for anomaly detection (wide FOV)
-        - Arducam 12.3MP    (IMX477) — recommended for face recognition (high detail)
-
-    Requires JetPack with Argus camera drivers installed.
-
-    Args:
-        sensor_id   : CSI sensor index (0 or 1 for dual-camera setups)
-        width       : capture width in pixels
-        height      : capture height in pixels
-        fps         : frames per second
-        flip_method : nvvidconv flip (0=none, 2=180deg, etc.)
-
-    Returns:
-        GStreamer pipeline string for cv2.VideoCapture
-    """
     return (
         f"nvarguscamerasrc sensor-id={sensor_id} ! "
         f"video/x-raw(memory:NVMM), width={width}, height={height}, "
@@ -42,27 +23,29 @@ def gstreamer_csi_pipeline(
 
 class CameraSource:
     """
-    Unified camera source supporting USB, CSI (Jetson), and RTSP streams.
+    Unified camera source supporting:
+        - usb
+        - csi
+        - rtsp
+        - url        (HTTP/MJPEG stream from laptop)
+        - video_file
 
-    Configuration is read from the 'camera' section of config.yaml:
+    Example config:
 
         camera:
-          type: csi          # usb / csi / rtsp
+          type: url
+          stream_url: "http://192.168.137.1:5000/video_feed"
           width: 640
           height: 480
           fps: 10
-          sensor_id: 0       # CSI only
-          flip_method: 0     # CSI only
-          device_index: 0    # USB only
-          rtsp_url: "..."    # RTSP only
     """
 
     def __init__(self, cfg: dict) -> None:
         cam_cfg     = cfg["camera"]
         self.type   = cam_cfg["type"].lower()
-        self.width  = int(cam_cfg["width"])
-        self.height = int(cam_cfg["height"])
-        self.fps    = int(cam_cfg["fps"])
+        self.width  = int(cam_cfg.get("width", 640))
+        self.height = int(cam_cfg.get("height", 480))
+        self.fps    = int(cam_cfg.get("fps", 10))
 
         if self.type == "usb":
             idx      = int(cam_cfg.get("device_index", 0))
@@ -75,6 +58,14 @@ class CameraSource:
             url      = cam_cfg["rtsp_url"]
             self.cap = cv2.VideoCapture(url)
 
+        elif self.type == "url":
+            url      = cam_cfg["stream_url"]
+            self.cap = cv2.VideoCapture(url)
+
+        elif self.type == "video_file":
+            path     = cam_cfg["video_path"]
+            self.cap = cv2.VideoCapture(path)
+
         elif self.type == "csi":
             sensor_id   = int(cam_cfg.get("sensor_id",   0))
             flip_method = int(cam_cfg.get("flip_method", 0))
@@ -86,31 +77,48 @@ class CameraSource:
         else:
             raise ValueError(
                 f"Unknown camera.type={self.type!r}. "
-                f"Valid options: usb / csi / rtsp"
+                f"Valid options: usb / csi / rtsp / url / video_file"
             )
 
         if not self.cap.isOpened():
             raise RuntimeError(
                 f"Failed to open camera (type={self.type}). "
-                f"Check sensor connection and JetPack drivers."
+                f"Check source path/URL/device and network connectivity."
             )
 
-    def frames(self):
-        """
-        Yield (frame_bgr, timestamp_ms) indefinitely.
+        try:
+            self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        except Exception:
+            pass
 
-        frame_bgr    : numpy array [H, W, 3] in BGR format
-        timestamp_ms : Unix timestamp in milliseconds at time of capture
-        """
+    def frames(self):
         while True:
-            ok, frame = self.cap.read()
-            if not ok:
+            ok = False
+            frame = None
+
+            # For live sources, try to drop stale buffered frames first
+            if self.type in ("usb", "csi", "rtsp", "url"):
+                try:
+                    for _ in range(2):
+                        self.cap.grab()
+                    ok, frame = self.cap.retrieve()
+                except Exception:
+                    ok, frame = self.cap.read()
+            else:
+                ok, frame = self.cap.read()
+
+            if not ok or frame is None:
+                if self.type == "video_file":
+                    # loop the file for convenience
+                    self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    time.sleep(0.05)
+                    continue
                 time.sleep(0.05)
                 continue
+
             yield frame, int(time.time() * 1000)
 
     def release(self) -> None:
-        """Release the camera resource."""
         try:
             self.cap.release()
         except Exception:
