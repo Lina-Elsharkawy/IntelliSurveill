@@ -10,10 +10,7 @@ const PrivateRoute = ({ element }: PrivateRouteProps) => {
 
     if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-    // If user is admin, they shouldn't access regular user routes
-    if (roles && roles.includes('admin')) {
-        return <Navigate to="/admin-users" replace />;
-    }
+    // Admins are naturally also users, so they are allowed to access regular user routes.
 
     return element;
 };

@@ -507,8 +507,28 @@ export default function Login() {
             </div>
 
             {error && (
-              <div style={{ fontSize: 13, color: "#ff4d4d", background: "rgba(255,77,77,0.1)", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,77,77,0.2)", marginBottom: 4 }}>
-                {error}
+              <div style={{ 
+                fontSize: 11, 
+                color: "#ff3333", 
+                background: "rgba(255,51,51,0.05)", 
+                padding: "12px 16px", 
+                borderRadius: 8, 
+                border: "1px solid rgba(255,51,51,0.3)", 
+                marginBottom: 4,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                fontFamily: "'Syne', sans-serif",
+                textTransform: "uppercase",
+                letterSpacing: 1.5,
+                boxShadow: "0 0 15px rgba(255,51,51,0.1) inset, 0 0 5px rgba(255,51,51,0.2)"
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                  <path d="M12 8v4m0 4h.01M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10z" stroke="#ff3333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {error === "invalid_grant" || error === "Login failed" ? "Access Denied: Invalid Credentials" : error}
+                </div>
               </div>
             )}
 

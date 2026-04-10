@@ -17,25 +17,26 @@ import { useAuth } from "@/context/AuthContext";
 const G = "rgb(46,213,115)";
 const GA = (a: number) => `rgba(46,213,115,${a})`;
 
-const NAV_ITEMS = [
+const ALL_NAV_ITEMS = [
   { title: "Dashboard", url: "/dashboard", Icon: LayoutDashboard },
   { title: "Live Cameras", url: "/cameras", Icon: Camera },
-  { title: "Anomalies", url: "/alerts", Icon: AlertTriangle },
+  { title: "Anomalies", url: "/anomaly", Icon: AlertTriangle },
   { title: "Departments", url: "/departments", Icon: Building },
   { title: "Labs", url: "/labs", Icon: GraduationCap },
   { title: "Analytics", url: "/analytics", Icon: BarChart3 },
   { title: "Activity Log", url: "/activity-log", Icon: ListCheck },
   { title: "Schedules", url: "/schedules", Icon: Calendar },
   { title: "Settings", url: "/settings", Icon: Settings },
-  { title: "Admin", url: "/admin", Icon: UserCog },
+  { title: "Detected people", url: "/admin", Icon: UserCog, adminOnly: false },
+  { title: "Users", url: "/admin-users", Icon: Shield, adminOnly: true },
 ];
 
 // Quarter-circle fan math — origin at burger button center
 const BURGER_X = 55;   // px from left of viewport
 const BURGER_Y = 32;   // px from top of viewport
-const RADIUS = 800;  // bigger arc so icons are well separated
+const RADIUS = 600;  // bigger arc so icons are well separated
 const START_DEG = 5;    // nearly horizontal
-const END_DEG = 100;  // nearly vertical
+const END_DEG = 85;  // nearly vertical, but kept within screen bounds
 
 function getPos(index: number, total: number) {
   const deg = START_DEG + (END_DEG - START_DEG) * (index / (total - 1));
@@ -56,6 +57,9 @@ export function TopNav() {
 
   const displayName = user?.name || user?.email?.split("@")[0] || "User";
   const userRole = roles[0] || "viewer";
+  const isAdmin = roles.includes("admin");
+
+  const NAV_ITEMS = ALL_NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <>
@@ -95,6 +99,42 @@ export function TopNav() {
         </div>
 
         <div style={{ flex: 1 }} />
+
+        {/* Admin Panel Button — only visible to admins
+        {isAdmin && (
+          <NavLink
+            to="/admin-users"
+            title="User Management"
+            style={({ isActive }) => ({
+              opacity: open ? 0 : 1,
+              pointerEvents: open ? "none" : "auto",
+              transition: "opacity 0.3s",
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "7px 16px",
+              borderRadius: 10,
+              border: `1px solid ${isActive ? GA(0.6) : GA(0.25)}`,
+              background: isActive ? GA(0.18) : GA(0.08),
+              color: G,
+              textDecoration: "none",
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: 12, fontWeight: 600,
+              letterSpacing: "0.05em",
+              cursor: "pointer",
+              // transition: "background 0.2s, border-color 0.2s, opacity 0.3s",
+            })} */}
+        {/* onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = GA(0.18);
+              (e.currentTarget as HTMLElement).style.borderColor = G;
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = GA(0.08);
+              (e.currentTarget as HTMLElement).style.borderColor = GA(0.25);
+            }}
+          >
+            <Shield size={14} />
+            Users
+          </NavLink>
+        )} */}
 
         {/* Profile Section */}
         <div style={{ opacity: open ? 0 : 1, transition: "opacity 0.3s", display: "flex", alignItems: "center", gap: 15 }}>

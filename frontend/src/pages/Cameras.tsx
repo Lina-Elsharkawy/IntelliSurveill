@@ -22,7 +22,7 @@ const Cameras = () => {
     const fetchCameras = async () => {
       try {
         const cameras = await getAllCameras();
-        
+
         // Map backend cameras to the premium CameraFeedData format
         // This ensures the "modern" page is connected to your actual database.
         const mappedFeeds: CameraFeedData[] = cameras.map((cam, index) => ({
