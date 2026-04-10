@@ -1,25 +1,26 @@
 camera:
-  type: csi          # usb / csi / rtsp
+  type: usb         # usb / csi / rtsp
   device_index: 0
+  #stream_url: "http://172.21.0.238:5000/video_feed"
   width: 640
   height: 480
   fps: 10
-  # for CSI (Arducam IMX219 8MP):
-  sensor_id: 0
-  flip_method: 0
+  # # for CSI (Arducam IMX219 8MP):
+  # sensor_id: 0
+  # flip_method: 0
   # for RTSP:
   # rtsp_url: "rtsp://user:pass@ip/stream"
 
 # Edge device identity
-device_key: "jetson_tx2_01"
+device_key: "jetson_nano_01"
 camera_id: 1
 
 kafka:
-  bootstrap_servers: "kafka:9093"
+  bootstrap_servers: "172.21.0.238:9092"
   topic_anomaly: "anomaly_events"
 
 evidence_gateway:
-  upload_url: "http://evidence-gateway:8010/evidence/upload"
+  upload_url: "http://172.21.0.238:8010/evidence/upload"
 
 anomaly:
   # --- Motion detection (MOG2) ---
@@ -32,9 +33,10 @@ anomaly:
   morph_kernel: 5
   dilate_iters: 2
 
-  # --- YOLO person detector ---
-  yolo_model: "/opt/anomaly/models/yolov8n.pt"   # absolute path for Jetson deployment
+  # --- YOLO person detector (TensorRT YOLOv8 engine) ---
+  yolo_engine: "/opt/anomaly/models/yolov8n_fp16.engine"
   yolo_conf: 0.35
+  yolo_nms_thresh: 0.45
   min_bbox_area: 1600.0
 
   # --- IoU Tracker ---
