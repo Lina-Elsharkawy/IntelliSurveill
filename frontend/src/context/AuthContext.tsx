@@ -84,10 +84,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
                 setRoles(userRoles);
 
-                if (userRoles.includes('admin')) {
-                    navigate("/admin-users");
-                    return;
-                }
+                // Admin users go to dashboard — they can reach /admin-users via the TopNav icon
             } catch (e) {
                 console.error("Error decoding id_token during login", e);
             }

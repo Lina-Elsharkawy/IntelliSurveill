@@ -16,10 +16,10 @@ import {
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Live Cameras", url: "/cameras", icon: Camera },
-  { title: "Anomalies", url: "/alerts", icon: AlertTriangle },
+  { title: "Anomalies", url: "/anomaly", icon: AlertTriangle },
   { title: "Departments", url: "/departments", icon: Building },
   { title: "Labs", url: "/labs", icon: GraduationCap },
-  { title: "Admin", url: "/admin", icon: UserCog },
+  { title: "Detected people", url: "/admin", icon: UserCog },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Activity Log", url: "/activity-log", icon: ListCheck },
   { title: "Schedules", url: "/schedules", icon: Calendar },

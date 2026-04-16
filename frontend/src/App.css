@@ -11,9 +11,11 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #6be784aa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #58ca57aa);
 }
@@ -22,6 +24,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -39,4 +42,8 @@
 
 .read-the-docs {
   color: #888;
+}
+
+.clip-diagonal {
+  clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%);
 }

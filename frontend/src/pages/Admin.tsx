@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useAuth } from "@/context/AuthContext";
 
 import { apiGet, apiPost } from "@/lib/api";
 import { getAllEmployees, deleteEmployee, createEmployee, updateEmployee } from "@/services/employees";
@@ -33,6 +34,9 @@ export default function AdminPage() {
   const [anomalyCandidates, setAnomalyCandidates] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { roles } = useAuth();
+  const isAdmin = roles.includes("admin");
+  const userRole = roles[0] || "user";
 
   // CRUD
   const [editPerson, setEditPerson] = useState<any>(null);
@@ -61,19 +65,6 @@ export default function AdminPage() {
     }
   };
 
-  const fetchAnomalies = async () => {
-    try {
-      setError(null);
-      const res = await fetch(`${ANOMALY_API_BASE}/anomaly-candidates`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-      const data = await res.json();
-      setAnomalyCandidates(data);
-    } catch (err: any) {
-      console.error("Failed to fetch anomalies:", err);
-      setError(err.message || "Failed to load anomalies");
-    }
-  };
-
   const registerUnknown = async (id: number) => {
     await apiPost(`/api/detected-people/register/${id}`, {});
     fetchUnknown();
@@ -93,7 +84,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([fetchUnknown(), fetchRegistered(), fetchAnomalies()]).finally(() => setLoading(false));
+    Promise.all([fetchUnknown(), fetchRegistered()]).finally(() => setLoading(false));
   }, []);
 
   const registeredPeople = [
@@ -105,8 +96,10 @@ export default function AdminPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Database Management</h1>
-          <Badge variant="outline" className="text-green-500 border-green-500/30">System Admin</Badge>
+          <h1 className="text-3xl font-bold">Detected People</h1>
+          <Badge variant="outline" className="text-green-500 border-green-500/30 uppercase">
+             {userRole}
+          </Badge>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -126,21 +119,13 @@ export default function AdminPage() {
               <div className="text-2xl font-bold">{unknownIdentities.length}</div>
             </CardContent>
           </Card>
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-400">Active Anomalies</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-500">{anomalyCandidates.length}</div>
-            </CardContent>
-          </Card>
         </div>
 
         <Tabs defaultValue="registered" className="w-full">
           <TabsList className="bg-gray-900 border-gray-800">
             <TabsTrigger value="registered">Registered People</TabsTrigger>
             <TabsTrigger value="unknown">Unknown Identites</TabsTrigger>
-            <TabsTrigger value="anomalies">Anomalies</TabsTrigger>
+
           </TabsList>
 
           <TabsContent value="registered" className="space-y-4 pt-4">

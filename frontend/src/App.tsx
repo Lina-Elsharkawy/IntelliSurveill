@@ -7,7 +7,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import Index from "./pages/Index";
 import Cameras from "./pages/Cameras";
-import Alerts from "./pages/Alerts";
+import Anomaly from "./pages/Anomaly";
 import Admin from "./pages/Admin";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
@@ -32,7 +32,6 @@ const AppRoutes = () => {
 
   const getHomeElement = () => {
     if (!isAuthenticated) return <Navigate to="/login" replace />;
-    if (roles.includes('admin')) return <Navigate to="/admin-users" replace />;
     return <Navigate to="/dashboard" replace />;
   };
 
@@ -44,11 +43,11 @@ const AppRoutes = () => {
       {/* Dashboard main */}
       <Route path="/dashboard" element={<PrivateRoute element={<Index />} />} />
       <Route path="/cameras" element={<PrivateRoute element={<Cameras />} />} />
-      <Route path="/alerts" element={<PrivateRoute element={<Alerts />} />} />
+      <Route path="/anomaly" element={<PrivateRoute element={<Anomaly />} />} />
       <Route path="/analytics" element={<PrivateRoute element={<Analytics />} />} />
       <Route path="/settings" element={<PrivateRoute element={<Settings />} />} />
       <Route path="/activity-log" element={<PrivateRoute element={<ActivityLog />} />} />
-      <Route path="/admin" element={<PrivateRoute element={<Admin />} />} />
+      <Route path="/admin" element={<RoleBasedRoute element={<Admin />} allowedRoles={['admin', 'user']} />} />
       <Route path="/departments" element={<PrivateRoute element={<Departments />} />} />
       <Route path="/labs" element={<PrivateRoute element={<Labs />} />} />
       <Route path="/schedules" element={<PrivateRoute element={<Schedules />} />} /> {/* ← Added */}

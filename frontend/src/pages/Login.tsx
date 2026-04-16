@@ -118,6 +118,16 @@ function CameraParticles({ onFlash }: { onFlash: () => void }) {
       const scy = canvas.height * 0.5;
       const scale = Math.min(canvas.width, canvas.height) * 0.65;
 
+      // Pre-render dot glow texture
+      const dotCanvas = document.createElement("canvas");
+      dotCanvas.width = 32; dotCanvas.height = 32;
+      const dctx = dotCanvas.getContext("2d")!;
+      const dgr = dctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+      dgr.addColorStop(0, "rgba(74,222,128,1)");
+      dgr.addColorStop(1, "rgba(34,197,94,0)");
+      dctx.fillStyle = dgr;
+      dctx.fillRect(0, 0, 32, 32);
+
       // — Orbit phase —
       if (totalTime > ASSEMBLE_END && totalTime < ORBIT_END) {
         const elapsed = totalTime - ASSEMBLE_END;
@@ -200,12 +210,14 @@ function CameraParticles({ onFlash }: { onFlash: () => void }) {
         ctx.fillStyle = grd;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Grid lines inside cone — makes it look like a projection
+        // Grid lines inside cone — batched
         const G = 20;
         ctx.lineWidth = 0.6;
         ctx.strokeStyle = `rgba(46,213,115,${0.22 * bp})`;
-        for (let gx = 0; gx < canvas.width; gx += G) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, canvas.height); ctx.stroke(); }
-        for (let gy = 0; gy < canvas.height; gy += G) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(canvas.width, gy); ctx.stroke(); }
+        ctx.beginPath();
+        for (let gx = 0; gx < canvas.width; gx += G) { ctx.moveTo(gx, 0); ctx.lineTo(gx, canvas.height); }
+        for (let gy = 0; gy < canvas.height; gy += G) { ctx.moveTo(0, gy); ctx.lineTo(canvas.width, gy); }
+        ctx.stroke();
 
         ctx.restore();
 
@@ -220,22 +232,59 @@ function CameraParticles({ onFlash }: { onFlash: () => void }) {
         ctx.strokeStyle = rg; ctx.lineWidth = 3; ctx.stroke();
       }
 
-      // — Connections —
+      // — Connections: Optimized spatial partitioning —
       const lk = 0.082 * scale;
-      for (let i = 0; i < pts.length; i++) {
-        for (let j = i + 1; j < pts.length; j++) {
-          const dx = pts[i].sx - pts[j].sx, dy = pts[i].sy - pts[j].sy;
-          const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < lk) {
-            const mf = Math.min(pts[i].formed, pts[j].formed);
-            if (mf < 0.3) continue;
-            ctx.beginPath();
-            ctx.strokeStyle = `rgba(120, 255, 180, ${mf * 0.45 * (1 - d / lk)})`;
-            ctx.lineWidth = 0.5;
-            ctx.moveTo(pts[i].sx, pts[i].sy); ctx.lineTo(pts[j].sx, pts[j].sy);
-            ctx.stroke();
+      const lkSq = lk * lk;
+      const gridSize = lk;
+      const grid: Map<string, {p: typeof pts[0], idx: number}[]> = new Map();
+      
+      // Assign to grid with stored indices
+      for (let idx = 0; idx < pts.length; idx++) {
+        const p = pts[idx];
+        if (p.formed < 0.3) continue;
+        const gx = Math.floor(p.sx / gridSize), gy = Math.floor(p.sy / gridSize);
+        const key = `${gx},${gy}`;
+        if (!grid.has(key)) grid.set(key, []);
+        grid.get(key)!.push({ p, idx });
+      }
+
+      // Batch lines by opacity to reduce stroke calls
+      const buckets: [number, number, number, number][][] = Array.from({ length: 11 }, () => []);
+
+      for (let idx1 = 0; idx1 < pts.length; idx1++) {
+        const p1 = pts[idx1];
+        if (p1.formed < 0.3) continue;
+        const gx = Math.floor(p1.sx / gridSize), gy = Math.floor(p1.sy / gridSize);
+        
+        for (let i = -1; i <= 1; i++) {
+          for (let j = -1; j <= 1; j++) {
+            const cell = grid.get(`${gx + i},${gy + j}`);
+            if (!cell) continue;
+            for (const { p: p2, idx: idx2 } of cell) {
+              if (idx1 >= idx2) continue; 
+              
+              const dx = p1.sx - p2.sx, dy = p1.sy - p2.sy;
+              const dSq = dx * dx + dy * dy;
+              if (dSq < lkSq) {
+                const mf = Math.min(p1.formed, p2.formed);
+                const opacity = mf * 0.45 * (1 - Math.sqrt(dSq) / lk);
+                const bIdx = Math.min(10, Math.floor(opacity * 20));
+                if (bIdx > 0) buckets[bIdx].push([p1.sx, p1.sy, p2.sx, p2.sy]);
+              }
+            }
           }
         }
+      }
+
+      ctx.lineWidth = 0.5;
+      for (let b = 1; b <= 10; b++) {
+        if (buckets[b].length === 0) continue;
+        ctx.strokeStyle = `rgba(120, 255, 180, ${b / 20})`;
+        ctx.beginPath();
+        for (const [x1, y1, x2, y2] of buckets[b]) {
+          ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+        }
+        ctx.stroke();
       }
 
       // — Lens charge glow at true GLB lens position —
@@ -265,19 +314,23 @@ function CameraParticles({ onFlash }: { onFlash: () => void }) {
         }
       }
 
-      // — Dots —
+      // — Dots: Optimized texture drawing —
       for (const p of pts) {
         const nd = Math.max(0, Math.min(1, (p.depth + 0.8) / 1.6));
         const r = (p.r + nd * 0.9) * Math.max(0.25, 0.3 + p.formed * 0.7);
         const op = (0.2 + nd * 0.5) * Math.max(0.1, 0.15 + p.formed * 0.85);
-        const gr = ctx.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, r * 5);
-        gr.addColorStop(0, `rgba(74,222,128,${Math.min(1, op * 0.7)})`);
-        gr.addColorStop(1, `rgba(34,197,94,0)`);
-        ctx.beginPath(); ctx.arc(p.sx, p.sy, r * 5, 0, Math.PI * 2); ctx.fillStyle = gr; ctx.fill();
-        ctx.beginPath(); ctx.arc(p.sx, p.sy, Math.max(0.4, r), 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${p.formed > 0.8 ? "160,255,190" : "74,222,128"},${Math.min(1, op + 0.1)})`;
-        ctx.fill();
+        
+        // Draw glow using pre-rendered texture
+        const glowR = r * 5;
+        ctx.globalAlpha = Math.min(1, op * 0.7);
+        ctx.drawImage(dotCanvas, p.sx - glowR, p.sy - glowR, glowR * 2, glowR * 2);
+        
+        // Draw solid core
+        ctx.globalAlpha = Math.min(1, op + 0.1);
+        ctx.fillStyle = p.formed > 0.8 ? "rgb(160,255,190)" : "rgb(74,222,128)";
+        ctx.beginPath(); ctx.arc(p.sx, p.sy, Math.max(0.4, r), 0, Math.PI * 2); ctx.fill();
       }
+      ctx.globalAlpha = 1.0;
 
       animId = requestAnimationFrame(draw);
     };
@@ -507,8 +560,28 @@ export default function Login() {
             </div>
 
             {error && (
-              <div style={{ fontSize: 13, color: "#ff4d4d", background: "rgba(255,77,77,0.1)", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,77,77,0.2)", marginBottom: 4 }}>
-                {error}
+              <div style={{ 
+                fontSize: 11, 
+                color: "#ff3333", 
+                background: "rgba(255,51,51,0.05)", 
+                padding: "12px 16px", 
+                borderRadius: 8, 
+                border: "1px solid rgba(255,51,51,0.3)", 
+                marginBottom: 4,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                fontFamily: "'Syne', sans-serif",
+                textTransform: "uppercase",
+                letterSpacing: 1.5,
+                boxShadow: "0 0 15px rgba(255,51,51,0.1) inset, 0 0 5px rgba(255,51,51,0.2)"
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                  <path d="M12 8v4m0 4h.01M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10z" stroke="#ff3333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {error === "invalid_grant" || error === "Login failed" ? "Access Denied: Invalid Credentials" : error}
+                </div>
               </div>
             )}
 
