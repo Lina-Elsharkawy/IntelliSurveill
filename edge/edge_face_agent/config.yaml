@@ -1,23 +1,38 @@
 camera:
-  type: "csi"          # "usb" | "csi" | "rtsp"
-  sensor_id: 0         # CSI port index (0 or 1)
-  width: 1280
-  height: 720
-  fps: 30
-  flip_method: 0       # 0..7 if you need rotation
-  rtsp_url: ""
+  type: "usb"
+  device_index: 0
+  width: 640
+  height: 480
+  fps: 25
 
 face:
+  model_name: "buffalo_l_trt"
   det_size: [640, 640]
   face_img_size: 160
   jpeg_quality: 80
-  model_name: "buffalo_l"
   min_face_size: 40
+  min_det_score: 0.35
+  nms_thres: 0.4
+  use_kps_alignment: true
+
+  det_engine_path: "/opt/face_models/trt/det_10g_fp16.engine"
+  rec_engine_path: "/opt/face_models/trt/w600k_r50_fp16.engine"
+  rec_input_size: 112
+  det_score_mode: "auto"
 
 kafka:
-  bootstrap_servers: "BACKEND_IP:9092"
+  bootstrap_servers:
+    - "172.21.0.243:9092"
   topic: "face_events"
-  camera_id: "cam_01"
+  camera_id: 1
+
+evidence_gateway:
+  upload_url: "http://172.21.0.243:8010/evidence/upload"
 
 runtime:
   send_every_n_frames: 2
+
+dedup:
+  ttl_sec: 3.0
+  sim_threshold: 0.72
+  max_items: 50
