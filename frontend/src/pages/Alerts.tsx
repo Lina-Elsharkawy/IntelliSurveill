@@ -106,7 +106,7 @@ const Alerts = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="alerts-page-wrapper space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -200,50 +200,6 @@ const Alerts = () => {
                   Error: {error}
                 </div>
               )}
-
-              <style>{`
-                .anomaly-cards {
-                  display: flex;
-                  flex-direction: column;
-                  gap: 15px;
-                }
-
-                .anomaly-card {
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  flex-direction: column;
-                  text-align: center;
-                  min-height: 100px;
-                  border-radius: 10px;
-                  color: white;
-                  cursor: pointer;
-                  transition: all 400ms;
-                  padding: 1.5rem;
-                  position: relative;
-                  overflow: hidden;
-                }
-
-                .anomaly-card .tip {
-                  font-size: 1em;
-                  font-weight: 700;
-                  margin-bottom: 0.5rem;
-                }
-
-                .anomaly-card .second-text {
-                  font-size: 0.7em;
-                  opacity: 0.8;
-                }
-
-                .anomaly-card:hover {
-                  transform: scale(1.05);
-                }
-
-                .anomaly-cards:hover > .anomaly-card:not(:hover) {
-                  filter: blur(10px);
-                  transform: scale(0.95);
-                }
-              `}</style>
 
               <TabsContent value="new">
                 {newAnomalies.length === 0 ? (

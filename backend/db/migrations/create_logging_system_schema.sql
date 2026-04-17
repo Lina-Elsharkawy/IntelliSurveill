@@ -362,30 +362,30 @@ FOR EACH ROW EXECUTE FUNCTION anomaly_candidates_set_updated_at();
 --     anomaly_candidates must exist before this
 --     table so source_candidate_id FK is valid.
 -- ============================================
-CREATE TABLE IF NOT EXISTS anomaly_rules (
-    id          BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+-- CREATE TABLE IF NOT EXISTS anomaly_rules (
+--     id          BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
-    -- The rule itself — natural language
-    rule_text   TEXT NOT NULL,
+--     -- The rule itself — natural language
+--     rule_text   TEXT NOT NULL,
 
-    -- Who wrote it and why (traceability)
-    reviewer    TEXT NULL,
-    source_candidate_id BIGINT NULL
-        REFERENCES anomaly_candidates(id) ON DELETE SET NULL,
+--     -- Who wrote it and why (traceability)
+--     reviewer    TEXT NULL,
+--     source_candidate_id BIGINT NULL
+--         REFERENCES anomaly_candidates(id) ON DELETE SET NULL,
 
-    -- Scope — NULL means global (applies everywhere)
-    camera_id   BIGINT NULL REFERENCES cameras(id) ON DELETE SET NULL,
-    lab_id      BIGINT NULL REFERENCES labs(id)    ON DELETE SET NULL,
+--     -- Scope — NULL means global (applies everywhere)
+--     camera_id   BIGINT NULL REFERENCES cameras(id) ON DELETE SET NULL,
+--     lab_id      BIGINT NULL REFERENCES labs(id)    ON DELETE SET NULL,
 
-    -- Whether this rule describes anomalous OR normal behavior:
-    --   'anomalous' -> LLM should alert if this is seen
-    --   'normal'    -> LLM should NOT alert if this is seen
-    rule_type   TEXT NOT NULL DEFAULT 'anomalous'
-                  CHECK (rule_type IN ('anomalous', 'normal')),
+--     -- Whether this rule describes anomalous OR normal behavior:
+--     --   'anomalous' -> LLM should alert if this is seen
+--     --   'normal'    -> LLM should NOT alert if this is seen
+--     rule_type   TEXT NOT NULL DEFAULT 'anomalous'
+--                   CHECK (rule_type IN ('anomalous', 'normal')),
 
-    is_active   BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+--     is_active   BOOLEAN NOT NULL DEFAULT TRUE,
+--     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+-- );
 
 CREATE INDEX IF NOT EXISTS anomaly_rules_active_idx
 ON anomaly_rules (is_active, camera_id);
@@ -444,6 +444,32 @@ CREATE TABLE IF NOT EXISTS ollama_jobs (
     created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
     started_at           TIMESTAMPTZ NULL,
     finished_at          TIMESTAMPTZ NULL
+);
+
+-- ============================================
+-- 23. Anomaly Rules
+-- ============================================
+CREATE TABLE IF NOT EXISTS Anomaly_Rules (
+    id                   BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    rule_text            TEXT NOT NULL,
+    rule_type            VARCHAR(20) NOT NULL CHECK (rule_type IN ('trigger','suppress')),
+    event_type           VARCHAR(50) NOT NULL CHECK (event_type IN ('intrusion', 'loitering', 'after_hours', 'fall_detected', 'fight_detection', 'camera_tamper', 'sudden_movement', 'smoke_fire', 'crowd_detection')),
+    conditions           JSONB NOT NULL,
+    source               VARCHAR(50) NOT NULL CHECK (source IN ('Admin','Learned')),
+    active               BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- ============================================
+-- 24. Rule Conflicts
+-- ============================================
+CREATE TABLE rule_conflicts (
+    id SERIAL PRIMARY KEY,
+    rule_id_1 VARCHAR,
+    rule_id_2 VARCHAR,
+    conflict_reason TEXT,
+    status VARCHAR DEFAULT 'pending', -- pending, resolved, ignored
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS ollama_jobs_status_idx

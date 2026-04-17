@@ -9,7 +9,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Camera, AlertTriangle, BarChart3,
   ListCheck, UserCog, Building, GraduationCap, Calendar,
-  LogOut, Shield, Settings, User,
+  LogOut, Shield, Settings, User, FileText
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -20,6 +20,7 @@ const ALL_NAV_ITEMS = [
   { title: "Dashboard", url: "/dashboard", Icon: LayoutDashboard },
   { title: "Live Cameras", url: "/cameras", Icon: Camera },
   { title: "Anomalies", url: "/anomaly", Icon: AlertTriangle },
+  { title: "Anomaly Rules", url: "/anomaly-rules", Icon: FileText },
   { title: "Departments", url: "/departments", Icon: Building },
   { title: "Labs", url: "/labs", Icon: GraduationCap },
   { title: "Analytics", url: "/analytics", Icon: BarChart3 },

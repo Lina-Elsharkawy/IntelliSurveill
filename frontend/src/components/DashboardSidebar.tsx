@@ -1,4 +1,4 @@
-import { LayoutDashboard, Camera, AlertTriangle, Map, BarChart3, Shield, ListCheck, UserCog, Building, GraduationCap, Calendar } from "lucide-react";
+import { LayoutDashboard, Camera, AlertTriangle, Map, BarChart3, Shield, ListCheck, UserCog, Building, GraduationCap, Calendar, FileText } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -17,6 +17,7 @@ const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Live Cameras", url: "/cameras", icon: Camera },
   { title: "Anomalies", url: "/anomaly", icon: AlertTriangle },
+  { title: "Anomaly Rules", url: "/anomaly-rules", icon: FileText },
   { title: "Departments", url: "/departments", icon: Building },
   { title: "Labs", url: "/labs", icon: GraduationCap },
   { title: "Detected people", url: "/admin", icon: UserCog },

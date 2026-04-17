@@ -1,0 +1,124 @@
+/* Global Fonts for Pages */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Manrope:wght@600&family=Syne:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Outfit:wght@400;500;600;700&display=swap');
+
+/* --- Login Page --- */
+.login-container * { box-sizing:border-box; margin:0; padding:0; }
+.login-container .inp { width:100%; padding:13px 16px; border-radius:10px; background:rgba(0,0,0,0.45); border:1px solid rgba(46,213,115,0.18); color:#fff; font-size:14px; outline:none; transition:border-color .25s,box-shadow .25s; font-family:inherit; }
+.login-container .inp:focus { border-color:rgba(46,213,115,0.55); box-shadow:0 0 0 3px rgba(46,213,115,0.07); }
+.login-container .inp::placeholder { color:rgba(255,255,255,0.2); }
+.login-container .lbl { display:block; font-size:10px; color:rgba(46,213,115,0.6); letter-spacing:2.5px; text-transform:uppercase; margin-bottom:7px; }
+.login-container .global-bg { position:fixed; inset:0; pointer-events:none; z-index:0; transition:opacity 1.2s ease-out; }
+.login-container .form-bg { position:absolute; inset:0; pointer-events:none; z-index:0; background-image: linear-gradient(rgba(46,213,115,0.08) 1px, transparent 1px), linear-gradient(to right, rgba(46,213,115,0.08) 1px, transparent 1px); background-size:16px 16px; }
+.login-container .form-glow { position:absolute; inset:0; pointer-events:none; z-index:0; background: radial-gradient(ellipse 85% 70% at 50% 50%, rgba(46,213,115,0.18) 0%, rgba(46,213,115,0.08) 35%, rgba(0,0,0,0.8) 65%, rgba(0,0,0,1) 100%); }
+.login-container .btn-wrapper { --padding:6px; --border-radius:16px; --dot-size:12px; --animation-duration:1.2s; position:relative; display:flex; align-items:center; justify-content:center; width:100%; height:56px; border-radius:var(--border-radius); border:none; background-color:#00000008; box-shadow:1px 1px 2px 0 rgba(255,255,255,0.12),2px 2px 2px #0001 inset,2px 2px 4px #0001 inset,2px 2px 8px #0001 inset; transition:box-shadow 50ms linear; perspective:150px; perspective-origin:center; user-select:none; z-index:1; margin-top:6px; }
+.login-container .btn { display:flex; align-items:center; justify-content:center; gap:0.25em; padding:0 56px 0 24px; width:calc(100% - 12px); height:calc(100% - 12px); border-radius:calc(var(--border-radius) - var(--padding)); border:none; cursor:pointer; transition:transform .25s cubic-bezier(.25,1.5,.5,2.2),box-shadow .25s cubic-bezier(.25,1.5,.5,1),filter .3s cubic-bezier(.25,1.5,.5,1); will-change:transform,filter; z-index:2; }
+.login-container .btn-txt { display:inline-block; font-size:14px; font-weight:600; font-family:"Montserrat","Manrope",sans-serif; letter-spacing:3px; text-transform:uppercase; filter:drop-shadow(0 1px 0px rgba(255,255,255,0.5)) drop-shadow(0 -1px 0px rgba(0,0,0,0.4)); transition:background-image 0.6s; }
+.login-container .dot { position:absolute; top:calc(50% - var(--dot-size)/2); right:calc(28px - var(--padding)/2); width:var(--dot-size); aspect-ratio:1/1; border-radius:50%; background-color:hsla(var(--hue),80%,50%,1); border:1px solid hsla(var(--hue),60%,60%,0.8); box-sizing:border-box; box-shadow:1px 1px 2px -1px #fffe inset,0 2px 1px #00000010,0 4px 2px #00000010,0 8px 4px #00000010; pointer-events:none; z-index:3; transition:background-color 0.6s, border-color 0.6s, box-shadow 0.6s; }
+.login-container .dot::before { content:""; position:absolute; top:calc(var(--padding)/-2); left:calc(var(--padding)/-2); width:calc(100% + var(--padding)); height:calc(100% + var(--padding)); border-radius:inherit; background-color:#0006; mask-image:radial-gradient(circle at 50% 60%,transparent 50%,black); }
+.login-container .dot::after { content:""; position:absolute; top:calc(var(--padding)/-2); left:calc(var(--padding)/-2); width:calc(100% + var(--padding)); height:calc(100% + var(--padding)); border-radius:inherit; background-color:#0000; box-shadow:0 0 10px 2px hsla(var(--hue),80%,50%,0.5),0 0 20px 10px hsla(var(--hue),80%,50%,0.6),0 0 50px 20px hsla(var(--hue),80%,50%,0.4),0 0 16px 1px hsla(var(--hue),100%,60%,0.9) inset; opacity:1; transition:box-shadow 0.6s; }
+.login-container .btn:hover, .login-container .btn:focus-visible { filter:drop-shadow(var(--padding) 0 var(--padding) hsla(var(--hue),70%,60%,0.6)); transform:translate3d(0,0px,3px); }
+.login-container .btn:focus-visible { outline:2px dashed hsla(var(--hue),70%,40%,1); outline-offset:var(--padding); }
+.login-container .btn:active { filter:drop-shadow(var(--padding) 0 var(--padding) hsla(var(--hue),100%,50%,1)); transform:translate3d(0,0,-4px); }
+.login-container .btn-wrapper:has(.btn:active) { box-shadow:1px 1px 2px 0 #fffd,2px 2px 2px #0001 inset,2px 2px 4px #0001 inset,2px 2px 8px #0001 inset,0 0 32px 2px hsla(var(--hue),50%,50%,0.5) inset; }
+.co { position:absolute; width:18px; height:18px; border-color:rgba(46,213,115,0.3); border-style:solid; }
+.tl { top:16px; left:16px; border-width:2px 0 0 2px; }
+.tr { top:16px; right:16px; border-width:2px 2px 0 0; }
+.bl { bottom:16px; left:16px; border-width:0 0 2px 2px; }
+.br { bottom:16px; right:16px; border-width:0 2px 2px 0; }
+
+/* --- Anomaly Rules Page --- */
+.anomaly-rules-page { display: flex; min-height: calc(100vh - 120px); background: #000; color: #fff; overflow: hidden; position: relative; border-radius: 12px; border: 1px solid rgba(46,213,115,0.13); font-family: system-ui, sans-serif; }
+.anomaly-rules-page.page-bg-grid::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(46,213,115,0.04) 1px, transparent 1px), linear-gradient(to right, rgba(46,213,115,0.04) 1px, transparent 1px); background-size: 22px 22px; pointer-events: none; z-index: 0; }
+.anomaly-rules-page .left-panel { flex: 0 0 600px; position: relative; z-index: 2; display: flex; flex-direction: column; justify-content: center; padding: 32px 24px 24px; border-right: 1px solid rgba(46,213,115,0.13); background: rgba(0,0,0,0.75); }
+.anomaly-rules-page .welcome-heading { font-family: 'Montserrat', system-ui, sans-serif; font-weight: 700; font-size: 36px; color: #fff; line-height: 1.1; margin-bottom: 8px; }
+.anomaly-rules-page .welcome-heading span { color: rgb(46,213,115); }
+.anomaly-rules-page .welcome-desc { font-size: 16px; color: rgba(255,255,255,0.35); line-height: 1.7; margin-bottom: 28px; }
+.anomaly-rules-page .welcome-desc strong { color: rgba(46,213,115,0.8); font-weight: 600; }
+.anomaly-rules-page .section-label { font-size: 12px; color: rgba(46,213,115,0.55); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 10px; }
+.anomaly-rules-page .add-row { display: flex; gap: 8px; align-items: center; margin-bottom: 28px; }
+.anomaly-rules-page .inp { flex: 1; padding: 11px 14px; border-radius: 10px; background: rgba(0,0,0,0.5); border: 1px solid rgba(46,213,115,0.18); color: #fff; font-size: 15px; outline: none; transition: border-color .25s, box-shadow .25s; font-family: inherit; }
+.anomaly-rules-page .inp:focus { border-color: rgba(46,213,115,0.55); box-shadow: 0 0 0 3px rgba(46,213,115,0.07); }
+.anomaly-rules-page .inp::placeholder { color: rgba(255,255,255,0.2); }
+.anomaly-rules-page .btn-wrapper { --hue: 142deg; --dot-size: 10px; --padding: 5px; --border-radius: 12px; position: relative; display: flex; align-items: center; justify-content: center; height: 44px; min-width: 100px; border-radius: var(--border-radius); border: none; background-color: #00000008; box-shadow: 1px 1px 2px 0 rgba(255,255,255,0.12), 2px 2px 4px #0001 inset; transition: box-shadow 50ms linear; perspective: 150px; user-select: none; flex-shrink: 0; }
+.anomaly-rules-page .custom-btn { display: flex; align-items: center; justify-content: center; gap: 0.25em; padding: 0 36px 0 14px; width: calc(100% - 10px); height: calc(100% - 10px); border-radius: calc(var(--border-radius) - var(--padding)); border: none; cursor: pointer; background: linear-gradient(rgba(255,255,255,0.07), rgba(0,0,0,0.04)), #0a1f10; box-shadow: 1px 1px 2px -1px rgba(255,255,255,0.5) inset; transition: transform .25s cubic-bezier(.25,1.5,.5,2.2), filter .3s; will-change: transform, filter; }
+.anomaly-rules-page .custom-btn:hover { filter: drop-shadow(3px 0 6px rgba(46,213,115,0.5)); transform: translate3d(0,0,3px); }
+.anomaly-rules-page .custom-btn:active { transform: translate3d(0,0,-3px); }
+.anomaly-rules-page .btn-txt { font-size: 11px; font-weight: 600; font-family: 'Montserrat', system-ui, sans-serif; letter-spacing: 2.5px; text-transform: uppercase; background-image: linear-gradient(hsla(142deg,70%,65%,0.95), hsla(142deg,70%,40%,0.7)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.anomaly-rules-page .dot { position: absolute; top: calc(50% - var(--dot-size)/2); right: 14px; width: var(--dot-size); aspect-ratio: 1/1; border-radius: 50%; background-color: hsla(142deg,80%,50%,1); border: 1px solid hsla(142deg,60%,60%,0.8); pointer-events: none; z-index: 3; }
+.anomaly-rules-page .dot::after { content: ''; position: absolute; top: -2px; left: -2px; width: calc(100% + 4px); height: calc(100% + 4px); border-radius: inherit; background: #0000; box-shadow: 0 0 8px 2px hsla(142deg,80%,50%,0.5), 0 0 16px 8px hsla(142deg,80%,50%,0.4); }
+.anomaly-rules-page .stats { display: flex; gap: 10px; margin-bottom: 24px; }
+.anomaly-rules-page .stat { flex: 1; background: rgba(46,213,115,0.04); border: 1px solid rgba(46,213,115,0.1); border-radius: 8px; padding: 10px 12px; text-align: center; }
+.anomaly-rules-page .stat-num { font-size: 28px; font-weight: 700; color: rgb(46,213,115); font-family: 'Montserrat', system-ui; }
+.anomaly-rules-page .stat-label { font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
+.anomaly-rules-page .right-panel { flex: 1; position: relative; z-index: 2; overflow-y: auto; padding: 28px 24px; background: radial-gradient(circle at top right, rgba(46,213,115,0.06), transparent 500px), rgba(15, 18, 15, 0.8); backdrop-filter: blur(8px); }
+.anomaly-rules-page .right-panel::-webkit-scrollbar { width: 4px; }
+.anomaly-rules-page .right-panel::-webkit-scrollbar-track { background: rgba(46,213,115,0.03); }
+.anomaly-rules-page .right-panel::-webkit-scrollbar-thumb { background: rgba(46,213,115,0.2); border-radius: 2px; }
+.anomaly-rules-page .right-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.anomaly-rules-page .right-title { font-size: 11px; color: rgba(46,213,115,0.6); letter-spacing: 2.5px; text-transform: uppercase; }
+.anomaly-rules-page .count-badge { font-size: 10px; color: rgba(46,213,115,0.5); background: rgba(46,213,115,0.07); border: 1px solid rgba(46,213,115,0.15); border-radius: 20px; padding: 3px 10px; letter-spacing: 1px; }
+.anomaly-rules-page .rule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.anomaly-rules-page .rule-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(46,213,115,0.12); border-radius: 12px; overflow: hidden; transition: border-color .2s; }
+.anomaly-rules-page .rule-card:hover { border-color: rgba(46,213,115,0.28); }
+.anomaly-rules-page .rule-card.active-card { border-color: rgba(46,213,115,0.22); }
+.anomaly-rules-page .rule-card.inactive-card { border-color: rgba(255,255,255,0.06); }
+.anomaly-rules-page .card-bar { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-bottom: 1px solid rgba(46,213,115,0.08); background: rgba(46,213,115,0.03); }
+.anomaly-rules-page .card-bar-left { display: flex; align-items: center; gap: 6px; }
+.anomaly-rules-page .card-id { font-size: 9px; color: rgba(46,213,115,0.5); letter-spacing: 2px; text-transform: uppercase; font-family: 'Montserrat', system-ui; }
+.anomaly-rules-page .card-bar-btns { display: flex; gap: 6px; align-items: center; }
+.anomaly-rules-page .toggle-btn { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 6px; border: 1px solid; cursor: pointer; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; font-family: 'Montserrat', system-ui; transition: all .2s; }
+.anomaly-rules-page .toggle-btn.is-active { background: rgba(46,213,115,0.08); border-color: rgba(46,213,115,0.3); color: rgb(46,213,115); }
+.anomaly-rules-page .toggle-btn.is-inactive { background: rgba(255,80,80,0.06); border-color: rgba(255,80,80,0.25); color: rgba(255,100,100,0.8); }
+.anomaly-rules-page .toggle-icon { width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.anomaly-rules-page .toggle-icon.tick { background: rgba(46,213,115,0.15); color: rgb(46,213,115); }
+.anomaly-rules-page .toggle-icon.cross { background: rgba(255,80,80,0.12); color: rgba(255,100,100,0.8); }
+.anomaly-rules-page .del-btn { width: 24px; height: 24px; border-radius: 5px; border: 1px solid rgba(255,60,60,0.2); background: rgba(255,60,60,0.05); color: rgba(255,80,80,0.6); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; flex-shrink: 0; }
+.anomaly-rules-page .del-btn:hover { background: rgba(255,60,60,0.12); border-color: rgba(255,60,60,0.4); color: rgba(255,80,80,1); }
+.anomaly-rules-page .card-body { padding: 12px; }
+.anomaly-rules-page .card-heading { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 4px; font-family: 'Montserrat', system-ui; letter-spacing: 0.3px; }
+.anomaly-rules-page .card-desc { font-size: 14px; color: rgba(255,255,255,0.35); line-height: 1.6; margin-bottom: 12px; }
+@keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.3 } }
+@keyframes pulse-red { 0%, 100% { opacity: 0.8 } 50% { opacity: 0.2 } }
+.anomaly-rules-page .pulse { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: rgb(46,213,115); animation: pulse 2s infinite; }
+.anomaly-rules-page .pulse.red { background: rgba(255,80,80,0.8); animation: pulse-red 2s infinite; }
+
+/* --- Anomaly Page --- */
+.anomaly-page-wrapper .anomaly-cards-container { display: flex; flex-direction: column; gap: 15px; padding: 10px; }
+.anomaly-page-wrapper .anomaly-card { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 100px; border-radius: 12px; color: white; cursor: pointer; transition: 400ms cubic-bezier(0.4, 0, 0.2, 1); padding: 20px; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+.anomaly-page-wrapper .anomaly-card.red { background-color: #f43f5e; box-shadow: 0 0 20px rgba(244, 63, 94, 0.2); }
+.anomaly-page-wrapper .anomaly-card.blue { background-color: #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+.anomaly-page-wrapper .anomaly-card.green { background-color: #22c55e; box-shadow: 0 0 20px rgba(34, 197, 94, 0.2); }
+.anomaly-page-wrapper .anomaly-card.gray { background-color: #64748b; }
+.anomaly-page-wrapper .anomaly-card .tip { font-size: 1.1em; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+.anomaly-page-wrapper .anomaly-card .second-text { font-size: .8em; opacity: 0.9; margin-top: 4px; }
+.anomaly-page-wrapper .anomaly-card .hover-content { max-height: 0; opacity: 0; transform: translateY(10px); transition: all 400ms ease; width: 100%; overflow: hidden; }
+.anomaly-page-wrapper .anomaly-card:hover .hover-content { max-height: 500px; opacity: 1; transform: translateY(0); margin-top: 15px; }
+.anomaly-page-wrapper .hover-image { width: 100%; max-width: 280px; height: 140px; margin: 0 auto 12px; border-radius: 8px; overflow: hidden; border: 2px solid rgba(255,255,255,0.3); }
+.anomaly-page-wrapper .hover-image img { width: 100%; height: 100%; object-fit: cover; }
+.anomaly-page-wrapper .hover-description { font-size: 0.85em; line-height: 1.5; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; text-align: left; }
+.anomaly-page-wrapper .anomaly-card:hover { transform: scale(1.05); z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+.anomaly-page-wrapper .anomaly-cards-container:hover > .anomaly-card:not(:hover) { filter: blur(8px); transform: scale(0.95); opacity: 0.6; }
+
+/* --- Alerts Page --- */
+.alerts-page-wrapper .anomaly-cards { display: flex; flex-direction: column; gap: 15px; }
+.alerts-page-wrapper .anomaly-card { display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; min-height: 100px; border-radius: 10px; color: white; cursor: pointer; transition: all 400ms; padding: 1.5rem; position: relative; overflow: hidden; }
+.alerts-page-wrapper .anomaly-card .tip { font-size: 1em; font-weight: 700; margin-bottom: 0.5rem; }
+.alerts-page-wrapper .anomaly-card .second-text { font-size: 0.7em; opacity: 0.8; }
+.alerts-page-wrapper .anomaly-card:hover { transform: scale(1.05); }
+.alerts-page-wrapper .anomaly-cards:hover > .anomaly-card:not(:hover) { filter: blur(10px); transform: scale(0.95); }
+
+/* --- Admin Users Page --- */
+.admin-users-page .admin-btn { width: 50px; height: 50px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(0,0,0,0.3); cursor: pointer; transition: width 0.3s ease, border-radius 0.3s ease, background-color 0.3s ease; overflow: hidden; position: relative; font-family: 'Outfit', sans-serif; }
+.admin-users-page .admin-btn__icon { width: 20px; height: 20px; flex-shrink: 0; transition: width 0.3s ease, height 0.3s ease, transform 0.3s ease; }
+.admin-users-page .admin-btn::before { position: absolute; top: -20px; content: attr(title); color: #fff; font-size: 0; transition: font-size 0.2s ease, transform 0.3s ease, opacity 0.2s ease; opacity: 0; white-space: nowrap; font-weight: 600; letter-spacing: 0.5px; }
+.admin-users-page .admin-btn--refresh { background-color: rgb(20, 20, 20); }
+.admin-users-page .admin-btn--refresh .admin-btn__icon { color: white; }
+.admin-users-page .admin-btn--refresh:hover { width: 140px; border-radius: 50px; background-color: rgb(46, 213, 115); }
+.admin-users-page .admin-btn--refresh:hover .admin-btn__icon { width: 28px; height: 28px; transform: translateY(60%); }
+.admin-users-page .admin-btn--refresh:hover::before { content: 'Refresh'; font-size: 13px; opacity: 1; transform: translateY(30px); }
+.admin-users-page .admin-btn--add { background-color: rgba(46, 213, 115, 0.15); border: 1.5px solid rgba(46, 213, 115, 0.5) !important; }
+.admin-users-page .admin-btn--add .admin-btn__icon { color: rgb(46, 213, 115); }
+.admin-users-page .admin-btn--add:hover { width: 140px; border-radius: 50px; background-color: rgb(46, 213, 115); }
+.admin-users-page .admin-btn--add:hover .admin-btn__icon { color: white; width: 28px; height: 28px; transform: translateY(60%); }
+.admin-users-page .admin-btn--add:hover::before { content: 'Add User'; font-size: 13px; opacity: 1; transform: translateY(30px); }

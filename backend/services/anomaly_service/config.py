@@ -40,7 +40,7 @@ else:
 OLLAMA_HOST = (
     os.getenv("OLLAMA_HOST")
     or os.getenv("OLLAMA_BASE_URL")
-    or "http://localhost:11434"
+    or "http://localhost:11435"
 ).rstrip("/")
  
 VLM_MODEL            = os.getenv("VLM_MODEL") or os.getenv("OLLAMA_VLM_MODEL") or "moondream"

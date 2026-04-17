@@ -259,7 +259,7 @@ const AdminUsers = () => {
 
     return (
         <DashboardLayout>
-            <div className="min-h-screen p-8" style={{ background: "#050505", color: "#fff" }}>
+            <div className="admin-users-page min-h-screen p-8" style={{ background: "#050505", color: "#fff" }}>
                 <div className="max-w-7xl mx-auto space-y-6">
                     {/* Header */}
                     <div className="flex justify-between items-center mb-8">
@@ -572,93 +572,6 @@ const AdminUsers = () => {
                         </DialogContent>
                     </Dialog>
                 </div>
-
-                <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Outfit:wght@400;500;600;700&display=swap');
-                
-                /* ── Animated action buttons ── */
-                .admin-btn {
-                    width: 50px;
-                    height: 50px;
-                    border-radius: 50%;
-                    border: none;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 0 20px rgba(0,0,0,0.3);
-                    cursor: pointer;
-                    transition: width 0.3s ease, border-radius 0.3s ease, background-color 0.3s ease;
-                    overflow: hidden;
-                    position: relative;
-                    font-family: 'Outfit', sans-serif;
-                }
-                .admin-btn__icon {
-                    width: 20px;
-                    height: 20px;
-                    flex-shrink: 0;
-                    transition: width 0.3s ease, height 0.3s ease, transform 0.3s ease;
-                }
-                .admin-btn::before {
-                    position: absolute;
-                    top: -20px;
-                    content: attr(title);
-                    color: #fff;
-                    font-size: 0;
-                    transition: font-size 0.2s ease, transform 0.3s ease, opacity 0.2s ease;
-                    opacity: 0;
-                    white-space: nowrap;
-                    font-weight: 600;
-                    letter-spacing: 0.5px;
-                }
-
-                /* REFRESH button */
-                .admin-btn--refresh {
-                    background-color: rgb(20, 20, 20);
-                }
-                .admin-btn--refresh .admin-btn__icon { color: white; }
-                .admin-btn--refresh:hover {
-                    width: 140px;
-                    border-radius: 50px;
-                    background-color: rgb(46, 213, 115);
-                }
-                .admin-btn--refresh:hover .admin-btn__icon {
-                    width: 28px;
-                    height: 28px;
-                    transform: translateY(60%);
-                }
-                .admin-btn--refresh:hover::before {
-                    content: 'Refresh';
-                    font-size: 13px;
-                    opacity: 1;
-                    transform: translateY(30px);
-                }
-
-                /* ADD button */
-                .admin-btn--add {
-                    background-color: rgba(46, 213, 115, 0.15);
-                    border: 1.5px solid rgba(46, 213, 115, 0.5) !important;
-                }
-                .admin-btn--add .admin-btn__icon { color: rgb(46, 213, 115); }
-                .admin-btn--add:hover {
-                    width: 140px;
-                    border-radius: 50px;
-                    background-color: rgb(46, 213, 115);
-                }
-                .admin-btn--add:hover .admin-btn__icon {
-                    color: white;
-                    width: 28px;
-                    height: 28px;
-                    transform: translateY(60%);
-                }
-                .admin-btn--add:hover::before {
-                    content: 'Add User';
-                    font-size: 13px;
-                    opacity: 1;
-                    transform: translateY(30px);
-                }
-
- 
-            `}</style>
             </div>
         </DashboardLayout>
     );

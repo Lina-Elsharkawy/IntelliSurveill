@@ -131,7 +131,7 @@ const Anomaly = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="anomaly-page-wrapper space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Anomalies</h1>
@@ -219,105 +219,6 @@ const Anomaly = () => {
                   Error: {error}
                 </div>
               )}
-
-              <style>{`
-                .anomaly-cards-container {
-                  display: flex;
-                  flex-direction: column;
-                  gap: 15px;
-                  padding: 10px;
-                }
-
-                .anomaly-card {
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  justify-content: center;
-                  text-align: center;
-                  min-height: 100px;
-                  border-radius: 12px;
-                  color: white;
-                  cursor: pointer;
-                  transition: 400ms cubic-bezier(0.4, 0, 0.2, 1);
-                  padding: 20px;
-                  position: relative;
-                  overflow: hidden;
-                  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-                }
-
-                .anomaly-card.red { background-color: #f43f5e; box-shadow: 0 0 20px rgba(244, 63, 94, 0.2); }
-                .anomaly-card.blue { background-color: #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
-                .anomaly-card.green { background-color: #22c55e; box-shadow: 0 0 20px rgba(34, 197, 94, 0.2); }
-                .anomaly-card.gray { background-color: #64748b; }
-
-                .anomaly-card .tip {
-                  font-size: 1.1em;
-                  font-weight: 800;
-                  letter-spacing: 0.5px;
-                  text-transform: uppercase;
-                }
-
-                .anomaly-card .second-text {
-                  font-size: .8em;
-                  opacity: 0.9;
-                  margin-top: 4px;
-                }
-
-                /* Hover Reveal Content */
-                .anomaly-card .hover-content {
-                  max-height: 0;
-                  opacity: 0;
-                  transform: translateY(10px);
-                  transition: all 400ms ease;
-                  width: 100%;
-                  overflow: hidden;
-                }
-
-                .anomaly-card:hover .hover-content {
-                  max-height: 500px;
-                  opacity: 1;
-                  transform: translateY(0);
-                  margin-top: 15px;
-                }
-
-                .hover-image {
-                  width: 100%;
-                  max-width: 280px;
-                  height: 140px;
-                  margin: 0 auto 12px;
-                  border-radius: 8px;
-                  overflow: hidden;
-                  border: 2px solid rgba(255,255,255,0.3);
-                }
-
-                .hover-image img {
-                  width: 100%;
-                  height: 100%;
-                  object-fit: cover;
-                }
-
-                .hover-description {
-                  font-size: 0.85em;
-                  line-height: 1.5;
-                  background: rgba(0,0,0,0.2);
-                  padding: 10px;
-                  border-radius: 6px;
-                  text-align: left;
-                }
-
-                /* Container Hover Effect (Blur Background) */
-                .anomaly-card:hover {
-                  transform: scale(1.05);
-                  z-index: 10;
-                  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                }
-
-                .anomaly-cards-container:hover > .anomaly-card:not(:hover) {
-                  filter: blur(8px);
-                  transform: scale(0.95);
-                  opacity: 0.6;
-                }
-              `}</style>
 
               <TabsContent value="new">
                 {newAnomalies.length === 0 ? (

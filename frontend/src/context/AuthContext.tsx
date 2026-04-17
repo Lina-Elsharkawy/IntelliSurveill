@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 const decoded: any = jwtDecode(t);
                 let extracted = decoded["https://myapp.com/roles"] || decoded.roles || [];
                 if (typeof extracted === 'string') extracted = [extracted];
-                let finalRoles = Array.isArray(extracted) ? extracted : [];
+                const finalRoles = Array.isArray(extracted) ? extracted : [];
 
                 return finalRoles;
             } catch (e) {
