@@ -316,7 +316,7 @@ def main() -> None:
                 *TOPICS,
                 bootstrap_servers=BOOTSTRAP,
                 group_id=GROUP_ID,
-                auto_offset_reset="earliest",
+                auto_offset_reset="latest",
                 enable_auto_commit=False,
                 value_deserializer=lambda v: json.loads(v.decode("utf-8")),
             )
