@@ -2,24 +2,26 @@ const express = require('express');
 const router = express.Router();
 const checkJwt = require('../middleware/auth');
 const adminController = require('../controllers/adminController');
+const vectorMatchController = require('../controllers/vectorMatchController');
 
-// Apply JWT check middleware
+// Apply JWT check middleware to all admin routes
 router.use(checkJwt);
 
-// Static routes first (no parameters)
+// ── Auth0 user management (existing, untouched) ──
 router.get('/roles', adminController.getAllRoles);
-
-// /users routes - non-parameterized first
 router.get('/users', adminController.getUsers);
 router.post('/users', adminController.createUser);
-
-// /users/:id routes (parameterized)
 router.patch('/users/:id', adminController.updateUser);
 router.delete('/users/:id', adminController.deleteUser);
-
-// /users/:id/roles routes
 router.get('/users/:id/roles', adminController.getUserRoles);
 router.post('/users/:id/roles', adminController.assignRoles);
 router.delete('/users/:id/roles', adminController.removeRoles);
+
+// ── Vector-match face identity routes (new) ──
+router.get('/identities', vectorMatchController.listIdentities);
+router.get('/pending-unknowns', vectorMatchController.listPendingUnknowns);
+router.get('/recent-entry-logs', vectorMatchController.listRecentEntryLogs);
+router.post('/assign-unknown', vectorMatchController.assignUnknown);
+router.post('/create-identity-from-unknown', vectorMatchController.createIdentityFromUnknown);
 
 module.exports = router;
