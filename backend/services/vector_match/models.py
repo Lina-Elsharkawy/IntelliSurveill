@@ -1,6 +1,6 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class EdgeEvent(BaseModel):
     event_id: str
@@ -57,6 +57,11 @@ class PendingUnknownItem(BaseModel):
     notes: Optional[str] = None
     created_at: datetime
 
+    quality_score: Optional[float] = None
+    best_similarity: Optional[float] = None
+    second_similarity: Optional[float] = None
+    margin: Optional[float] = None
+
     camera_id: Optional[int] = None
     location: Optional[str] = None
     event_type: Optional[str] = None
@@ -65,16 +70,24 @@ class PendingUnknownItem(BaseModel):
 
 class EntryLogItem(BaseModel):
     id: int
-    timestamp: str
+    timestamp: datetime
     detected_id: Optional[int] = None
+    identity_name: Optional[str] = None
     camera_id: Optional[int] = None
     authorized: Optional[bool] = None
     event_type: Optional[str] = None
     location: Optional[str] = None
     device_status: Optional[str] = None
     image_video_ref: Optional[str] = None
-    processing_time: Optional[str] = None
+    image_path: Optional[str] = None
+    processing_time: Optional[timedelta] = None
     model_version: Optional[str] = None
+    unknown_face_event_id: Optional[int] = None
+
+    quality_score: Optional[float] = None
+    best_similarity: Optional[float] = None
+    second_similarity: Optional[float] = None
+    margin: Optional[float] = None
 
 
 class IdentityItem(BaseModel):
@@ -86,3 +99,8 @@ class IdentityItem(BaseModel):
     visitor_id: Optional[int] = None
     embeddings_count: int
     authoritative_count: int
+
+class AdminCountsResponse(BaseModel):
+    identities: int
+    unknowns: int
+    logs: int

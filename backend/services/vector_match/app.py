@@ -1,5 +1,4 @@
 from typing import Optional
-
 from fastapi import FastAPI, HTTPException
 
 from .config import (
@@ -18,6 +17,7 @@ from .models import (
     PendingUnknownItem,
     EntryLogItem,
     IdentityItem,
+    AdminCountsResponse,
 )
 from .utils import l2_normalize, to_pgvector_literal, interval_from_ms
 from . import db
@@ -92,6 +92,10 @@ def match(event: EdgeEvent):
                 image_video_ref=event.image_video_ref,
                 processing_time_interval=interval_from_ms(event.processing_time_ms),
                 model_version=event.model_version,
+                quality_score=event.quality_score,
+                best_similarity=best_sim,
+                second_similarity=second_sim,
+                margin=margin,
             )
 
             auto_learned = False
@@ -128,6 +132,10 @@ def match(event: EdgeEvent):
                     qvec_literal=qvec,
                     embedding_model=embedding_model,
                     notes="pending_review",
+                    quality_score=event.quality_score,
+                    best_similarity=best_sim,
+                    second_similarity=second_sim,
+                    margin=margin,
                 )
 
             return MatchResponse(
@@ -194,9 +202,9 @@ def admin_create_identity(req: CreateIdentityFromUnknownRequest):
 
 
 @app.get("/admin/pending-unknowns", response_model=list[PendingUnknownItem])
-def admin_list_pending_unknowns(limit: int = 50, offset: int = 0):
+def admin_list_pending_unknowns(limit: int = 2000, offset: int = 0):
     """List pending unknown events for review UI."""
-    limit = max(1, min(int(limit), 500))
+    limit = max(1, min(int(limit), 2000))
     offset = max(0, int(offset))
     with db.get_conn() as conn:
         rows = db.list_pending_unknowns(conn, limit=limit, offset=offset)
@@ -204,14 +212,30 @@ def admin_list_pending_unknowns(limit: int = 50, offset: int = 0):
 
 
 @app.get("/admin/recent-entry-logs", response_model=list[EntryLogItem])
-def admin_list_recent_entry_logs(limit: int = 100, offset: int = 0):
+def admin_list_recent_entry_logs(limit: int = 2000, offset: int = 0):
     """List recent entry logs (for debugging / dashboards)."""
-    limit = max(1, min(int(limit), 1000))
+    limit = max(1, min(int(limit), 2000))
     offset = max(0, int(offset))
     with db.get_conn() as conn:
         rows = db.list_recent_entry_logs(conn, limit=limit, offset=offset)
-        return [EntryLogItem(**r) for r in rows]
 
+        items = []
+        for r in rows:
+            item = dict(r)
+            item["image_path"] = f"/api/admin/entry-logs/{item['id']}/image" if item.get("image_video_ref") else None
+            items.append(EntryLogItem(**item))
+
+        return items
+@app.get("/admin/entry-logs/{entry_log_id}", response_model=EntryLogItem)
+def admin_get_entry_log(entry_log_id: int):
+    with db.get_conn() as conn:
+        row = db.get_entry_log_by_id(conn, entry_log_id=entry_log_id)
+        if not row:
+            raise HTTPException(status_code=404, detail="Entry log not found")
+
+        item = dict(row)
+        item["image_path"] = f"/api/admin/entry-logs/{item['id']}/image" if item.get("image_video_ref") else None
+        return EntryLogItem(**item)
 
 @app.get("/admin/identities", response_model=list[IdentityItem])
 def admin_list_identities(limit: int = 100, offset: int = 0):
@@ -223,3 +247,11 @@ def admin_list_identities(limit: int = 100, offset: int = 0):
         return [IdentityItem(**r) for r in rows]
 
 
+@app.get("/admin/counts", response_model=AdminCountsResponse)
+def admin_counts():
+    with db.get_conn() as conn:
+        return AdminCountsResponse(
+            identities=db.count_identities(conn),
+            unknowns=db.count_pending_unknowns(conn),
+            logs=db.count_entry_logs(conn),
+        )
