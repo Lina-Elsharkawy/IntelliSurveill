@@ -9,6 +9,8 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
 from minio import Minio
 from minio.error import S3Error
+from urllib.parse import unquote
+from fastapi.responses import StreamingResponse
 
 APP_NAME = "evidence-gateway"
 
@@ -79,7 +81,19 @@ def _build_object_key(
         return f"anomalies/cam_{camera_id}/{event_id}/{event_id}.{ext}"
 
     return f"misc/cam_{camera_id}/{event_id}.{ext}"
+def _parse_s3_ref(ref: str) -> tuple[str, str]:
+    """
+    Parse s3://bucket/object/key.jpg into (bucket, object_key).
+    """
+    if not ref or not ref.startswith("s3://"):
+        raise ValueError("Invalid s3 ref")
 
+    rest = ref[len("s3://"):]
+    parts = rest.split("/", 1)
+    if len(parts) != 2 or not parts[0] or not parts[1]:
+        raise ValueError("Invalid s3 ref format")
+
+    return parts[0], parts[1]
 
 # ---------------------------------------------------------------------------
 # Minio client — created once at startup, reused across all requests
@@ -211,6 +225,36 @@ async def upload_evidence(
         "processing_time_ms": elapsed_ms,
     })
 
+@app.get("/evidence/object")
+def get_evidence_object(ref: str):
+    """
+    Stream an object back from MinIO using a stored s3://... reference.
+    """
+    try:
+        decoded_ref = unquote(ref)
+        bucket, object_key = _parse_s3_ref(decoded_ref)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    client = get_minio()
+
+    try:
+        stat = client.stat_object(bucket, object_key)
+        obj = client.get_object(bucket, object_key)
+
+        content_type = stat.content_type or mimetypes.guess_type(object_key)[0] or "application/octet-stream"
+
+        return StreamingResponse(
+            obj.stream(32 * 1024),
+            media_type=content_type,
+            headers={
+                "Content-Disposition": f'inline; filename="{os.path.basename(object_key)}"'
+            },
+        )
+    except S3Error as e:
+        raise HTTPException(status_code=404, detail=f"MinIO error: {e.code} {e.message}") from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fetch failed: {type(e).__name__}: {e}") from e
 
 # ---------------------------------------------------------------------------
 # Entry point
