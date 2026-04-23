@@ -453,7 +453,7 @@ CREATE TABLE IF NOT EXISTS Anomaly_Rules (
     id                   BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     rule_text            TEXT NOT NULL,
     rule_type            VARCHAR(20) NOT NULL CHECK (rule_type IN ('trigger','suppress')),
-    event_type           VARCHAR(50) NOT NULL CHECK (event_type IN ('intrusion', 'loitering', 'after_hours', 'fall_detected', 'fight_detection', 'camera_tamper', 'sudden_movement', 'smoke_fire', 'crowd_detection')),
+    event_type           VARCHAR(50) NOT NULL CHECK (event_type IN ('intrusion', 'loitering', 'after_hours', 'fall_detected', 'fight_detection', 'camera_tamper', 'sudden_movement', 'smoke_fire', 'crowd_detection','other')),
     conditions           JSONB NOT NULL,
     source               VARCHAR(50) NOT NULL CHECK (source IN ('Admin','Learned')),
     active               BOOLEAN NOT NULL DEFAULT TRUE,

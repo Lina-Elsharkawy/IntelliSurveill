@@ -417,6 +417,21 @@ services:
         max-file: "3"
     networks:
       - data-platform-net
+
+  anomaly-rules-service:
+    build:
+      context: ./backend/Anomaly_Rules
+      dockerfile: Dockerfile
+    environment:
+      DB_DSN: postgresql://lina:123@postgres-db:5432/lina
+      OLLAMA_BASE_URL: http://ollama:11434
+    ports:
+      - "8003:8000"
+    depends_on:
+      - postgres-db
+      - ollama
+    networks:
+      - data-platform-net
   # redis:
   #   image: redis:7.2-bookworm
   #   expose:

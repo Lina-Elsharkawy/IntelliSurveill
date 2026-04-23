@@ -608,26 +608,26 @@ def create_rule(p: CreateRulePayload) -> dict[str, Any]:
     return {"rule_id": rule_id, "rule_text": p.rule_text, "rule_type": p.rule_type}
 
 
-@app.get("/anomaly-rules")
-def list_rules(
-    camera_id:   Optional[int] = None,
-    active_only: bool          = True,
-) -> list[dict[str, Any]]:
-    """List rules with full metadata for the admin UI."""
-    with db.connect() as conn:
-        return db.get_all_rules(conn, camera_id=camera_id, active_only=active_only)
+# @app.get("/anomaly-rules")
+# def list_rules(
+#     camera_id:   Optional[int] = None,
+#     active_only: bool          = True,
+# ) -> list[dict[str, Any]]:
+#     """List rules with full metadata for the admin UI."""
+#     with db.connect() as conn:
+#         return db.get_all_rules(conn, camera_id=camera_id, active_only=active_only)
 
 
-@app.delete("/anomaly-rules/{rule_id}")
-def deactivate_rule(rule_id: int) -> dict[str, Any]:
-    """Deactivate a rule so it is no longer injected into LLM prompts."""
-    with db.connect() as conn:
-        conn.execute("BEGIN")
-        ok = db.deactivate_rule(conn, rule_id)
-        conn.execute("COMMIT")
-    if not ok:
-        raise HTTPException(404, detail="Rule not found")
-    return {"rule_id": rule_id, "is_active": False}
+# @app.delete("/anomaly-rules/{rule_id}")
+# def deactivate_rule(rule_id: int) -> dict[str, Any]:
+#     """Deactivate a rule so it is no longer injected into LLM prompts."""
+#     with db.connect() as conn:
+#         conn.execute("BEGIN")
+#         ok = db.deactivate_rule(conn, rule_id)
+#         conn.execute("COMMIT")
+#     if not ok:
+#         raise HTTPException(404, detail="Rule not found")
+#     return {"rule_id": rule_id, "is_active": False}
 
 
 @app.get("/anomaly-candidates")
