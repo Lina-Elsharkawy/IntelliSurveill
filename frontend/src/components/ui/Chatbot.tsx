@@ -125,32 +125,28 @@ export default function Chatbot() {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${
-                  message.sender === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"
+                  }`}
               >
                 <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2 ${
-                    message.sender === "user"
+                  className={`max-w-[75%] rounded-2xl px-4 py-2 ${message.sender === "user"
                       ? "bg-gradient-to-r from-green-600 to-emerald-600"
                       : "bg-white border border-gray-200"
-                  }`}
+                    }`}
                 >
                   <p
-                    className={`${
-                      message.sender === "user"
+                    className={`${message.sender === "user"
                         ? "text-black"
                         : "text-green-800"
-                    } text-sm`}
+                      } text-sm`}
                   >
                     {message.text}
                   </p>
                   <p
-                    className={`text-xs mt-1 ${
-                      message.sender === "user"
+                    className={`text-xs mt-1 ${message.sender === "user"
                         ? "text-black/70"
                         : "text-green-500"
-                    }`}
+                      }`}
                   >
                     {message.timestamp.toLocaleTimeString([], {
                       hour: "2-digit",

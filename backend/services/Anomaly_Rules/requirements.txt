@@ -3,3 +3,4 @@ uvicorn
 psycopg[binary]
 ollama
 pydantic
+pyspellchecker

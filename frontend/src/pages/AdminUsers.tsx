@@ -38,14 +38,13 @@ import {
     getUsers,
     getAllRoles,
     getUserRoles,
-    assignRoles,
-    removeRoles,
-    deleteUser,
-    createUser,
-    updateUser,
     Auth0User,
     Auth0Role
 } from "@/services/adminService";
+import { CreateUserDialog } from "@/components/admin/users/CreateUserDialog";
+import { UpdateUserDialog } from "@/components/admin/users/UpdateUserDialog";
+import { ManageRolesDialog } from "@/components/admin/users/ManageRolesDialog";
+import { DeleteUserDialog } from "@/components/admin/users/DeleteUserDialog";
 
 const AdminUsers = () => {
     const { toast } = useToast();
@@ -53,22 +52,11 @@ const AdminUsers = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [allRoles, setAllRoles] = useState<Auth0Role[]>([]);
     const [selectedUser, setSelectedUser] = useState<Auth0User | null>(null);
-    const [currentUserRoles, setCurrentUserRoles] = useState<Auth0Role[]>([]);
     const [roleDialogOpen, setRoleDialogOpen] = useState(false);
-    const [isSavingRoles, setIsSavingRoles] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState<Auth0User | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
-    const [newUserEmail, setNewUserEmail] = useState("");
-    const [newUserPassword, setNewUserPassword] = useState("");
-    const [newUserName, setNewUserName] = useState("");
-    const [isCreating, setIsCreating] = useState(false);
-    const [isUpdating, setIsUpdating] = useState(false);
-    const [updateEmail, setUpdateEmail] = useState("");
-    const [updateName, setUpdateName] = useState("");
-    const [updatePassword, setUpdatePassword] = useState("");
     const [userRoles, setUserRoles] = useState<Record<string, Auth0Role[]>>({});
 
     const fetchData = async () => {
@@ -106,155 +94,16 @@ const AdminUsers = () => {
         fetchData();
     }, []);
 
-    const handleManageRoles = async (user: Auth0User) => {
+    const handleManageRoles = (user: Auth0User) => {
         setSelectedUser(user);
         setRoleDialogOpen(true);
-        try {
-            const roles = await getUserRoles(user.user_id);
-            setCurrentUserRoles(roles);
-        } catch (error) {
-            toast({ title: "Error", description: "Failed to fetch user roles.", variant: "destructive" });
-        }
     };
 
-    const handleRoleToggle = (roleId: string, isChecked: boolean) => {
-        if (isChecked) {
-            // Single role mode: Select this one, clear others
-            const role = allRoles.find(r => r.id === roleId);
-            if (role) setCurrentUserRoles([role]);
-        } else {
-            // Allow deselecting the single role
-            setCurrentUserRoles([]);
-        }
-    };
 
-    const saveRoles = async () => {
-        if (!selectedUser) return;
-        setIsSavingRoles(true);
-        try {
-            const originalRoles = await getUserRoles(selectedUser.user_id);
-            const originalIds = originalRoles.map(r => r.id);
-            const currentIds = currentUserRoles.map(r => r.id);
-
-            // Calculate roles to remove (all previous roles that are not the new one)
-            const toAdd = currentIds.filter(id => !originalIds.includes(id));
-            const toRemove = originalIds.filter(id => !currentIds.includes(id));
-
-            // Execute remove first, then add to ensure clean state
-            if (toRemove.length) await removeRoles(selectedUser.user_id, toRemove);
-            if (toAdd.length) await assignRoles(selectedUser.user_id, toAdd);
-
-            toast({ title: "Success", description: "Roles updated." });
-            setRoleDialogOpen(false);
-            await fetchData(); // Refresh to show updated roles
-        } catch (error) {
-            toast({ title: "Error", description: "Failed to update roles.", variant: "destructive" });
-        } finally {
-            setIsSavingRoles(false);
-        }
-    };
-
-    const handleDeleteUser = async () => {
-        if (!userToDelete) return;
-        setIsDeleting(true);
-        try {
-            await deleteUser(userToDelete.user_id);
-            setUsers(prev => prev.filter(u => u.user_id !== userToDelete.user_id));
-            setDeleteDialogOpen(false);
-            toast({ title: "Success", description: "User deleted." });
-        } catch (error) {
-            toast({ title: "Error", description: "Failed to delete user.", variant: "destructive" });
-        } finally {
-            setIsDeleting(false);
-        }
-    };
-
-    const handleCreateUser = async () => {
-        if (!newUserEmail || !newUserPassword) {
-            toast({
-                title: "Validation Error",
-                description: "Email and password are required.",
-                variant: "destructive"
-            });
-            return;
-        }
-
-        setIsCreating(true);
-        try {
-            console.log('Creating user:', { email: newUserEmail, name: newUserName });
-            await createUser(newUserEmail, newUserPassword, newUserName || undefined);
-            setCreateDialogOpen(false);
-            setNewUserEmail("");
-            setNewUserPassword("");
-            setNewUserName("");
-            await fetchData();
-            toast({ title: "Success", description: "User created successfully." });
-        } catch (error: any) {
-            console.error('Create user error:', error);
-            toast({
-                title: "Error",
-                description: error.message || "Failed to create user.",
-                variant: "destructive"
-            });
-        } finally {
-            setIsCreating(false);
-        }
-    };
 
     const openUpdateDialog = (user: Auth0User) => {
         setSelectedUser(user);
-        setUpdateEmail(user.email);
-        setUpdateName(user.name || "");
-        setUpdatePassword("");
         setUpdateDialogOpen(true);
-    };
-
-    const handleUpdateUser = async () => {
-        if (!selectedUser) return;
-
-        setIsUpdating(true);
-        try {
-            const updateData: { email?: string; name?: string; password?: string } = {};
-
-            if (updateEmail && updateEmail !== selectedUser.email) {
-                updateData.email = updateEmail;
-            }
-            if (updateName && updateName !== selectedUser.name) {
-                updateData.name = updateName;
-            }
-            if (updatePassword) {
-                updateData.password = updatePassword;
-            }
-
-            if (Object.keys(updateData).length === 0) {
-                toast({
-                    title: "No Changes",
-                    description: "No changes were made.",
-                    variant: "default"
-                });
-                setUpdateDialogOpen(false);
-                return;
-            }
-
-            console.log('Updating user:', { userId: selectedUser.user_id, updateData });
-            await updateUser(selectedUser.user_id, updateData);
-
-            toast({
-                title: "Success",
-                description: "User updated successfully."
-            });
-            setUpdateDialogOpen(false);
-            await fetchData(); // Refresh the user list
-        } catch (error: any) {
-            console.error('Update user error:', error);
-            toast({
-                title: "Error",
-                description: error.message || "Failed to update user.",
-                variant: "destructive"
-            });
-        } finally {
-            setIsUpdating(false);
-        }
     };
 
     return (
@@ -416,161 +265,35 @@ const AdminUsers = () => {
                             </Table>
                         </CardContent>
                     </Card>
+                    <ManageRolesDialog
+                        isOpen={roleDialogOpen}
+                        onOpenChange={setRoleDialogOpen}
+                        user={selectedUser}
+                        allRoles={allRoles}
+                        onSuccess={fetchData}
+                    />
 
-                    {/* Role Management Dialog */}
-                    <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
-                        <DialogContent className="bg-gray-900 text-white border-gray-800">
-                            <DialogHeader>
-                                <DialogTitle>Manage Roles</DialogTitle>
-                                <DialogDescription className="text-gray-400">
-                                    Update roles for {selectedUser?.name || selectedUser?.email}
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                {allRoles.map(role => (
-                                    <div key={role.id} className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id={role.id}
-                                            checked={currentUserRoles.some(r => r.id === role.id)}
-                                            onCheckedChange={(checked) => handleRoleToggle(role.id, !!checked)}
-                                        />
-                                        <label htmlFor={role.id} className="text-sm cursor-pointer">
-                                            <div className="font-semibold">{role.name}</div>
-                                            <div className="text-xs text-gray-500">{role.description}</div>
-                                        </label>
-                                    </div>
-                                ))}
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setRoleDialogOpen(false)}>Cancel</Button>
-                                <Button onClick={saveRoles} disabled={isSavingRoles}>
-                                    {isSavingRoles ? 'Saving...' : 'Save'}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                    <CreateUserDialog
+                        isOpen={createDialogOpen}
+                        onOpenChange={setCreateDialogOpen}
+                        onSuccess={fetchData}
+                    />
 
-                    {/* Create User Dialog */}
-                    <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-                        <DialogContent className="bg-gray-900 text-white border-gray-800">
-                            <DialogHeader>
-                                <DialogTitle>Create New User</DialogTitle>
-                                <DialogDescription className="text-gray-400">
-                                    Add a new user to the system
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="name">Name (Optional)</Label>
-                                    <Input
-                                        id="name"
-                                        value={newUserName}
-                                        onChange={(e) => setNewUserName(e.target.value)}
-                                        className="bg-gray-800 border-gray-700"
-                                        placeholder="John Doe"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">Email *</Label>
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        value={newUserEmail}
-                                        onChange={(e) => setNewUserEmail(e.target.value)}
-                                        className="bg-gray-800 border-gray-700"
-                                        placeholder="user@example.com"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="password">Password *</Label>
-                                    <Input
-                                        id="password"
-                                        type="password"
-                                        value={newUserPassword}
-                                        onChange={(e) => setNewUserPassword(e.target.value)}
-                                        className="bg-gray-800 border-gray-700"
-                                        placeholder="Minimum 8 characters"
-                                        required
-                                    />
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-                                <Button onClick={handleCreateUser} disabled={isCreating}>
-                                    {isCreating ? 'Creating...' : 'Create User'}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                    <UpdateUserDialog
+                        isOpen={updateDialogOpen}
+                        onOpenChange={setUpdateDialogOpen}
+                        user={selectedUser}
+                        onSuccess={fetchData}
+                    />
 
-                    {/* Update User Dialog */}
-                    <Dialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
-                        <DialogContent className="bg-gray-900 text-white border-gray-800">
-                            <DialogHeader>
-                                <DialogTitle>Update User</DialogTitle>
-                                <DialogDescription className="text-gray-400">
-                                    Update user information for {selectedUser?.email}
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="update-name">Name</Label>
-                                    <Input
-                                        id="update-name"
-                                        value={updateName}
-                                        onChange={(e) => setUpdateName(e.target.value)}
-                                        className="bg-gray-800 border-gray-700"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="update-email">Email</Label>
-                                    <Input
-                                        id="update-email"
-                                        type="email"
-                                        value={updateEmail}
-                                        onChange={(e) => setUpdateEmail(e.target.value)}
-                                        className="bg-gray-800 border-gray-700"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="update-password">New Password (optional)</Label>
-                                    <Input
-                                        id="update-password"
-                                        type="password"
-                                        value={updatePassword}
-                                        onChange={(e) => setUpdatePassword(e.target.value)}
-                                        placeholder="Leave blank to keep current password"
-                                        className="bg-gray-800 border-gray-700"
-                                    />
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setUpdateDialogOpen(false)}>Cancel</Button>
-                                <Button onClick={handleUpdateUser} disabled={isUpdating}>
-                                    {isUpdating ? 'Updating...' : 'Update User'}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-
-                    {/* Delete Confirmation Dialog */}
-                    <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                        <DialogContent className="bg-gray-900 text-white border-gray-800">
-                            <DialogHeader>
-                                <DialogTitle>Delete User</DialogTitle>
-                                <DialogDescription className="text-gray-400">
-                                    Are you sure you want to delete {userToDelete?.name || userToDelete?.email}? This action cannot be undone.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-                                <Button variant="destructive" onClick={handleDeleteUser} disabled={isDeleting}>
-                                    {isDeleting ? 'Deleting...' : 'Delete User'}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                    <DeleteUserDialog
+                        isOpen={deleteDialogOpen}
+                        onOpenChange={setDeleteDialogOpen}
+                        user={userToDelete}
+                        onSuccess={(deletedId) => {
+                            setUsers(prev => prev.filter(u => u.user_id !== deletedId));
+                        }}
+                    />
                 </div>
             </div>
         </DashboardLayout>
