@@ -1,6 +1,7 @@
 import json
 import psycopg
 import ollama
+from typing import Literal
 from config import DB_DSN, OLLAMA_HOST, LLM_MODEL
 from spellchecker import SpellChecker
 
@@ -20,7 +21,7 @@ def correct_spelling(text: str) -> str:
         corrected.append(suggestion if suggestion else clean)
     return " ".join(corrected)
 
-def parse_rule_with_llm(rule_text: str) -> dict:
+def parse_rule_with_llm(rule_text: str,rule_type: Literal["trigger", "suppress"]) -> dict:
     """
     Call LLM once to convert natural language rule into structured JSON.
     """
@@ -29,17 +30,9 @@ def parse_rule_with_llm(rule_text: str) -> dict:
 
     prompt= f"""You are a rule parser for a surveillance system.
     Convert the following admin rule into a structured JSON object.
-    
-
-    Step 1: Correct any spelling or grammar mistakes in the Admin rule.
-    Store the corrected version in the "corrected_text" field.
-    Keep the meaning exactly the same, only fix spelling/grammar.
-
-    RULE TYPE DETECTION (read this first):
-    - If the rule contains words like "do not", "don't", "ignore", "suppress", 
-    "no alert", "never alert" → rule_type MUST be "suppress"
-    - Otherwise → rule_type is "trigger"
-
+    step 0: Check the spelling of the rule text and correct it if needed.
+    step 1: {rule_type} is the rule type see it first to help you understand the rule better it will be either trigger or suppress.
+    step 2: convert the rule text into a structured JSON object
     ALLOWED event_type values (choose the BEST match):
     - "intrusion"         → unauthorized access, trespassing, entering restricted area
     - "loitering"         → hanging around, standing still, suspicious waiting  
@@ -65,7 +58,6 @@ def parse_rule_with_llm(rule_text: str) -> dict:
     Output:
     {{
       "rule_text": "Alert me if someone enters the server room after 5 PM",
-      "rule_type": "trigger",
       "event_type": "intrusion",
       "conditions": {{
         "location": "server room",
@@ -79,7 +71,6 @@ def parse_rule_with_llm(rule_text: str) -> dict:
     Output:
     {{
       "rule_text": "Do not alert if there is a fight",
-      "rule_type": "suppress",
       "event_type": "fight_detection",
       "conditions": {{
         "location": "All",
@@ -93,7 +84,6 @@ def parse_rule_with_llm(rule_text: str) -> dict:
     Output:
     {{
       "rule_text": "Ignore crowd alerts in the cafeteria between 12 PM and 2 PM",
-      "rule_type": "suppress",
       "event_type": "crowd_detection",
       "conditions": {{
         "location": "cafeteria",
@@ -128,23 +118,19 @@ def parse_rule_with_llm(rule_text: str) -> dict:
     # Validate event_type is from allowed list
     if parsed.get("event_type") not in ALLOWED_EVENT_TYPES:
         parsed["event_type"] = "intrusion"  # safe fallback
-        parsed["parser_confidence"] = 0.3   # flag low confidence
 
     return parsed
 def add_rule(
     rule_text: str,
+    rule_type: Literal["trigger", "suppress"],
     source: str = "Admin",
     active: bool = True
-    ) -> dict:
+) -> dict:
     rule_text = correct_spelling(rule_text)
-    structured = parse_rule_with_llm(rule_text)
-
-    # Use corrected text if LLM provided one, otherwise keep original
-    saved_text = structured.get("corrected_text") or rule_text
+    structured = parse_rule_with_llm(rule_text, rule_type=rule_type)  # ← pass rule_type
 
     with psycopg.connect(DB_DSN) as conn:
         conn.execute("BEGIN")
-
         row = conn.execute(
             """
             INSERT INTO Anomaly_Rules (
@@ -155,27 +141,25 @@ def add_rule(
             RETURNING id
             """,
             (
-                saved_text,  # ← corrected text saved to DB
-                structured.get("rule_type", "trigger"),
+                structured.get("rule_text") or rule_text,  
+                rule_type,                                  
                 structured.get("event_type", "intrusion"),
                 json.dumps(structured.get("conditions", {})),
                 source
             )
         ).fetchone()
-
         rule_id = row[0]
         conn.execute("COMMIT")
 
     return {
-        "rule_id":           rule_id,
-        "rule_text":         saved_text,  # ← return corrected text
-        "rule_type":         structured.get("rule_type"),
-        "event_type":        structured.get("event_type"),
-        "conditions":        structured.get("conditions"),
-        "source":            source,
-        "active":            active
+        "rule_id":    rule_id,
+        "rule_text":  structured.get("rule_text") or rule_text,
+        "rule_type":  rule_type,
+        "event_type": structured.get("event_type"),
+        "conditions": structured.get("conditions"),
+        "source":     source,
+        "active":     active
     }
-
 def inactive_rule(rule_id: int) -> dict:
     """
     Deactivate a rule by its ID.
@@ -243,79 +227,172 @@ def get_all_rules() -> list[dict]:
         for row in rows
     ]
 
-def check_conflicts_preview(new_parsed: dict) -> list[dict]:
+def check_conflicts_preview(new_parsed: dict, exclude_rule_id: int = None) -> list[dict]:
     """
-    Stricter conflict detection:
-    - Same event_type AND same location AND opposite rule_type (trigger vs suppress)
-    - OR same event_type AND same location AND very similar rule_text
-    - Treats 'person', 'someone', 'anyone', 'people',
-        'employee', 'employees', 'staff', 'personnel',
-        'student', 'students', 'labour', 'laborer',
-        'worker', 'workers', 'visitor', 'visitors',
-        'individual', 'individuals' as equivalent
+    Conflict detection with minimal LLM dependency.
+    Uses deterministic logic for structured event types.
+    Only calls LLM for the ambiguous 'other' event type bucket.
     """
     with psycopg.connect(DB_DSN) as conn:
         rows = conn.execute(
             """
             SELECT id, rule_text, rule_type, event_type, conditions, active
             FROM Anomaly_Rules
-            WHERE active = TRUE AND event_type = %s
-            """,
-            (new_parsed.get("event_type"),)
+            WHERE active = TRUE
+            """
         ).fetchall()
 
-    conflicts = []
-    new_location = (new_parsed.get("conditions") or {}).get("location", "All")
     new_rule_type = new_parsed.get("rule_type")
-    new_text = (new_parsed.get("rule_text", "") or "").lower()
+    new_event_type = new_parsed.get("event_type")
+    new_location = (new_parsed.get("conditions") or {}).get("location", "All")
 
+    confirmed = []
     for row in rows:
-        existing_location = (row[4] or {}).get("location", "All")
-        existing_rule_type = row[2]
-        existing_text = (row[1] or "").lower()
-
-        # Location must actually overlap
-        location_conflict = (
-            new_location == "All" and existing_location == "All"
-        ) or (
-            new_location != "All" and existing_location != "All" and
-            new_location.lower() == existing_location.lower()
-        ) or (
-            new_location == "All" and existing_location != "All"
-        ) or (
-            new_location != "All" and existing_location == "All"
-        )
-
-        if not location_conflict:
+        rule_id = row[0]
+        if exclude_rule_id and rule_id == exclude_rule_id:
             continue
 
-        # Only conflict if rule_type is OPPOSITE (trigger vs suppress)
-        type_conflict = new_rule_type != existing_rule_type
+        ex_rule_type = row[2]
+        ex_event_type = row[3]
+        ex_conditions = row[4] or {}
+        ex_location = ex_conditions.get("location", "All")
 
-        # OR if same subject keywords appear in both texts
-        new_words = set(new_text.split())
-        existing_words = set(existing_text.split())
-        # Remove common stop words
-        stop_words = {'if', 'a', 'the', 'is', 'are', 'me', 'alert', 'do', 'not', 
-                     'tell', 'notify', 'when', 'there', 'someone', 'anyone', 'in', 
-                     'at', 'on', 'and', 'or', 'that', 'this', 'for', 'to', 'of'}
-        new_keywords = new_words - stop_words
-        existing_keywords = existing_words - stop_words
-        shared_keywords = new_keywords & existing_keywords
-        text_similar = len(shared_keywords) >= 2  # at least 2 meaningful words in common
+        # ── Filter 1: same intent → impossible to conflict ──
+        if ex_rule_type == new_rule_type:
+            continue
 
-        if type_conflict or text_similar:
-            conflicts.append({
-                "rule_id": row[0],
-                "rule_text": row[1],
-                "rule_type": existing_rule_type,
-                "event_type": row[3],
-                "location": existing_location,
-                "has_type_conflict": type_conflict,
-                "shared_keywords": list(shared_keywords),
-            })
+        # ── Filter 2: different event_type → usually no conflict ──
+        # EXCEPT: if one of them is "other", it might semantically overlap with anything.
+        if ex_event_type != new_event_type and ex_event_type != "other" and new_event_type != "other":
+            continue
 
-    return conflicts
+        # ── Filter 3: locations must overlap ──
+        locations_overlap = (
+            new_location == "All"
+            or ex_location == "All"
+            or new_location.lower().strip() == ex_location.lower().strip()
+        )
+        if not locations_overlap:
+            continue
+
+        # At this point: opposite intent, same event_type, overlapping location
+        candidate = {
+            "rule_id":          row[0],
+            "rule_text":        row[1],
+            "rule_type":        ex_rule_type,
+            "event_type":       ex_event_type,
+            "conditions":       ex_conditions,
+            "location":         ex_location,
+            "has_type_conflict": True,
+            "shared_keywords":  [],
+        }
+
+        if new_event_type != "other" and ex_event_type != "other":
+            # ── Both are standard structured event types (e.g. intrusion vs intrusion) ──
+            # Same event_type + opposite intent + overlapping location = CONFLICT
+            # No LLM needed — the structured data is unambiguous.
+            candidate["llm_reason"] = (
+                f"Opposite intents for same event ({ex_event_type}) "
+                f"in overlapping location"
+            )
+            confirmed.append(candidate)
+        else:
+            # ── At least one is "other" event type (catch-all) ──
+            # We must check if their semantic meaning overlaps (e.g., drinks/food vs drinking)
+            is_same, reason = _llm_same_subject(new_parsed, candidate)
+            if is_same:
+                candidate["llm_reason"] = reason
+                confirmed.append(candidate)
+
+    return confirmed
+
+
+def _llm_same_subject(rule_a: dict, rule_b: dict) -> tuple[bool, str]:
+    """
+    Since small LLMs (like qwen2.5:3b) can be unreliable for logical comparisons,
+    we use a robust hybrid approach:
+    1. Extract core nouns/adjectives (by stripping stop words & common verbs) and check for overlap.
+    2. If overlap is found, it's a guaranteed conflict (same subject).
+    3. If no overlap, fall back to the LLM to catch synonyms.
+    """
+    text1 = rule_a.get('rule_text', '').lower()
+    text2 = rule_b.get('rule_text', '').lower()
+
+    stop_words = {
+        'if', 'a', 'the', 'is', 'are', 'me', 'alert', 'do', 'not', 'no',
+        'tell', 'notify', 'when', 'there', 'someone', 'anyone', 'in',
+        'at', 'on', 'and', 'or', 'that', 'this', 'for', 'to', 'of',
+        'person', 'people', 'employee', 'employees', 'student', 'worker', 'must', 'be',
+        'wearing', 'wear', 'wears', 'carrying', 'carry', 'carries',
+        'holding', 'hold', 'holds', 'using', 'use', 'uses', 'has', 'have',
+        'enters', 'entering', 'enter', 'exit', 'exiting', 'walking', 'walk', 'running', 'run',
+        'standing', 'stand', 'sitting', 'sit', 'seen', 'see', 'detected', 'detect',
+        'found', 'find', 'spotted', 'spot', 'with', 'without', 'near', 'around',
+        'inside', 'outside', 'somebody', 'anybody', 'they', 'them', 'he', 'she', 'it',
+        'about', 'above', 'below', 'under', 'over', 'into', 'out', 'up', 'down'
+    }
+
+    words1 = {w.strip('.,!?') for w in text1.split()}
+    words2 = {w.strip('.,!?') for w in text2.split()}
+
+    # Strip 's' from the end to naively handle plurals (mask vs masks)
+    w1_clean = {w.rstrip('s') for w in words1 - stop_words if len(w) > 2}
+    w2_clean = {w.rstrip('s') for w in words2 - stop_words if len(w) > 2}
+
+    overlap = w1_clean & w2_clean
+    if overlap:
+        return True, f"Same subject detected ({', '.join(overlap)})"
+
+    # --- Fallback to LLM for synonyms (e.g., 'car' vs 'vehicle') ---
+    client = ollama.Client(host=OLLAMA_HOST)
+
+    prompt = f"""Analyze the MEANING of these two surveillance rules.
+Are they about the SAME core subject, action, or behavior, even if they use different words?
+
+A rule conflicts ONLY if the MEANING overlaps. Do not be fooled by different keywords.
+
+Examples of SAME meaning (same=true):
+- "Ignore if a vehicle enters" and "Alert if a car is seen" → same (vehicle/car overlap)
+- "Employee is running" and "Someone is sprinting" → same (run/sprint overlap)
+- "No weapons allowed" and "Alert if gun detected" → same (weapons/gun)
+
+Examples of DIFFERENT meaning (same=false):
+- "wearing a red shirt" and "wearing a hat" → different (shirt vs hat)
+- "Someone is smoking" and "Person is eating" → different (smoke vs eat)
+- "Alert if umbrella opened" and "Ignore if crying" → different (umbrella vs crying)
+
+Rule 1: "{text1}"
+Rule 2: "{text2}"
+
+Answer ONLY JSON: {{"same": true}} or {{"same": false}}"""
+
+    for attempt in range(3):
+        resp = client.chat(
+            model=LLM_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            stream=False,
+            options={"temperature": 0.0}
+        )
+
+        raw = (resp.get("message") or {}).get("content", "").strip()
+
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        raw = raw.strip()
+
+        try:
+            result = json.loads(raw)
+            is_same = bool(result.get("same", False))
+            reason = result.get("reason", "Same subject (LLM)" if is_same else "Different subjects")
+            return is_same, reason
+        except (json.JSONDecodeError, ValueError):
+            if attempt == 2:
+                return False, "LLM failed"
+            continue
+    return False, "LLM failed"
+    
 # def Auto_Genration_Rules(source:str="Learned",active:bool=True,rule_text:str):
 
     

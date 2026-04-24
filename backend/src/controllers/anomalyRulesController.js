@@ -14,7 +14,8 @@ exports.listRules = async (req, res) => {
 exports.createRule = async (req, res) => {
     try {
         const { data } = await axios.post(`${RULES_SERVICE_URL}/rules`, {
-            rule_text: req.body.rule_text
+            rule_text: req.body.rule_text,
+            rule_type: req.body.rule_type   // ← forward rule_type to Python service
         });
         res.json(data);
     } catch (err) {
@@ -45,7 +46,8 @@ exports.deleteRule = async (req, res) => {
 exports.previewRule = async (req, res) => {
     try {
         const { data } = await axios.post(`${RULES_SERVICE_URL}/rules/preview`, {
-            rule_text: req.body.rule_text
+            rule_text: req.body.rule_text,
+            rule_type: req.body.rule_type   // ← forward rule_type to Python service
         });
         res.json(data);
     } catch (err) {
@@ -68,9 +70,7 @@ exports.resolveAndAdd = async (req, res) => {
 };
 exports.reactivatePreview = async (req, res) => {
     try {
-        const { data } = await axios.post(`${RULES_SERVICE_URL}/rules/reactivate-preview`, {
-            rule_id: parseInt(req.params.id)
-        });
+        const { data } = await axios.post(`${RULES_SERVICE_URL}/rules/reactivate-preview/${req.params.id}`);  // ← rule_id in path
         res.json(data);
     } catch (err) {
         res.status(err.response?.status || 500).json({ error: err.message });

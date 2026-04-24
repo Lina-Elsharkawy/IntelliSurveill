@@ -22,6 +22,7 @@ export type PreviewResult = {
 export default function AnomalyRules() {
     const [rules, setRules] = useState<any[]>([]);
     const [ruleInput, setRuleInput] = useState("");
+    const [ruleType, setRuleType] = useState<"trigger" | "suppress">("trigger");
     const [loading, setLoading] = useState(false);
     const [reactivatingRuleId, setReactivatingRuleId] = useState<number | null>(null);
 
@@ -92,7 +93,8 @@ export default function AnomalyRules() {
         setLoading(true);
         try {
             const result = await apiPost<PreviewResult>("/api/anomaly-rules/preview", {
-                rule_text: text
+                rule_text: text,
+                rule_type: ruleType
             });
 
             if (result.has_conflicts) {
@@ -102,7 +104,7 @@ export default function AnomalyRules() {
                 setShowConflictModal(true);
             } else {
                 // No conflicts — add directly
-                await apiPost("/api/anomaly-rules", { rule_text: text });
+                await apiPost("/api/anomaly-rules", { rule_text: text, rule_type: ruleType });
                 setRuleInput('');
                 await fetchRules();
             }
@@ -125,7 +127,7 @@ export default function AnomalyRules() {
                 await apiPatch(`/api/anomaly-rules/${reactivatingRuleId}/reactivate`, {});
             } else {
                 // We were adding a new rule
-                await apiPost("/api/anomaly-rules", { rule_text: ruleInput.trim() });
+                await apiPost("/api/anomaly-rules", { rule_text: ruleInput.trim(), rule_type: ruleType });
                 setRuleInput('');
             }
 
@@ -188,6 +190,29 @@ export default function AnomalyRules() {
                     </div>
 
                     <div className="section-label">Add New Rule</div>
+                    {/* Dropdown */}
+                    <div style={{ marginBottom: '10px' }}>
+                        <select
+                            value={ruleType}
+                            onChange={e => setRuleType(e.target.value as "trigger" | "suppress")}
+                            disabled={loading}
+                            style={{
+                                width: '100%',
+                                background: '#0d0d1a',
+                                border: `1px solid ${ruleType === 'trigger' ? 'rgba(46,213,115,0.3)' : 'rgba(255,100,100,0.3)'}`,
+                                borderRadius: '8px',
+                                color: ruleType === 'trigger' ? 'rgb(46,213,115)' : 'rgba(255,100,100,0.9)',
+                                padding: '10px 14px',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                outline: 'none',
+                            }}
+                        >
+                            <option value="trigger">🔔 Alert — trigger an alert when this happens</option>
+                            <option value="suppress">🔕 No Alert — suppress alerts for this</option>
+                        </select>
+                    </div>
                     <div className="add-row">
                         <input
                             className="inp"
@@ -263,11 +288,11 @@ export default function AnomalyRules() {
             </div>
 
             {/* CONFLICT MODAL */}
-            {/* CONFLICT MODAL */}
             <ConflictModal
                 show={showConflictModal}
                 preview={preview}
-                ruleInput={ruleInput}
+                ruleInput={reactivatingRuleId !== null ? (rules.find(r => r.rule_id === reactivatingRuleId)?.rule_text || "") : ruleInput}
+                isReactivating={reactivatingRuleId !== null}
                 selectedToDeactivate={selectedToDeactivate}
                 onToggleDeactivate={toggleDeactivate}
                 onCancel={cancelConflict}

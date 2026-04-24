@@ -5,6 +5,7 @@ interface ConflictModalProps {
     show: boolean;
     preview: PreviewResult | null;
     ruleInput: string;
+    isReactivating?: boolean;
     selectedToDeactivate: number[];
     onToggleDeactivate: (ruleId: number) => void;
     onCancel: () => void;
@@ -15,6 +16,7 @@ export function ConflictModal({
     show,
     preview,
     ruleInput,
+    isReactivating,
     selectedToDeactivate,
     onToggleDeactivate,
     onCancel,
@@ -48,7 +50,7 @@ export function ConflictModal({
                         </h2>
                     </div>
                     <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', margin: 0 }}>
-                        Your new rule conflicts with existing active rules. Choose which ones to deactivate.
+                        Your {isReactivating ? "reactivated rule" : "new rule"} conflicts with existing active rules. Choose which ones to deactivate.
                     </p>
                 </div>
 
@@ -61,7 +63,7 @@ export function ConflictModal({
                     marginBottom: '20px'
                 }}>
                     <div style={{ color: 'rgba(46,213,115,0.8)', fontSize: '11px', fontWeight: 700, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                        New Rule
+                        {isReactivating ? "Reactivating Rule" : "New Rule"}
                     </div>
                     <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px' }}>{ruleInput}</div>
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', marginTop: '4px' }}>
@@ -145,7 +147,7 @@ export function ConflictModal({
                             fontSize: '14px', fontWeight: 600
                         }}
                     >
-                        Deactivate & Add ({selectedToDeactivate.length})
+                        Deactivate & {isReactivating ? "Reactivate" : "Add"} ({selectedToDeactivate.length})
                     </button>
                 </div>
             </div>
