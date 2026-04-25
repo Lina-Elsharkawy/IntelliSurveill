@@ -8,17 +8,18 @@ interface RuleCardProps {
         event_type: string;
         active: boolean;
     };
+    displayId: number;
     onToggle: () => void;
     onDelete: () => void;
 }
 
-export function RuleCard({ rule, onToggle, onDelete }: RuleCardProps) {
+export function RuleCard({ rule, displayId, onToggle, onDelete }: RuleCardProps) {
     return (
         <div className={`rule-card ${rule.active ? 'active-card' : 'inactive-card'}`}>
             <div className="card-bar">
                 <div className="card-bar-left">
                     <span className={`pulse ${rule.active ? '' : 'red'}`}></span>
-                    <span className="card-id">RULE-{String(rule.rule_id).padStart(2, '0')}</span>
+                    <span className="card-id">RULE-{String(displayId).padStart(2, '0')}</span>
                 </div>
                 <div className="card-bar-btns">
                     <button

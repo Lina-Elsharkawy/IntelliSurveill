@@ -59,7 +59,7 @@ export default function AnomalyRules() {
             } else {
                 // Reactivating — check for conflicts first
                 const result = await apiPost<PreviewResult>(`/api/anomaly-rules/reactivate-preview/${rule.rule_id}`, {});
-                
+
                 if (result.has_conflicts || result.has_duplicate) {
                     // Format the duplicate as a conflict to reuse the same modal
                     if (result.has_duplicate && result.duplicate) {
@@ -193,9 +193,9 @@ export default function AnomalyRules() {
 
                 {/* LEFT PANEL */}
                 <div className="left-panel">
-                    <h1 className="welcome-heading">Welcome <span>back</span></h1>
+                    <h1 className="welcome-heading">Rules <span>Engine</span></h1>
                     <p className="welcome-desc">
-                        <strong>Anomaly Rules Engine.</strong> Define, configure and manage behavioral detection rules for your surveillance zones. Each rule triggers automated alerts when thresholds are exceeded.
+                        <strong>Intelligent Rule Management.</strong> Define exactly when your surveillance system should fire an alert and when it should stay silent. Build trigger rules to catch what matters and suppression rules to cut through the noise so every notification means something.
                     </p>
 
                     <div className="stats">
@@ -213,7 +213,7 @@ export default function AnomalyRules() {
                         </div>
                     </div>
 
-                    <AddRuleForm 
+                    <AddRuleForm
                         ruleInput={ruleInput}
                         setRuleInput={setRuleInput}
                         ruleType={ruleType}
@@ -232,9 +232,10 @@ export default function AnomalyRules() {
 
                     <div className="rule-grid">
                         {rules.map((rule, idx) => (
-                            <RuleCard 
+                            <RuleCard
                                 key={rule.rule_id || idx}
                                 rule={rule}
+                                displayId={idx + 1}
                                 onToggle={() => toggleRule(idx)}
                                 onDelete={() => deleteRule(idx)}
                             />

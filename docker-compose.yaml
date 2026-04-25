@@ -441,6 +441,24 @@ services:
       - ollama
     networks:
       - data-platform-net
+  chatbot-service:
+    build:
+      context: ./backend/services/Chatbot
+      dockerfile: Dockerfile
+    container_name: chatbot-service
+    restart: unless-stopped
+    ports:
+      - "8004:8000"
+    environment:
+      - DB_DSN=postgresql://lina:123@postgres-db:5432/lina
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - LLM_MODEL=llama3.2       # match whatever model ollama pulls
+    depends_on:
+      - postgres-db
+      - ollama
+    networks:
+      - data-platform-net
+    
   # redis:
   #   image: redis:7.2-bookworm
   #   expose:

@@ -15,10 +15,18 @@ def correct_spelling(text: str) -> str:
     words = text.split()
     corrected = []
     for word in words:
-        # Keep punctuation attached words as-is
-        clean = word.strip(".,!?")
-        suggestion = spell.correction(clean)
-        corrected.append(suggestion if suggestion else clean)
+        # Separate punctuation from word
+        stripped = word.strip(".,!?;:")
+        punctuation = word[len(stripped):]  # keep trailing punctuation
+
+        if not stripped:
+            corrected.append(word)
+            continue
+
+        suggestion = spell.correction(stripped)
+        # If None (unknown word) or unchanged, keep original
+        corrected.append((suggestion if suggestion else stripped) + punctuation)
+
     return " ".join(corrected)
 
 def parse_rule_with_llm(rule_text: str, rule_type: Literal["trigger", "suppress"]) -> dict:
@@ -27,6 +35,7 @@ def parse_rule_with_llm(rule_text: str, rule_type: Literal["trigger", "suppress"
     """
     
     client = ollama.Client(host=OLLAMA_HOST)
+    rule_text = correct_spelling(rule_text)
 
     prompt = f"""You are a rule parser for a surveillance system.
     Convert the following admin rule into a structured JSON object.
@@ -94,30 +103,46 @@ def parse_rule_with_llm(rule_text: str, rule_type: Literal["trigger", "suppress"
 
     Admin rule: "{rule_text}"
     """
+    import time
+    for attempt in range(3):
+        try:
+            resp = client.chat(
+                model=LLM_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                stream=False,
+                options={"temperature": 0.0}
+            )
 
-    resp = client.chat(
-        model=LLM_MODEL,
-        messages=[{"role": "user", "content": prompt}],
-        stream=False,
-        options={"temperature": 0.0}
-    )
+            raw = (resp.get("message") or {}).get("content", "").strip()
 
-    raw = (resp.get("message") or {}).get("content", "").strip()
+            # Strip markdown fences if model adds them
+            if raw.startswith("```"):
+                raw = raw.split("```")[1]
+                if raw.startswith("json"):
+                    raw = raw[4:]
+            raw = raw.strip()
 
-    # Strip markdown fences if model adds them
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-    raw = raw.strip()
+            parsed = json.loads(raw)
 
-    parsed = json.loads(raw)
+            # Validate event_type is from allowed list
+            if parsed.get("event_type") not in ALLOWED_EVENT_TYPES:
+                parsed["event_type"] = "intrusion"  # safe fallback
 
-    # Validate event_type is from allowed list
-    if parsed.get("event_type") not in ALLOWED_EVENT_TYPES:
-        parsed["event_type"] = "intrusion"  # safe fallback
-
-    return parsed
+            return parsed
+        except Exception as e:
+            print(f"LLM parse error (attempt {attempt+1}): {e}")
+            if attempt == 2:
+                # Safe fallback if all attempts fail
+                return {
+                    "rule_text": rule_text,
+                    "event_type": "intrusion",
+                    "conditions": {
+                        "location": "All",
+                        "time_range": None,
+                        "person_type": None
+                    }
+                }
+            time.sleep(1)
 
 def _llm_same_subject(rule_a: dict, rule_b: dict) -> tuple[bool, str]:
     """
@@ -151,32 +176,56 @@ def _llm_same_subject(rule_a: dict, rule_b: dict) -> tuple[bool, str]:
     w1_clean = {w.rstrip('s') for w in words1 - stop_words if len(w) > 2}
     w2_clean = {w.rstrip('s') for w in words2 - stop_words if len(w) > 2}
 
-    overlap = w1_clean & w2_clean
-    if overlap:
-        return True, f"Same subject detected ({', '.join(overlap)})"
+    # overlap = w1_clean & w2_clean
+    # if overlap:
+    #     return True, f"Same subject detected ({', '.join(overlap)})"
 
     # --- Fallback to LLM for synonyms (e.g., 'car' vs 'vehicle') ---
     client = ollama.Client(host=OLLAMA_HOST)
 
-    prompt = f"""Analyze the MEANING of these two surveillance rules.
-Are they about the SAME core subject, action, or behavior, even if they use different words?
+    prompt = f"""You are a behavior comparator for a surveillance rule engine.
 
-A rule conflicts ONLY if the MEANING overlaps. Do not be fooled by different keywords.
 
-Examples of SAME meaning (same=true):
-- "Ignore if a vehicle enters" and "Alert if a car is seen" → same (vehicle/car overlap)
-- "Employee is running" and "Someone is sprinting" → same (run/sprint overlap)
-- "No weapons allowed" and "Alert if gun detected" → same (weapons/gun)
+    Your job: decide if two rules describe the SAME physical behavior or action and Analyze the MEANING of these two surveillance rules.
+    
+    A  rule conflicts ONLY if the MEANING overlaps. Do not be fooled by different keywords.
+    Rules:
+    - Focus ONLY on the ACTION or EVENT being described (e.g. eating, running, entering, fighting).
+    - IGNORE shared location (cafeteria, hallway, etc.) — location alone is NOT a match.
+    - IGNORE shared subject (person, someone, employee) — that alone is NOT a match.
+    - Two rules match only if the BEHAVIOR they describe is the same or semantically equivalent.
+    STEP 1 - Extract the core action from Rule 1.
+  Write only the behavior/action in 1-3 words.
+  Strip out completely: location, time, person, negation words.
+  Example: "Do not alert if someone is eating in the cafeteria" → action: "eating"
+  Example: "Alert me if someone enters the server room after 5 PM" → action: "entering"
+  Example: "Do not alert if someone is in the office after 5" → action: "presence"
 
-Examples of DIFFERENT meaning (same=false):
-- "wearing a red shirt" and "wearing a hat" → different (shirt vs hat)
-- "Someone is smoking" and "Person is eating" → different (smoke vs eat)
-- "Alert if umbrella opened" and "Ignore if crying" → different (umbrella vs crying)
+STEP 2 - Extract the core action from Rule 2 the same way.
+STEP 3 - Are the two extracted actions the same behavior or clear synonyms?
+    SAME behavior examples (same=true):
+    - "eating food" vs "consuming a meal" → same (eat/consume overlap)
+    - "a vehicle drives in" vs "a car is seen entering" → same (vehicle/car, drive/enter)
+    - "someone is sprinting" vs "rapid movement detected" → same (sprint/rapid movement)
+    - "eating" vs "consuming"       → YES (same meaning)
+    - "drinking coffee" vs "having a drink" → YES (coffee is a drink, subset = same behavior)
+    - "presence" vs "presence"      → YES (same meaning, even if different location/time)
+    - "sprinting" vs "rapid movement" → YES
 
-Rule 1: "{text1}"
-Rule 2: "{text2}"
 
-Answer ONLY JSON: {{"same": true}} or {{"same": false}}"""
+    DIFFERENT behavior examples (same=false):
+    - "someone is eating" vs "someone enters the building" → DIFFERENT (eat ≠ enter)
+    - "wearing a red shirt" vs "wearing a hat" → DIFFERENT (shirt ≠ hat)
+    - "person is smoking" vs "person is eating" → DIFFERENT (smoke ≠ eat)
+    - "camera is covered" vs "someone is loitering" → DIFFERENT (tamper ≠ loiter)
+    - "smoking" vs "playing "         → NO
+
+
+    Rule 1: "{text1}"
+    Rule 2: "{text2}"
+
+    Respond ONLY with this exact JSON and nothing else:
+{{"action1": "<core action from rule 1>", "action2": "<core action from rule 2>", "same": true or false}}"""
 
     for attempt in range(3):
         resp = client.chat(
@@ -197,7 +246,13 @@ Answer ONLY JSON: {{"same": true}} or {{"same": false}}"""
         try:
             result = json.loads(raw)
             is_same = bool(result.get("same", False))
-            reason = result.get("reason", "Same subject (LLM)" if is_same else "Different subjects")
+            a1 = result.get("action1", "?")
+            a2 = result.get("action2", "?")
+            reason = (
+                f"Same behavior: '{a1}' ≈ '{a2}'"
+                if is_same
+                else f"Different behaviors: '{a1}' vs '{a2}'"
+            )
             return is_same, reason
         except (json.JSONDecodeError, ValueError):
             if attempt == 2:

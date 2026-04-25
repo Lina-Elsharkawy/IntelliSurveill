@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Literal
+from llm_service import parse_rule_with_llm
+from rules_engine import check_conflicts_preview, check_duplicate_active_rule
+
 
 from db import (
     get_all_rules,
@@ -11,8 +12,11 @@ from db import (
     get_rule_by_id,
     set_rule_active
 )
-from llm_service import parse_rule_with_llm
-from rules_engine import check_conflicts_preview, check_duplicate_active_rule
+from model import (
+    RuleRequest,
+    ResolveConflictRequest,
+    ResolveReactivateRequest
+)
 
 app = FastAPI(title="Anomaly Rules Service")
 
@@ -23,21 +27,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class RuleRequest(BaseModel):
-    rule_text: str
-    rule_type: Literal["trigger", "suppress"]
-
-class ResolveConflictRequest(BaseModel):
-    rule_text: str
-    rule_type: Literal["trigger", "suppress"]
-    deactivate_rule_ids: list[int]
-
-class ResolveReactivateRequest(BaseModel):
-    rule_id: int
-    deactivate_rule_ids: list[int]
-
-class ReactivateRequest(BaseModel):
-    rule_id: int
 
 @app.get("/rules")
 def list_rules():
