@@ -60,11 +60,25 @@ exports.resolveAndAdd = async (req, res) => {
     try {
         const { data } = await axios.post(`${RULES_SERVICE_URL}/rules/resolve-and-add`, {
             rule_text: req.body.rule_text,
+            rule_type: req.body.rule_type,
             deactivate_rule_ids: req.body.deactivate_rule_ids
         });
         res.json(data);
     } catch (err) {
         console.error('Resolve and add error:', err.message);
+        res.status(err.response?.status || 500).json({ error: err.message });
+    }
+};
+
+exports.resolveAndReactivate = async (req, res) => {
+    try {
+        const { data } = await axios.post(`${RULES_SERVICE_URL}/rules/resolve-and-reactivate`, {
+            rule_id: req.body.rule_id,
+            deactivate_rule_ids: req.body.deactivate_rule_ids
+        });
+        res.json(data);
+    } catch (err) {
+        console.error('Resolve and reactivate error:', err.message);
         res.status(err.response?.status || 500).json({ error: err.message });
     }
 };

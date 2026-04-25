@@ -3,7 +3,8 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { apiGet, apiPost, apiDelete, apiPatch } from "@/lib/api";
 
 import { ConflictModal } from "@/components/anomaly/ConflictModal";
-
+import { RuleCard } from "@/components/anomaly/RuleCard";
+import { AddRuleForm } from "@/components/anomaly/AddRuleForm";
 export type ConflictRule = {
     rule_id: number;
     rule_text: string;
@@ -17,6 +18,8 @@ export type PreviewResult = {
     parsed: any;
     conflicts: ConflictRule[];
     has_conflicts: boolean;
+    duplicate?: ConflictRule;
+    has_duplicate?: boolean;
 };
 
 export default function AnomalyRules() {
@@ -56,7 +59,18 @@ export default function AnomalyRules() {
             } else {
                 // Reactivating — check for conflicts first
                 const result = await apiPost<PreviewResult>(`/api/anomaly-rules/reactivate-preview/${rule.rule_id}`, {});
-                if (result.has_conflicts) {
+                
+                if (result.has_conflicts || result.has_duplicate) {
+                    // Format the duplicate as a conflict to reuse the same modal
+                    if (result.has_duplicate && result.duplicate) {
+                        if (!result.conflicts) result.conflicts = [];
+                        // Ensure we don't add it twice if it's already in conflicts
+                        if (!result.conflicts.some(c => c.rule_id === result.duplicate!.rule_id)) {
+                            result.conflicts.push(result.duplicate);
+                        }
+                        result.has_conflicts = true;
+                    }
+
                     // Reuse same conflict modal
                     setPreview({
                         parsed: result.parsed,
@@ -97,7 +111,17 @@ export default function AnomalyRules() {
                 rule_type: ruleType
             });
 
-            if (result.has_conflicts) {
+            if (result.has_conflicts || result.has_duplicate) {
+                // Format the duplicate as a conflict to reuse the same modal
+                if (result.has_duplicate && result.duplicate) {
+                    if (!result.conflicts) result.conflicts = [];
+                    // Ensure we don't add it twice if it's already in conflicts
+                    if (!result.conflicts.some(c => c.rule_id === result.duplicate!.rule_id)) {
+                        result.conflicts.push(result.duplicate);
+                    }
+                    result.has_conflicts = true;
+                }
+
                 // Show conflict modal
                 setPreview(result);
                 setSelectedToDeactivate(result.conflicts.map(c => c.rule_id)); // default: deactivate all
@@ -117,17 +141,19 @@ export default function AnomalyRules() {
         if (!preview) return;
         setLoading(true);
         try {
-            // Deactivate selected conflicting rules first
-            for (const id of selectedToDeactivate) {
-                await apiPatch(`/api/anomaly-rules/${id}/deactivate`, {});
-            }
-
             if (reactivatingRuleId !== null) {
-                // We were reactivating an existing rule
-                await apiPatch(`/api/anomaly-rules/${reactivatingRuleId}/reactivate`, {});
+                // We were reactivating an existing rule, resolve it atomically
+                await apiPost("/api/anomaly-rules/resolve-and-reactivate", {
+                    rule_id: reactivatingRuleId,
+                    deactivate_rule_ids: selectedToDeactivate
+                });
             } else {
-                // We were adding a new rule
-                await apiPost("/api/anomaly-rules", { rule_text: ruleInput.trim(), rule_type: ruleType });
+                // We were adding a new rule, resolve it atomically
+                await apiPost("/api/anomaly-rules/resolve-and-add", {
+                    rule_text: ruleInput.trim(),
+                    rule_type: ruleType,
+                    deactivate_rule_ids: selectedToDeactivate
+                });
                 setRuleInput('');
             }
 
@@ -157,9 +183,7 @@ export default function AnomalyRules() {
         );
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') addRule();
-    };
+
 
     return (
         <DashboardLayout>
@@ -189,47 +213,14 @@ export default function AnomalyRules() {
                         </div>
                     </div>
 
-                    <div className="section-label">Add New Rule</div>
-                    {/* Dropdown */}
-                    <div style={{ marginBottom: '10px' }}>
-                        <select
-                            value={ruleType}
-                            onChange={e => setRuleType(e.target.value as "trigger" | "suppress")}
-                            disabled={loading}
-                            style={{
-                                width: '100%',
-                                background: '#0d0d1a',
-                                border: `1px solid ${ruleType === 'trigger' ? 'rgba(46,213,115,0.3)' : 'rgba(255,100,100,0.3)'}`,
-                                borderRadius: '8px',
-                                color: ruleType === 'trigger' ? 'rgb(46,213,115)' : 'rgba(255,100,100,0.9)',
-                                padding: '10px 14px',
-                                fontSize: '13px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                outline: 'none',
-                            }}
-                        >
-                            <option value="trigger">🔔 Alert — trigger an alert when this happens</option>
-                            <option value="suppress">🔕 No Alert — suppress alerts for this</option>
-                        </select>
-                    </div>
-                    <div className="add-row">
-                        <input
-                            className="inp"
-                            type="text"
-                            placeholder="Enter anomaly rule"
-                            value={ruleInput}
-                            onChange={e => setRuleInput(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            disabled={loading}
-                        />
-                        <div className="btn-wrapper">
-                            <button className="custom-btn" onClick={addRule} disabled={loading}>
-                                <span className="btn-txt">{loading ? '...' : 'Add'}</span>
-                            </button>
-                            <div className="dot"></div>
-                        </div>
-                    </div>
+                    <AddRuleForm 
+                        ruleInput={ruleInput}
+                        setRuleInput={setRuleInput}
+                        ruleType={ruleType}
+                        setRuleType={setRuleType}
+                        loading={loading}
+                        onAddRule={addRule}
+                    />
                 </div>
 
                 {/* RIGHT PANEL */}
@@ -241,44 +232,12 @@ export default function AnomalyRules() {
 
                     <div className="rule-grid">
                         {rules.map((rule, idx) => (
-                            <div key={rule.rule_id || idx} className={`rule-card ${rule.active ? 'active-card' : 'inactive-card'}`}>
-                                <div className="card-bar">
-                                    <div className="card-bar-left">
-                                        <span className={`pulse ${rule.active ? '' : 'red'}`}></span>
-                                        <span className="card-id">RULE-{String(rule.rule_id).padStart(2, '0')}</span>
-                                    </div>
-                                    <div className="card-bar-btns">
-                                        <button
-                                            className={`toggle-btn ${rule.active ? 'is-active' : 'is-inactive'}`}
-                                            onClick={() => toggleRule(idx)}
-                                        >
-                                            <span className={`toggle-icon ${rule.active ? 'tick' : 'cross'}`}>
-                                                {rule.active ? (
-                                                    <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
-                                                        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                                                    </svg>
-                                                ) : (
-                                                    <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
-                                                        <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                                                    </svg>
-                                                )}
-                                            </span>
-                                            {rule.active ? 'Active' : 'Inactive'}
-                                        </button>
-                                        <button className="del-btn" onClick={() => deleteRule(idx)} title="Delete rule">
-                                            <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-                                                <path d="M2 3.5h10M5.5 3.5V2.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1M12 3.5l-.8 8a1 1 0 0 1-1 .9H3.8a1 1 0 0 1-1-.9L2 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="card-body">
-                                    <div className="card-heading">{rule.rule_text}</div>
-                                    <div className="card-desc">
-                                        Type: {rule.rule_type} · Event: {rule.event_type || '—'}
-                                    </div>
-                                </div>
-                            </div>
+                            <RuleCard 
+                                key={rule.rule_id || idx}
+                                rule={rule}
+                                onToggle={() => toggleRule(idx)}
+                                onDelete={() => deleteRule(idx)}
+                            />
                         ))}
                         {rules.length === 0 && !loading && (
                             <div style={{ color: 'gray', padding: '1rem' }}>No rules found.</div>

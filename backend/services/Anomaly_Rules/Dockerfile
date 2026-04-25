@@ -5,7 +5,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY Add_Rules.py .
+COPY db.py .
+COPY llm_service.py .
+COPY rules_engine.py .
 COPY app.py .
 COPY config.py .
 

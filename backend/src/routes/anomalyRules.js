@@ -12,6 +12,7 @@ router.patch('/:id/deactivate', anomalyRulesController.deactivateRule);
 router.delete('/:id', anomalyRulesController.deleteRule);
 router.post('/preview', anomalyRulesController.previewRule);
 router.post('/resolve-and-add', anomalyRulesController.resolveAndAdd);
+router.post('/resolve-and-reactivate', anomalyRulesController.resolveAndReactivate);
 router.post('/reactivate-preview/:id', anomalyRulesController.reactivatePreview);
 router.patch('/:id/reactivate', anomalyRulesController.reactivateRule);
 
