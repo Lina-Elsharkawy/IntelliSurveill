@@ -1,4 +1,5 @@
 import React from "react";
+import { RuleTypeToggle } from "./RuleTypeToggle";
 
 interface AddRuleFormProps {
     ruleInput: string;
@@ -25,29 +26,6 @@ export function AddRuleForm({
         <div className="add-rule-section">
             <div className="section-label">Add New Rule</div>
             
-            <div style={{ marginBottom: '10px' }}>
-                <select
-                    value={ruleType}
-                    onChange={e => setRuleType(e.target.value as "trigger" | "suppress")}
-                    disabled={loading}
-                    style={{
-                        width: '100%',
-                        background: '#0d0d1a',
-                        border: `1px solid ${ruleType === 'trigger' ? 'rgba(46,213,115,0.3)' : 'rgba(255,100,100,0.3)'}`,
-                        borderRadius: '8px',
-                        color: ruleType === 'trigger' ? 'rgb(46,213,115)' : 'rgba(255,100,100,0.9)',
-                        padding: '10px 14px',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        outline: 'none',
-                    }}
-                >
-                    <option value="trigger">🔔 Alert — trigger an alert when this happens</option>
-                    <option value="suppress">🔕 No Alert — suppress alerts for this</option>
-                </select>
-            </div>
-            
             <div className="add-row">
                 <input
                     className="inp"
@@ -58,6 +36,7 @@ export function AddRuleForm({
                     onKeyDown={handleKeyDown}
                     disabled={loading}
                 />
+                <RuleTypeToggle ruleType={ruleType} setRuleType={setRuleType} disabled={loading} />
                 <div className="btn-wrapper">
                     <button className="custom-btn" onClick={onAddRule} disabled={loading}>
                         <span className="btn-txt">{loading ? '...' : 'Add'}</span>

@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY db.py .
 COPY llm_service.py .
 COPY rules_engine.py .
+COPY model.py .
 COPY app.py .
 COPY config.py .
 

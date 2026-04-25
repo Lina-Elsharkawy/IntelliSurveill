@@ -1,6 +1,19 @@
 from db import get_all_active_rules
 from llm_service import _llm_same_subject
 
+
+EVENT_BEHAVIOR_HINTS = {
+    "intrusion":       {"enter", "trespass", "access", "break", "sneak", "unauthorized"},
+    "loitering":       {"loiter", "linger", "wait", "hang", "idle"},
+    "after_hours":     {"hour", "night", "late", "early", "pm", "am", "outside"},
+    "fall_detected":   {"fall", "fell", "collapse", "trip", "drop"},
+    "fight_detection": {"fight", "hit", "punch", "attack", "brawl", "assault", "violence"},
+    "camera_tamper":   {"camera", "tamper", "cover", "block", "vandal"},
+    "sudden_movement": {"sprint", "rush", "dash", "race", "bolt", "speed"},
+    "smoke_fire":      {"smoke", "fire", "flame", "burn", "blaze"},
+    "crowd_detection": {"crowd", "gather", "group", "mass"},
+}
+
 def normalize_text(text: str) -> str:
     return " ".join((text or "").lower().strip().split())
 
@@ -107,4 +120,22 @@ def check_duplicate_active_rule(new_parsed: dict) -> dict | None:
                 "reason": "Duplicate active rule"
             }
 
+    # ── Pass 2: same rule_type + same event_type + same location → check semantic meaning ──
+        if (
+            row[2] == new_type
+            and row[3] == new_event
+            and ex_location == new_location
+        ):
+            is_same, reason = _llm_same_subject(new_parsed, {
+                "rule_text": row[1], "conditions": row[4]
+            })
+            if is_same:
+                return {
+                    "rule_id": row[0], "rule_text": row[1],
+                    "rule_type": row[2], "event_type": row[3],
+                    "conditions": row[4],
+                    "reason": f"Semantic duplicate: {reason}"
+                }
+
     return None
+
