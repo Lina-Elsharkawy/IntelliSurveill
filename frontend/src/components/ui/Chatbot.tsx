@@ -98,116 +98,116 @@ export default function Chatbot() {
   };
 
   return (
-    <div className="fixed bottom-6 left-6 z-50">
+    <>
+      {/* Modal & Backdrop */}
       {isOpen && (
-        <div className="mb-4 w-80 h-[420px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                <MessageCircle className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <h3 className="text-white font-semibold">System Assistant</h3>
-                <p className="text-green-100 text-xs">Always here to help</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-white hover:bg-white/20 rounded-full p-1 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"
-                  }`}
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => setIsOpen(false)}
+        >
+          <div 
+            className="w-full max-w-2xl h-[80vh] bg-white dark:bg-zinc-800 shadow-2xl rounded-2xl overflow-hidden flex flex-col border border-gray-200 dark:border-zinc-700 animate-in fade-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-6 py-4 border-b dark:border-zinc-700 bg-white dark:bg-zinc-800 flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-zinc-800 dark:text-white">
+                Chatbot Assistant
+              </h2>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white transition-colors p-1"
               >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 p-6 overflow-y-auto flex flex-col space-y-4">
+              {messages.map((message) => (
                 <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2 ${message.sender === "user"
-                      ? "bg-gradient-to-r from-green-600 to-emerald-600"
-                      : "bg-white border border-gray-200"
+                  key={message.id}
+                  className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"
                     }`}
                 >
-                  <p
-                    className={`${message.sender === "user"
-                        ? "text-black"
-                        : "text-green-800"
-                      } text-sm`}
-                  >
-                    {message.text}
-                  </p>
-                  <p
-                    className={`text-xs mt-1 ${message.sender === "user"
-                        ? "text-black/70"
-                        : "text-green-500"
+                  <div
+                    className={`chat-message max-w-[80%] rounded-xl px-4 py-3 text-[15px] shadow-sm ${message.sender === "user"
+                        ? "self-end bg-emerald-600 text-white"
+                        : "self-start bg-zinc-500 text-white"
                       }`}
                   >
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                </div>
-              </div>
-            ))}
-
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-white text-green-800 border border-gray-200 rounded-2xl px-4 py-3">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" />
-                    <div
-                      className="w-2 h-2 bg-green-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-green-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    />
+                    <p>{message.text}</p>
+                    <p
+                      className={`text-[11px] mt-1.5 text-right ${message.sender === "user"
+                          ? "text-emerald-100"
+                          : "text-zinc-200"
+                        }`}
+                    >
+                      {message.timestamp.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
                   </div>
                 </div>
+              ))}
+
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="self-start bg-zinc-500 text-white max-w-[80%] rounded-xl px-4 py-3 shadow-sm">
+                    <div className="flex gap-1.5 py-1">
+                      <div className="w-2 h-2 bg-zinc-200 rounded-full animate-bounce" />
+                      <div
+                        className="w-2 h-2 bg-zinc-200 rounded-full animate-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      />
+                      <div
+                        className="w-2 h-2 bg-zinc-200 rounded-full animate-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="px-5 py-4 border-t dark:border-zinc-700 bg-white dark:bg-zinc-800">
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your message..."
+                  className="flex-1 p-3 border rounded-xl dark:bg-zinc-700 text-black dark:text-black dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-[15px]"
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={!input.trim()}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-xl transition duration-300 ease-in-out disabled:opacity-50 flex items-center justify-center text-[15px]"
+                >
+                  Send
+                </button>
               </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input */}
-          <div className="p-4 bg-white border-t border-gray-200">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-600"
-              />
-              <button
-                onClick={handleSend}
-                disabled={!input.trim()}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-2 rounded-full hover:shadow-lg transition-all disabled:opacity-50"
-              >
-                <Send className="w-5 h-5" />
-              </button>
             </div>
           </div>
         </div>
       )}
 
       {/* Toggle Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="bg-gradient-to-r from-green-600 to-emerald-600 text-white w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center"
-      >
-        {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
-      </button>
-    </div>
+      {!isOpen && (
+        <div className="fixed bottom-6 left-6 z-40">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center"
+          >
+            <MessageCircle className="w-6 h-6" />
+          </button>
+        </div>
+      )}
+    </>
   );
 }
