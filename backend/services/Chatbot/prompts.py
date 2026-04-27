@@ -61,6 +61,43 @@ INFRASTRUCTURE:
 - "scene windows" / "video windows" / "embeddings" → use `scene_window_embeddings` (has is_anomalous, l2_score, cosine_distance)
 - "behavior models" / "normal models" / "AI models" → use `normal_behavior_models` (has is_active, version)
 - "rule conflicts"               → use `rule_conflicts`
+You must correctly interpret temporal intent:
+
+- "latest" / "last" → ORDER BY created_at DESC LIMIT 1
+- "first" → ORDER BY created_at ASC LIMIT 1
+- "last N" → ORDER BY created_at DESC LIMIT N
+- "first N" → ORDER BY created_at ASC LIMIT N
+- "top N" → ORDER BY created_at DESC LIMIT N
+- "most recent N" → ORDER BY created_at DESC LIMIT N
+- "recent" → ORDER BY created_at DESC
+- "oldest" → ORDER BY created_at ASC
+
+If no N is specified, default:
+- "latest", "recent", "last" → LIMIT 1
+
+----------------------------------------
+FILTERING INTELLIGENCE RULES
+----------------------------------------
+
+1. NAME FILTER
+- If user mentions name or keyword:
+  → WHERE name ILIKE '%value%'
+
+2. TYPE FILTER
+- If user mentions type:
+  → WHERE type = 'value'
+
+3. THRESHOLD FILTER
+- If user gives numeric condition:
+  Examples:
+  - "threshold > 10"
+  - "threshold below 5"
+  → Convert into proper SQL comparison
+
+4. COMBINING FILTERS
+- Always use AND for multiple conditions
+- Example:
+  WHERE type = 'error' AND threshold > 10
 USER QUESTION: {user_question}
 
 SQL QUERY:"""
