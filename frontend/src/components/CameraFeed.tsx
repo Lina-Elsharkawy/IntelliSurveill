@@ -175,7 +175,7 @@ function CameraModal({ onClose, onSave, cam }: ModalProps) {
       <div onClick={(e) => e.stopPropagation()} style={{ width: 480, background: "#050505", border: `1px solid ${GA(0.3)}`, position: "relative", padding: "0", overflow: "hidden", borderRadius: "12px", boxShadow: "0 0 50px rgba(0,0,0,1), 0 0 20px rgba(46,213,115,0.1)" }}>
         {/* Header with decorative line */}
         <div style={{ height: "4px", background: G, width: "100%" }} />
-        
+
         <div style={{ padding: "40px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 30 }}>
             <div>
@@ -188,10 +188,10 @@ function CameraModal({ onClose, onSave, cam }: ModalProps) {
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             <div className="input-group">
               <label style={{ display: "block", fontSize: 10, color: GA(0.5), marginBottom: 8, fontWeight: 700, letterSpacing: 2 }}>NODE NAME</label>
-              <input 
-                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: `1px solid rgba(255,255,255,0.1)`, padding: "14px 18px", color: "#fff", outline: "none", transition: "0.3s", borderRadius: "8px", fontFamily: "'Outfit'" }} 
-                placeholder="e.g. MAIN_RECEPTION" 
-                value={f.name} 
+              <input
+                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: `1px solid rgba(255,255,255,0.1)`, padding: "14px 18px", color: "#fff", outline: "none", transition: "0.3s", borderRadius: "8px", fontFamily: "'Outfit'" }}
+                placeholder="e.g. MAIN_RECEPTION"
+                value={f.name}
                 onChange={e => setF({ ...f, name: e.target.value })}
                 onFocus={e => e.currentTarget.style.borderColor = GA(0.5)}
                 onBlur={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"}
@@ -199,10 +199,10 @@ function CameraModal({ onClose, onSave, cam }: ModalProps) {
             </div>
             <div className="input-group">
               <label style={{ display: "block", fontSize: 10, color: GA(0.5), marginBottom: 8, fontWeight: 700, letterSpacing: 2 }}>DEPLOYMENT LOCATION</label>
-              <input 
-                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: `1px solid rgba(255,255,255,0.1)`, padding: "14px 18px", color: "#fff", outline: "none", transition: "0.3s", borderRadius: "8px", fontFamily: "'Outfit'" }} 
-                placeholder="e.g. ENTRANCE_G1" 
-                value={f.loc} 
+              <input
+                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: `1px solid rgba(255,255,255,0.1)`, padding: "14px 18px", color: "#fff", outline: "none", transition: "0.3s", borderRadius: "8px", fontFamily: "'Outfit'" }}
+                placeholder="e.g. ENTRANCE_G1"
+                value={f.loc}
                 onChange={e => setF({ ...f, loc: e.target.value })}
                 onFocus={e => e.currentTarget.style.borderColor = GA(0.5)}
                 onBlur={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"}
@@ -210,11 +210,11 @@ function CameraModal({ onClose, onSave, cam }: ModalProps) {
             </div>
             <div className="input-group">
               <label style={{ display: "block", fontSize: 10, color: GA(0.5), marginBottom: 8, fontWeight: 700, letterSpacing: 2 }}>FACILITY LAB ID</label>
-              <input 
-                type="number" 
-                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: `1px solid rgba(255,255,255,0.1)`, padding: "14px 18px", color: "#fff", outline: "none", transition: "0.3s", borderRadius: "8px", fontFamily: "'Outfit'" }} 
-                placeholder="Lab ID" 
-                value={f.lab} 
+              <input
+                type="number"
+                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: `1px solid rgba(255,255,255,0.1)`, padding: "14px 18px", color: "#fff", outline: "none", transition: "0.3s", borderRadius: "8px", fontFamily: "'Outfit'" }}
+                placeholder="Lab ID"
+                value={f.lab}
                 onChange={e => setF({ ...f, lab: parseInt(e.target.value) })}
                 onFocus={e => e.currentTarget.style.borderColor = GA(0.5)}
                 onBlur={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"}
@@ -223,16 +223,16 @@ function CameraModal({ onClose, onSave, cam }: ModalProps) {
           </div>
 
           <div style={{ marginTop: 48, display: "flex", gap: 16 }}>
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               style={{ flex: 1, padding: "16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontFamily: "'Outfit'", fontSize: 12, fontWeight: 700, cursor: "pointer", borderRadius: "8px", transition: "0.2s" }}
               onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
               onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
             >
               ABORT
             </button>
-            <button 
-              onClick={() => onSave(f)} 
+            <button
+              onClick={() => onSave(f)}
               style={{ flex: 2, padding: "16px", background: G, border: "none", color: "#000", fontFamily: "'Outfit'", fontSize: 13, fontWeight: 800, cursor: "pointer", borderRadius: "8px", transition: "0.2s", letterSpacing: 1 }}
               onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"}
               onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
@@ -241,7 +241,7 @@ function CameraModal({ onClose, onSave, cam }: ModalProps) {
             </button>
           </div>
         </div>
-        
+
         {/* Decorative corner accents */}
         <div style={{ position: "absolute", bottom: 10, right: 10, width: 40, height: 40, borderRight: "1px solid rgba(46,213,115,0.3)", borderBottom: "1px solid rgba(46,213,115,0.3)", pointerEvents: "none" }} />
       </div>
@@ -261,24 +261,24 @@ function ConfirmModal({ onClose, onConfirm, title, desc }: ConfirmModalProps) {
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.92)", backdropFilter: "blur(20px)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeIn 0.3s ease-out" }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: 420, background: "#050505", border: "1px solid rgba(255,68,68,0.3)", position: "relative", padding: "0", overflow: "hidden", borderRadius: "12px", boxShadow: "0 0 60px rgba(255,68,68,0.15)" }}>
         <div style={{ height: "4px", background: "#ff4444", width: "100%" }} />
-        
+
         <div style={{ padding: "40px", textAlign: "center" }}>
           <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(255,68,68,0.1)", border: "1.5px solid #ff4444", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ff4444" strokeWidth="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ff4444" strokeWidth="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </div>
-          
+
           <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff", marginBottom: 12, letterSpacing: "-0.01em" }}>{title}</h3>
           <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.6, marginBottom: 36 }}>{desc}</p>
 
           <div style={{ display: "flex", gap: 16 }}>
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               style={{ flex: 1, padding: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontFamily: "'Outfit'", fontSize: 13, fontWeight: 700, cursor: "pointer", borderRadius: "8px" }}
             >
               CANCEL
             </button>
-            <button 
-              onClick={onConfirm} 
+            <button
+              onClick={onConfirm}
               style={{ flex: 1, padding: "14px", background: "#ff4444", border: "none", color: "#fff", fontFamily: "'Outfit'", fontSize: 13, fontWeight: 800, cursor: "pointer", borderRadius: "8px", boxShadow: "0 4px 15px rgba(255,68,68,0.3)" }}
             >
               TERMINATE
@@ -411,10 +411,10 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
       </div>
 
       {modal.show && <CameraModal onClose={() => setModal({ show: false, cam: null })} onSave={handleSave} cam={modal.cam} />}
-      
+
       {deleteModal.show && (
-        <ConfirmModal 
-          title="TERMINATE_NODE?"
+        <ConfirmModal
+          title="Remove Camera?"
           desc={`This will permanently disconnect ${deleteModal.cam?.name} from the surveillance grid. This action cannot be undone.`}
           onClose={() => setDeleteModal({ show: false, cam: null })}
           onConfirm={handleDelete}
