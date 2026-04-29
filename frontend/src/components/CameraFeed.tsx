@@ -21,6 +21,7 @@ export interface Camera {
   lab_id: number;
   status: "active" | "inactive" | "alert";
   thumbnail: string;
+  stream_url?: string;
 }
 
 // Export alias so Cameras.tsx can still import CameraFeedData
@@ -111,13 +112,48 @@ export function CameraCard({ cam, onPlay, onClick, isActive = false, width = 680
 
         {/* Visual Feed */}
         <div style={{ width: "100%", height: "100%", position: "relative" }}>
-          <img src={cam.thumbnail} alt={cam.name} style={{ width: "100%", height: "100%", objectFit: "cover", filter: cam.status === "inactive" ? "grayscale(1) brightness(0.4)" : (isActive ? "brightness(0.9) contrast(1.1)" : "brightness(0.5) blur(1px)"), transition: "all 0.6s" }} />
+          {isActive && cam.stream_url ? (
+            <iframe
+              src={cam.stream_url}
+              title={cam.name}
+              style={{
+                width: "100%",
+                height: "100%",
+                border: 0,
+                background: "#000",
+                filter: cam.status === "inactive"
+                  ? "grayscale(1) brightness(0.4)"
+                  : isActive
+                    ? "brightness(0.9) contrast(1.1)"
+                    : "brightness(0.5) blur(1px)",
+                transition: "all 0.6s",
+              }}
+              allow="autoplay; fullscreen"
+            />
+          ) : (
+            <img
+              src={cam.thumbnail}
+              alt={cam.name}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                filter: cam.status === "inactive"
+                  ? "grayscale(1) brightness(0.4)"
+                  : isActive
+                    ? "brightness(0.9) contrast(1.1)"
+                    : "brightness(0.5) blur(1px)",
+                transition: "all 0.6s",
+              }}
+            />
+          )}
+
           <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle, transparent 20%, rgba(0,0,0,0.5) 100%)", pointerEvents: "none" }} />
         </div>
 
         {/* Play Button HUD */}
         <div
-          onClick={(e) => { e.stopPropagation(); onPlay(cam); }}
+          onClick={(e) => { e.stopPropagation(); onPlay?.(cam); }}
           style={{
             position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
             backgroundColor: "rgba(0,0,0,0.4)", backdropFilter: hovered ? "blur(6px)" : "blur(0px)",
@@ -168,7 +204,11 @@ interface ModalProps {
 }
 
 function CameraModal({ onClose, onSave, cam }: ModalProps) {
-  const [f, setF] = useState({ name: cam?.name || "", loc: cam?.location || "", lab: cam?.lab_id || 1 });
+  const [f, setF] = useState({
+    name: cam?.name || "",
+    loc: cam?.location || "",
+    lab: cam?.lab_id || 1,
+  });
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.92)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -203,9 +243,14 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
     try {
       const resp = await getAllCameras();
       setCameras(resp.map((c: any) => ({
-        db_id: c.id, id: `CAM-${c.id.toString().padStart(2, '0')}`,
-        name: c.name, location: c.location, lab_id: c.lab_id,
-        status: "active", thumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"
+        db_id: c.id,
+        id: `CAM-${c.id.toString().padStart(2, "0")}`,
+        name: c.name,
+        location: c.location || "Unknown Location",
+        lab_id: c.lab_id || 1,
+        status: c.stream_url ? "active" : "inactive",
+        thumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+        stream_url: c.stream_url || undefined,
       })));
     } catch (e) { console.error(e); }
   };
@@ -235,7 +280,6 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
 
       {/* HEADER */}
       <div style={{ position: "absolute", top: 40, left: 60, right: 60, zIndex: 20, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        {/* Left: Brand */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ position: "relative", width: 10, height: 10 }}>
             <div style={{ width: 10, height: 10, borderRadius: "50%", background: G, boxShadow: `0 0 10px ${G}` }} />
@@ -251,7 +295,6 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
           </div>
         </div>
 
-        {/* Right: Add Camera */}
         <button className="cam-btn cam-btn--add" onClick={() => setModal({ show: true, cam: null })} title="Add Camera">
           <svg className="cam-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M12 5v14M5 12h14" />
@@ -274,9 +317,8 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
         <button onClick={() => goTo(activeIndex + 1)} disabled={!canNext} style={{ width: 76, height: 76, background: "rgba(10,10,10,0.6)", border: `1.5px solid ${canNext ? GA(0.4) : "rgba(255,255,255,0.05)"}`, borderRadius: "50%", color: canNext ? G : "rgba(255,255,255,0.1)", fontSize: 32, cursor: canNext ? "pointer" : "not-allowed", transition: "0.3s", backdropFilter: "blur(8px)", boxShadow: canNext ? `0 0 25px ${GA(0.1)}` : "none", zIndex: 30 }}>&gt;</button>
       </div>
 
-      {/* ACTIONS UNDER CARD — animated pill buttons */}
+      {/* ACTIONS UNDER CARD */}
       <div className="cam-actions" style={{ marginTop: 28, display: "flex", gap: 20, zIndex: 20, alignItems: "center" }}>
-        {/* Update Button */}
         <button
           className="cam-btn cam-btn--update"
           onClick={() => setModal({ show: true, cam: cameras[activeIndex] })}
@@ -288,7 +330,6 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
           </svg>
         </button>
 
-        {/* Delete Button */}
         <button
           className="cam-btn cam-btn--delete"
           onClick={handleDelete}
@@ -311,14 +352,46 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
 
       {fullscreenCam && (
         <div onClick={() => setFullscreenCam(null)} style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(0,0,0,0.98)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(12px)", animation: "fadeIn 0.5s ease-out" }}>
-          <div style={{ width: "90%", maxWidth: 1400, position: "relative", animation: "scaleUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)" }}>
-            <img src={fullscreenCam.thumbnail} style={{ width: "100%", borderRadius: 24, boxShadow: "0 0 120px rgba(0,0,0,1)", border: "1px solid rgba(255,255,255,0.05)" }} />
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "90%", maxWidth: 1400, position: "relative", animation: "scaleUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)" }}>
+            {fullscreenCam.stream_url ? (
+              <iframe
+                src={fullscreenCam.stream_url}
+                title={fullscreenCam.name}
+                style={{
+                  width: "100%",
+                  height: "78vh",
+                  borderRadius: 24,
+                  border: "1px solid rgba(255,255,255,0.05)",
+                  boxShadow: "0 0 120px rgba(0,0,0,1)",
+                  background: "#000",
+                }}
+                allow="autoplay; fullscreen"
+              />
+            ) : (
+              <img
+                src={fullscreenCam.thumbnail}
+                alt={fullscreenCam.name}
+                style={{
+                  width: "100%",
+                  borderRadius: 24,
+                  boxShadow: "0 0 120px rgba(0,0,0,1)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                }}
+              />
+            )}
+
             <div style={{ position: "absolute", top: 40, left: 40, background: "rgba(0,0,0,0.7)", padding: "20px 30px", borderRadius: 16, border: `1px solid ${GA(0.2)}`, backdropFilter: "blur(10px)" }}>
               <div style={{ fontSize: 10, letterSpacing: 4, color: G, fontWeight: 700, marginBottom: 5 }}>ENCRYPTED_UP_LINK</div>
               <h2 style={{ fontFamily: "'Syne'", fontSize: 48, fontWeight: 800, textTransform: "uppercase" }}>{fullscreenCam.name}</h2>
               <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 16, fontFamily: "'JetBrains Mono'" }}>{fullscreenCam.location} // {fullscreenCam.id}</p>
             </div>
-            <button style={{ position: "absolute", top: 40, right: 40, width: 50, height: 50, background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", fontSize: 24, cursor: "pointer", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+
+            <button
+              onClick={() => setFullscreenCam(null)}
+              style={{ position: "absolute", top: 40, right: 40, width: 50, height: 50, background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", fontSize: 24, cursor: "pointer", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}
+            >
+              ✕
+            </button>
           </div>
         </div>
       )}
@@ -337,7 +410,6 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
           animation: pulse 1.8s ease-out infinite;
         }
 
-        /* ── Animated action buttons ── */
         .cam-btn {
           width: 50px;
           height: 50px;
@@ -374,7 +446,6 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
           letter-spacing: 0.5px;
         }
 
-        /* ADD button */
         .cam-btn--add {
           background-color: rgba(46, 213, 115, 0.15);
           border: 1.5px solid rgba(46, 213, 115, 0.5) !important;
@@ -396,7 +467,6 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
           transform: translateY(30px);
         }
 
-        /* UPDATE button */
         .cam-btn--update {
           background-color: rgb(20, 20, 20);
         }
@@ -417,7 +487,6 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
           transform: translateY(30px);
         }
 
-        /* DELETE button */
         .cam-btn--delete {
           background-color: rgb(20, 20, 20);
         }

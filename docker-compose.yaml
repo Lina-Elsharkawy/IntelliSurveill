@@ -40,6 +40,17 @@
 #     - data-platform-net
 
 services:
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    ports:
+      - "8554:8554"
+      - "8889:8889"
+      - "8189:8189/udp"
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yaml
+    command: /mediamtx.yaml
+    restart: unless-stopped
   backend:
     build:
       context: ./backend

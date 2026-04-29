@@ -3,7 +3,6 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import CameraFeed, { CameraFeedData } from "@/components/CameraFeed";
 import { getAllCameras } from "@/services/cameras";
 
-// Professional security placeholders to enhance the modern aesthetic
 const PLACEHOLDER_THUMBNAILS = [
   "https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&q=80&w=1200",
   "https://images.unsplash.com/photo-1541888946425-d81bb19480c5?auto=format&fit=crop&q=80&w=1200",
@@ -12,7 +11,6 @@ const PLACEHOLDER_THUMBNAILS = [
   "https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?auto=format&fit=crop&q=80&w=1200",
   "https://images.unsplash.com/photo-1571401835393-8c5f35328320?auto=format&fit=crop&q=80&w=1200",
 ];
-
 
 const Cameras = () => {
   const [cameraFeeds, setCameraFeeds] = useState<CameraFeedData[]>([]);
@@ -23,19 +21,17 @@ const Cameras = () => {
       try {
         const cameras = await getAllCameras();
 
-        // Map backend cameras to the premium CameraFeedData format
-        // This ensures the "modern" page is connected to your actual database.
-        const mappedFeeds: CameraFeedData[] = cameras.map((cam, index) => ({
+        const mappedFeeds: CameraFeedData[] = cameras.map((cam: any, index) => ({
           db_id: cam.id,
-          id: `CAM-${cam.id.toString().padStart(2, '0')}`,
+          id: `CAM-${cam.id.toString().padStart(2, "0")}`,
           name: cam.name,
-          location: cam.location || "North Entrance",
+          location: cam.location || "Unknown Location",
           lab_id: cam.lab_id || 1,
-          status: index % 5 === 2 ? "alert" : (index % 4 === 1 ? "inactive" : "active"),
+          status: cam.stream_url ? "active" : "inactive",
           thumbnail: PLACEHOLDER_THUMBNAILS[index % PLACEHOLDER_THUMBNAILS.length],
+          stream_url: cam.stream_url || undefined,
         }));
 
-        // For first-time setups or if no cameras are in DB, we provide premium defaults
         if (mappedFeeds.length === 0) {
           setCameraFeeds([
             {
@@ -46,6 +42,7 @@ const Cameras = () => {
               lab_id: 1,
               status: "active",
               thumbnail: PLACEHOLDER_THUMBNAILS[0],
+              stream_url: "http://localhost:8889/rapoo/",
             },
             {
               id: "CAM-02",
@@ -53,9 +50,9 @@ const Cameras = () => {
               name: "SERVER_FACILITY",
               location: "SECURE_WING_B",
               lab_id: 3,
-              status: "alert",
+              status: "inactive",
               thumbnail: PLACEHOLDER_THUMBNAILS[1],
-            }
+            },
           ]);
         } else {
           setCameraFeeds(mappedFeeds);
@@ -80,8 +77,12 @@ const Cameras = () => {
               <div className="absolute inset-0 w-16 h-16 border border-green-500/5 rounded-full scale-125 animate-ping" />
             </div>
             <div className="text-center">
-              <p className="text-green-500 font-mono text-xs tracking-widest uppercase mb-1">Authenticating Grid...</p>
-              <p className="text-white/20 text-[10px] tracking-[0.3em] uppercase">Secured Feed // 128-bit Encryption</p>
+              <p className="text-green-500 font-mono text-xs tracking-widest uppercase mb-1">
+                Authenticating Grid...
+              </p>
+              <p className="text-white/20 text-[10px] tracking-[0.3em] uppercase">
+                Secured Feed // 128-bit Encryption
+              </p>
             </div>
           </div>
         </div>

@@ -1,0 +1,13 @@
+webrtc: yes
+webrtcAddress: :8889
+webrtcLocalUDPAddress: :8189
+webrtcAdditionalHosts:
+  - 127.0.0.1
+  - localhost
+
+paths:
+  rapoo:
+    source: udp://0.0.0.0:8000
+
+  tapoo_anomaly:
+    source: "rtsp://imhotep:Siemens24!@172.21.0.35:554/stream1"
