@@ -36,7 +36,7 @@ except Exception:
     try:
         cv2.setLogLevel(3)
     except Exception:
-        pass    
+        pass
 import numpy as np
 import torch
 import torch.nn as nn
@@ -59,7 +59,7 @@ except ImportError:
 
 
 import os
-os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "loglevel;quiet"
+os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|stimeout;5000000|loglevel;quiet"
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------

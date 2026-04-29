@@ -1,19 +1,12 @@
 camera:
-  type: usb         # usb / csi / rtsp
-  device_index: 0
-  #stream_url: "http://172.21.0.238:5000/video_feed"
+  type: rtsp
+  rtsp_url: "rtsp://imhotep:Siemens24!@172.21.0.35:554/stream1"
   width: 640
   height: 480
   fps: 10
-  # # for CSI (Arducam IMX219 8MP):
-  # sensor_id: 0
-  # flip_method: 0
-  # for RTSP:
-  # rtsp_url: "rtsp://user:pass@ip/stream"
-
 # Edge device identity
 device_key: "jetson_nano_01"
-camera_id: 1
+camera_id: 2
 
 kafka:
   bootstrap_servers: "172.21.0.238:9092"
