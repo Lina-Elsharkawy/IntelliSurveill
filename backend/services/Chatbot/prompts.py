@@ -20,7 +20,8 @@ RULES:
 5. Return ONLY the SQL query, no explanation, no markdown
 6. Do not use semicolons at the end
 7. Use double quotes for identifiers if needed (e.g., "table_name")
-8- please make sure that you are using the correct column names and table names and counting right and joining tables right
+8. ALWAYS filter by `table_schema = 'public'` when querying `information_schema.tables` or `information_schema.columns`.
+9. If you need to count tables, your query MUST exactly be: `SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'`
 
 You must correctly interpret temporal intent:
 
@@ -32,7 +33,6 @@ You must correctly interpret temporal intent:
 - "most recent N" → ORDER BY created_at DESC LIMIT N
 - "recent" → ORDER BY created_at DESC
 - "oldest" → ORDER BY created_at ASC
--when count use public
 
 If no N is specified, default:
 - "latest", "recent", "last" → LIMIT 1
@@ -109,8 +109,8 @@ USER QUESTION: {question}
 SQL QUERY EXECUTED:
 {sql}
 
-RESULTS (first 5 rows):
-{results[:5]}
+RESULTS (first 100 rows):
+{results[:100]}
 
 TOTAL ROWS: {len(results)}
 

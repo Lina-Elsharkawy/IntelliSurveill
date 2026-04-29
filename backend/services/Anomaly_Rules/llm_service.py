@@ -110,7 +110,7 @@ def parse_rule_with_llm(rule_text: str, rule_type: Literal["trigger", "suppress"
                 model=LLM_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 stream=False,
-                options={"temperature": 0.0, "num_predict": 120, "num_ctx": 1024}
+                options={"temperature": 0.0, "num_ctx": 4096}
             )
 
             raw = (resp.get("message") or {}).get("content", "").strip()

@@ -81,9 +81,9 @@ def format_response(state: SQLState) -> SQLState:
     results = state.get("results", [])
     if not results:
         answer = "No results found."
-    elif len(results) > 5:
-        # Too many results to format efficiently via LLM
-        answer = f"Found {len(results)} matches. Here is a summary of the first few: {str(results[:2])}..."
+    # elif len(results) > 5:
+    #     # Too many results to format efficiently via LLM
+    #     answer = f"Found {len(results)} matches. Here is a summary of the first few: {str(results[:2])}..."
     else:
         prompt = get_result_formatting_prompt(
             state["question"],

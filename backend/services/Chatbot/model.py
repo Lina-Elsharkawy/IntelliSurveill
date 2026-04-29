@@ -31,8 +31,7 @@ class OllamaLLM:
                 stream=False,
                 options={
                     "temperature": temperature,
-                    "num_predict": 150,   # was 500 — SQL is short, don't generate more
-                    "num_ctx": 4096,    
+                    "num_ctx": 4096  
                 }
             )
             
