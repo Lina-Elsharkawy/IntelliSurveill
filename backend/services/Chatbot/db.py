@@ -11,22 +11,30 @@ def get_db_connection():
     """Create a database connection"""
     return psycopg2.connect(DB_DSN)
 
+# Cache schema in memory — fetched once per process lifetime
+_schema_cache: str | None = None
+
 def get_database_schema() -> str:
     """
     Fetch the database schema as a text description.
-    This will be provided to the LLM for SQL generation.
+    Cached after the first call so the LLM prompt stays fast.
     """
+    global _schema_cache
+    if _schema_cache is not None:
+        return _schema_cache
+
     conn = get_db_connection()
     cursor = conn.cursor()
     
     schema_description = []
     
     try:
-        # Get all tables
+        # Get all PUBLIC tables only
         cursor.execute("""
             SELECT table_name 
             FROM information_schema.tables 
-            WHERE table_schema = 'public' 
+            WHERE table_schema = 'public'
+              AND table_type = 'BASE TABLE'
             ORDER BY table_name
         """)
         tables = cursor.fetchall()
@@ -34,11 +42,14 @@ def get_database_schema() -> str:
         for (table_name,) in tables:
             schema_description.append(f"\nTable: {table_name}")
             
-            # Get columns for this table
+            # FIXED: also filter by table_schema here — without this, postgres returns
+            # columns for the same table_name from ALL schemas (pg_catalog, etc.),
+            # which is why the schema was bloating to 238 "tables".
             cursor.execute("""
                 SELECT column_name, data_type, is_nullable
                 FROM information_schema.columns
                 WHERE table_name = %s
+                  AND table_schema = 'public'
                 ORDER BY ordinal_position
             """, (table_name,))
             
@@ -47,7 +58,8 @@ def get_database_schema() -> str:
                 nullable = "NULL" if is_nullable == "YES" else "NOT NULL"
                 schema_description.append(f"  - {col_name}: {data_type} ({nullable})")
         
-        return "\n".join(schema_description)
+        _schema_cache = "\n".join(schema_description)
+        return _schema_cache
     
     finally:
         cursor.close()

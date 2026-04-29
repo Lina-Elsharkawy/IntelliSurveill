@@ -7,7 +7,6 @@ def get_sql_generation_prompt(user_question: str, schema: str) -> str:
     """
     relevant_tables = _pick_relevant_tables(user_question, schema)
     prompt = f"""You are a PostgreSQL expert. Convert the user's natural language question into a valid SQL query.
-
 DATABASE SCHEMA:
 {schema}
 SCHEMA Tables Releated:
@@ -21,6 +20,7 @@ RULES:
 5. Return ONLY the SQL query, no explanation, no markdown
 6. Do not use semicolons at the end
 7. Use double quotes for identifiers if needed (e.g., "table_name")
+8- please make sure that you are using the correct column names and table names and counting right and joining tables right
 
 You must correctly interpret temporal intent:
 
@@ -32,6 +32,7 @@ You must correctly interpret temporal intent:
 - "most recent N" → ORDER BY created_at DESC LIMIT N
 - "recent" → ORDER BY created_at DESC
 - "oldest" → ORDER BY created_at ASC
+-when count use public
 
 If no N is specified, default:
 - "latest", "recent", "last" → LIMIT 1
