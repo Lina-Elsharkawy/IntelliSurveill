@@ -43,7 +43,7 @@ OLLAMA_HOST = (
     or "http://localhost:11435"
 ).rstrip("/")
  
-VLM_MODEL            = os.getenv("VLM_MODEL") or os.getenv("OLLAMA_VLM_MODEL") or "moondream"
+VLM_MODEL            = os.getenv("VLM_MODEL") or os.getenv("OLLAMA_VLM_MODEL") or "moondream:latest"
 LLM_MODEL            = os.getenv("LLM_MODEL") or os.getenv("OLLAMA_MODEL")     or "llama3.2:1b"
 DEFAULT_OLLAMA_MODEL = os.getenv("DEFAULT_OLLAMA_MODEL", LLM_MODEL)
  

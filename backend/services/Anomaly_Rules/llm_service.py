@@ -144,16 +144,22 @@ def parse_rule_with_llm(rule_text: str, rule_type: Literal["trigger", "suppress"
                 }
             time.sleep(1)
 
+
+# In-memory cache for semantic comparisons
+SEMANTIC_CACHE = {}
+
 def _llm_same_subject(rule_a: dict, rule_b: dict) -> tuple[bool, str]:
     """
     Since small LLMs (like qwen2.5:3b) can be unreliable for logical comparisons,
-    we use a robust hybrid approach:
-    1. Extract core nouns/adjectives (by stripping stop words & common verbs) and check for overlap.
-    2. If overlap is found, it's a guaranteed conflict (same subject).
-    3. If no overlap, fall back to the LLM to catch synonyms.
+    we use a robust hybrid approach with in-memory caching.
     """
-    text1 = rule_a.get('rule_text', '').lower()
-    text2 = rule_b.get('rule_text', '').lower()
+    text1 = rule_a.get('rule_text', '').lower().strip()
+    text2 = rule_b.get('rule_text', '').lower().strip()
+
+    # Sort keys to ensure (A, B) and (B, A) share the same cache entry
+    cache_key = tuple(sorted([text1, text2]))
+    if cache_key in SEMANTIC_CACHE:
+        return SEMANTIC_CACHE[cache_key]
 
     stop_words = {
         'if', 'a', 'the', 'is', 'are', 'me', 'alert', 'do', 'not', 'no',
@@ -253,6 +259,9 @@ STEP 3 - Are the two extracted actions the same behavior or clear synonyms?
                 if is_same
                 else f"Different behaviors: '{a1}' vs '{a2}'"
             )
+            
+            # Store in cache
+            SEMANTIC_CACHE[cache_key] = (is_same, reason)
             return is_same, reason
         except (json.JSONDecodeError, ValueError):
             if attempt == 2:

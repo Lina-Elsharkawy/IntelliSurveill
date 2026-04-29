@@ -30,6 +30,7 @@ const anomalyFeedbackRouter = require('./routes/anomalyCandidateFeedback.routes'
 const ollamaJobsRouter = require('./routes/ollamaJob.routes');
 const notificationsRouter = require('./routes/notificationsRoutes');
 const anomalyRulesRouter = require('./routes/anomalyRules');
+const chatbotRouter = require('./routes/chatbotRoutes');
 
 
 const checkJwt = require('./middleware/auth');
@@ -76,6 +77,8 @@ app.use('/api/ollama-jobs', ollamaJobsRouter);
 app.use('/api/notifications', notificationsRouter);
 //anomalyRules
 app.use('/api/anomaly-rules', anomalyRulesRouter);
+//chatbot
+app.use('/api/chatbot', chatbotRouter);
 
 // DIAGNOSTIC ROUTE
 app.post('/api/diag-test', (req, res) => {

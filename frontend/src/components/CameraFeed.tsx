@@ -211,18 +211,119 @@ function CameraModal({ onClose, onSave, cam }: ModalProps) {
   });
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.92)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: 440, background: "#0a0a0a", border: `1px solid ${GA(0.3)}`, clipPath: "polygon(0 0, calc(100% - 30px) 0, 100% 30px, 100% 100%, 30px 100%, 0 calc(100% - 30px))", position: "relative", padding: "40px" }}>
-        <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff", marginBottom: 10 }}>{cam ? "UPDATE_NODE" : "REGISTER_NODE"}</h3>
-        <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: GA(0.5), letterSpacing: 2, marginBottom: 30 }}>// {cam ? "MODIFYING SYSTEM POINT" : "CONNECTING NEW SURVEILLANCE POINT"}</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <input style={{ background: "#000", border: `1px solid ${GA(0.2)}`, padding: 12, color: "#fff" }} placeholder="Name" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
-          <input style={{ background: "#000", border: `1px solid ${GA(0.2)}`, padding: 12, color: "#fff" }} placeholder="Location" value={f.loc} onChange={e => setF({ ...f, loc: e.target.value })} />
-          <input type="number" style={{ background: "#000", border: `1px solid ${GA(0.2)}`, padding: 12, color: "#fff" }} placeholder="Lab ID" value={f.lab} onChange={e => setF({ ...f, lab: parseInt(e.target.value) })} />
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.85)", backdropFilter: "blur(20px)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeIn 0.3s ease-out" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: 480, background: "#050505", border: `1px solid ${GA(0.3)}`, position: "relative", padding: "0", overflow: "hidden", borderRadius: "12px", boxShadow: "0 0 50px rgba(0,0,0,1), 0 0 20px rgba(46,213,115,0.1)" }}>
+        {/* Header with decorative line */}
+        <div style={{ height: "4px", background: G, width: "100%" }} />
+
+        <div style={{ padding: "40px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 30 }}>
+            <div>
+              <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 800, color: "#fff", marginBottom: 4, letterSpacing: "-0.02em" }}>{cam ? "UPDATE_NODE" : "REGISTER_NODE"}</h3>
+              <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: GA(0.6), letterSpacing: 2, textTransform: "uppercase" }}>// {cam ? "MODIFYING SYSTEM POINT" : "CONNECTING NEW SURVEILLANCE POINT"}</p>
+            </div>
+            <div style={{ fontSize: 10, color: GA(0.4), fontFamily: "'JetBrains Mono'" }}>{cam ? cam.id : "NEW_CAM"}</div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <div className="input-group">
+              <label style={{ display: "block", fontSize: 10, color: GA(0.5), marginBottom: 8, fontWeight: 700, letterSpacing: 2 }}>NODE NAME</label>
+              <input
+                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: `1px solid rgba(255,255,255,0.1)`, padding: "14px 18px", color: "#fff", outline: "none", transition: "0.3s", borderRadius: "8px", fontFamily: "'Outfit'" }}
+                placeholder="e.g. MAIN_RECEPTION"
+                value={f.name}
+                onChange={e => setF({ ...f, name: e.target.value })}
+                onFocus={e => e.currentTarget.style.borderColor = GA(0.5)}
+                onBlur={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"}
+              />
+            </div>
+            <div className="input-group">
+              <label style={{ display: "block", fontSize: 10, color: GA(0.5), marginBottom: 8, fontWeight: 700, letterSpacing: 2 }}>DEPLOYMENT LOCATION</label>
+              <input
+                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: `1px solid rgba(255,255,255,0.1)`, padding: "14px 18px", color: "#fff", outline: "none", transition: "0.3s", borderRadius: "8px", fontFamily: "'Outfit'" }}
+                placeholder="e.g. ENTRANCE_G1"
+                value={f.loc}
+                onChange={e => setF({ ...f, loc: e.target.value })}
+                onFocus={e => e.currentTarget.style.borderColor = GA(0.5)}
+                onBlur={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"}
+              />
+            </div>
+            <div className="input-group">
+              <label style={{ display: "block", fontSize: 10, color: GA(0.5), marginBottom: 8, fontWeight: 700, letterSpacing: 2 }}>FACILITY LAB ID</label>
+              <input
+                type="number"
+                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: `1px solid rgba(255,255,255,0.1)`, padding: "14px 18px", color: "#fff", outline: "none", transition: "0.3s", borderRadius: "8px", fontFamily: "'Outfit'" }}
+                placeholder="Lab ID"
+                value={f.lab}
+                onChange={e => setF({ ...f, lab: parseInt(e.target.value) })}
+                onFocus={e => e.currentTarget.style.borderColor = GA(0.5)}
+                onBlur={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginTop: 48, display: "flex", gap: 16 }}>
+            <button
+              onClick={onClose}
+              style={{ flex: 1, padding: "16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontFamily: "'Outfit'", fontSize: 12, fontWeight: 700, cursor: "pointer", borderRadius: "8px", transition: "0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+              onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+            >
+              ABORT
+            </button>
+            <button
+              onClick={() => onSave(f)}
+              style={{ flex: 2, padding: "16px", background: G, border: "none", color: "#000", fontFamily: "'Outfit'", fontSize: 13, fontWeight: 800, cursor: "pointer", borderRadius: "8px", transition: "0.2s", letterSpacing: 1 }}
+              onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+            >
+              {cam ? "COMMIT_CHANGES →" : "INITIALIZE_NODE →"}
+            </button>
+          </div>
         </div>
-        <div style={{ marginTop: 40, display: "flex", gap: 15 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: "12px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", fontFamily: "'JetBrains Mono'", fontSize: 11, cursor: "pointer" }}>CANCEL</button>
-          <button onClick={() => onSave(f)} style={{ flex: 2, padding: "12px", background: GA(0.1), border: `1px solid ${G}`, color: G, fontFamily: "'JetBrains Mono'", fontSize: 11, fontWeight: 700, cursor: "pointer", letterSpacing: 2 }}>{cam ? "SAVE_CHANGES →" : "INITIALIZE →"}</button>
+
+        {/* Decorative corner accents */}
+        <div style={{ position: "absolute", bottom: 10, right: 10, width: 40, height: 40, borderRight: "1px solid rgba(46,213,115,0.3)", borderBottom: "1px solid rgba(46,213,115,0.3)", pointerEvents: "none" }} />
+      </div>
+    </div>
+  );
+}
+
+interface ConfirmModalProps {
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  desc: string;
+}
+
+function ConfirmModal({ onClose, onConfirm, title, desc }: ConfirmModalProps) {
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.92)", backdropFilter: "blur(20px)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeIn 0.3s ease-out" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: 420, background: "#050505", border: "1px solid rgba(255,68,68,0.3)", position: "relative", padding: "0", overflow: "hidden", borderRadius: "12px", boxShadow: "0 0 60px rgba(255,68,68,0.15)" }}>
+        <div style={{ height: "4px", background: "#ff4444", width: "100%" }} />
+
+        <div style={{ padding: "40px", textAlign: "center" }}>
+          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(255,68,68,0.1)", border: "1.5px solid #ff4444", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ff4444" strokeWidth="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </div>
+
+          <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 24, fontWeight: 800, color: "#fff", marginBottom: 12, letterSpacing: "-0.01em" }}>{title}</h3>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.6, marginBottom: 36 }}>{desc}</p>
+
+          <div style={{ display: "flex", gap: 16 }}>
+            <button
+              onClick={onClose}
+              style={{ flex: 1, padding: "14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontFamily: "'Outfit'", fontSize: 13, fontWeight: 700, cursor: "pointer", borderRadius: "8px" }}
+            >
+              CANCEL
+            </button>
+            <button
+              onClick={onConfirm}
+              style={{ flex: 1, padding: "14px", background: "#ff4444", border: "none", color: "#fff", fontFamily: "'Outfit'", fontSize: 13, fontWeight: 800, cursor: "pointer", borderRadius: "8px", boxShadow: "0 4px 15px rgba(255,68,68,0.3)" }}
+            >
+              TERMINATE
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -236,6 +337,7 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
   const [activeIndex, setActiveIndex] = useState(0);
   const [fullscreenCam, setFullscreenCam] = useState<Camera | null>(null);
   const [modal, setModal] = useState<{ show: boolean, cam: Camera | null }>({ show: false, cam: null });
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean, cam: Camera | null }>({ show: false, cam: null });
 
   useEffect(() => { setCameras(initialCameras); }, [initialCameras]);
 
@@ -262,9 +364,10 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
   };
 
   const handleDelete = async () => {
-    const activeCam = cameras[activeIndex];
-    if (!activeCam || !window.confirm("CONFIRM TERMINATION?")) return;
-    await deleteCamera(activeCam.db_id); await refreshList();
+    if (!deleteModal.cam) return;
+    await deleteCamera(deleteModal.cam.db_id);
+    await refreshList();
+    setDeleteModal({ show: false, cam: null });
     if (activeIndex >= cameras.length - 1) setActiveIndex(Math.max(0, cameras.length - 2));
   };
 
@@ -332,7 +435,7 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
 
         <button
           className="cam-btn cam-btn--delete"
-          onClick={handleDelete}
+          onClick={() => setDeleteModal({ show: true, cam: cameras[activeIndex] })}
           title="Delete camera"
         >
           <svg className="cam-btn__icon" viewBox="0 0 448 512">
@@ -349,6 +452,15 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
       </div>
 
       {modal.show && <CameraModal onClose={() => setModal({ show: false, cam: null })} onSave={handleSave} cam={modal.cam} />}
+
+      {deleteModal.show && (
+        <ConfirmModal
+          title="Remove Camera?"
+          desc={`This will permanently disconnect ${deleteModal.cam?.name} from the surveillance grid. This action cannot be undone.`}
+          onClose={() => setDeleteModal({ show: false, cam: null })}
+          onConfirm={handleDelete}
+        />
+      )}
 
       {fullscreenCam && (
         <div onClick={() => setFullscreenCam(null)} style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(0,0,0,0.98)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(12px)", animation: "fadeIn 0.5s ease-out" }}>

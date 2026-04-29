@@ -60,6 +60,7 @@ services:
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9093
       - VECTOR_MATCH_URL=http://vector-match:8000
+      - CHATBOT_SERVICE_URL=http://chatbot-service:8000
     ports:
       - "3000:3000"
     depends_on:
@@ -70,6 +71,7 @@ services:
     image: ollama/ollama:latest
     container_name: ollama
     restart: unless-stopped
+    runtime: nvidia
     ports:
       - "11435:11434"
     volumes:
@@ -77,15 +79,18 @@ services:
     environment:
       - OLLAMA_KEEP_ALIVE=-1
       - OLLAMA_NUM_PARALLEL=2
-      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_MAX_LOADED_MODELS=2
       - OLLAMA_GPU_OVERHEAD=0
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     entrypoint:
       - /bin/sh
-      - -c
+    
       - |
         ollama serve &
         sleep 8
         ollama list | grep -q "qwen2.5:3b" || ollama pull qwen2.5:3b
+        ollama list | grep -q "moondream:latest" || ollama pull moondream:latest
         wait
     deploy:
       resources:
@@ -463,7 +468,7 @@ services:
     environment:
       - DB_DSN=postgresql://lina:123@postgres-db:5432/lina
       - OLLAMA_BASE_URL=http://ollama:11434
-      - LLM_MODEL=llama3.2       # match whatever model ollama pulls
+      - LLM_MODEL=qwen2.5:3b       # match whatever model ollama pulls
     depends_on:
       - postgres-db
       - ollama

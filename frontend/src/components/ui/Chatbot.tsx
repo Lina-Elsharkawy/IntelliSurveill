@@ -1,27 +1,26 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { MessageCircle, X, Send } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
+import { apiPost } from "@/lib/api";
 
 interface Message {
   id: string;
   text: string;
   sender: "user" | "bot";
   timestamp: Date;
+  sql?: string;        // optional: show SQL used
+  rowCount?: number;   // optional: show result count
 }
 
 export default function Chatbot() {
   const location = useLocation();
-
-  // ⛔ Hide chatbot on login page
-  if (location.pathname === "/login") {
-    return null;
-  }
+  if (location.pathname === "/login") return null;
 
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hey! 👋 How can I help you with the surveillance system today?",
+      text: "Hey! 👋 Ask me anything about the surveillance system — I can query the database for you!",
       sender: "bot",
       timestamp: new Date(),
     },
@@ -34,60 +33,49 @@ export default function Chatbot() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const getBotResponse = (userMessage: string): string => {
-    const msg = userMessage.toLowerCase();
-
-    if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey")) {
-      return "Hey there! 😊 How can I assist you with the surveillance system today?";
-    }
-    if (msg.includes("how are you")) {
-      return "I'm running smoothly! How can I help with the monitoring tasks?";
-    }
-    if (msg.includes("help")) {
-      return "I'm here to help! Ask me anything about the surveillance system or its features.";
-    }
-    if (msg.includes("campus")) {
-      return "Regarding the surveillance system, I can provide info on cameras, alerts, and monitoring setup.";
-    }
-    if (msg.includes("course") || msg.includes("class")) {
-      return "I can guide you through the system usage or features, instead of courses.";
-    }
-    if (msg.includes("bye") || msg.includes("goodbye")) {
-      return "Goodbye! Feel free to chat anytime about the surveillance system. 👋";
-    }
-
-    return "That's interesting! Tell me more, or ask me something about the surveillance system. I'm here to help! 💬";
-  };
+  useEffect(() => { scrollToBottom(); }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
 
+    const question = input.trim();
+
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: input,
+      text: question,
       sender: "user",
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsTyping(true);
 
-    setTimeout(() => {
-      const botResponse: Message = {
+    try {
+      const result = await apiPost<any>("/api/chatbot/query", { question });
+
+      const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: getBotResponse(input),
+        text: result.success
+          ? result.answer || "Query executed successfully."
+          : `❌ Error: ${result.error || "Something went wrong."}`,
         sender: "bot",
         timestamp: new Date(),
+        sql: result.sql,
+        rowCount: result.results?.length,
       };
 
-      setMessages((prev) => [...prev, botResponse]);
+      setMessages(prev => [...prev, botMessage]);
+    } catch (err: any) {
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        text: "❌ Failed to reach the chatbot service. Please try again.",
+        sender: "bot",
+        timestamp: new Date(),
+      }]);
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -98,116 +86,150 @@ export default function Chatbot() {
   };
 
   return (
-    <div className="fixed bottom-6 left-6 z-50">
+    <>
       {isOpen && (
-        <div className="mb-4 w-80 h-[420px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                <MessageCircle className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <h3 className="text-white font-semibold">System Assistant</h3>
-                <p className="text-green-100 text-xs">Always here to help</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-white hover:bg-white/20 rounded-full p-1 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backdropFilter: "blur(40px)", background: "rgba(0,0,0,0.8)" }}
+          onClick={() => setIsOpen(false)}
+        >
+          <div
+            className="anomaly-rules-page page-bg-grid w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl animate-in fade-in zoom-in duration-200"
+            style={{
+              minHeight: 'auto',
+              borderRadius: '12px',
+              border: '1px solid rgba(46,213,115,0.13)',
+              background: 'transparent',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="co tl" style={{ zIndex: 1 }}></div>
+            <div className="co tr" style={{ zIndex: 1 }}></div>
+            <div className="co bl" style={{ zIndex: 1 }}></div>
+            <div className="co br" style={{ zIndex: 1 }}></div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"
-                  }`}
-              >
-                <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2 ${message.sender === "user"
-                      ? "bg-gradient-to-r from-green-600 to-emerald-600"
-                      : "bg-white border border-gray-200"
-                    }`}
-                >
-                  <p
-                    className={`${message.sender === "user"
-                        ? "text-black"
-                        : "text-green-800"
-                      } text-sm`}
-                  >
-                    {message.text}
-                  </p>
-                  <p
-                    className={`text-xs mt-1 ${message.sender === "user"
-                        ? "text-black/70"
-                        : "text-green-500"
-                      }`}
-                  >
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                </div>
-              </div>
-            ))}
+            <div className="right-panel" style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              padding: 0,
+              overflow: 'hidden',
+              background: 'radial-gradient(circle at top right, rgba(46,213,115,0.06), transparent 500px), rgba(15, 18, 15, 0.7)',
+              backdropFilter: 'blur(30px)',
+              borderRadius: '12px'
+            }}>
 
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-white text-green-800 border border-gray-200 rounded-2xl px-4 py-3">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" />
-                    <div
-                      className="w-2 h-2 bg-green-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-green-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    />
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-[rgba(46,213,115,0.08)] bg-[rgba(0,0,0,0.4)] flex justify-between items-center z-10">
+                <h2 className="text-xl font-bold font-['Montserrat'] text-white">
+                  Chatbot <span style={{ color: 'rgb(46,213,115)' }}>Assistant</span>
+                </h2>
+                <button onClick={() => setIsOpen(false)} className="text-[rgba(46,213,115,0.6)] hover:text-white transition-colors p-1">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 p-6 overflow-y-auto flex flex-col space-y-4 z-10" style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(46,213,115,0.2) rgba(46,213,115,0.03)'
+              }}>
+                {messages.map((message) => (
+                  <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[80%] rounded-xl px-4 py-3 text-[14px] shadow-sm font-['Inter',system-ui] ${message.sender === "user"
+                      ? "bg-[rgba(46,213,115,0.1)] text-white border border-[rgba(46,213,115,0.3)]"
+                      : "bg-[rgba(255,255,255,0.03)] text-[rgba(255,255,255,0.9)] border border-[rgba(255,255,255,0.08)]"
+                      }`}>
+                      <p style={{ whiteSpace: 'pre-wrap' }}>{message.text}</p>
+
+                      {/* Show SQL if available */}
+                      {message.sql && (
+                        <details style={{ marginTop: '8px' }}>
+                          <summary style={{
+                            color: 'rgba(46,213,115,0.6)',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                            userSelect: 'none'
+                          }}>
+                            🔍 View SQL {message.rowCount !== undefined ? `· ${message.rowCount} rows` : ''}
+                          </summary>
+                          <pre style={{
+                            marginTop: '6px',
+                            padding: '8px',
+                            background: 'rgba(0,0,0,0.4)',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            color: 'rgba(255,255,255,0.6)',
+                            overflowX: 'auto',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-all'
+                          }}>
+                            {message.sql}
+                          </pre>
+                        </details>
+                      )}
+
+                      <p className={`text-[10px] mt-1.5 text-right ${message.sender === "user" ? "text-[rgba(46,213,115,0.7)]" : "text-[rgba(255,255,255,0.4)]"
+                        }`}>
+                        {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] text-white max-w-[80%] rounded-xl px-4 py-3 shadow-sm">
+                      <div className="flex gap-1.5 py-1">
+                        <div className="w-2 h-2 bg-[rgba(255,255,255,0.6)] rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-[rgba(255,255,255,0.6)] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <div className="w-2 h-2 bg-[rgba(255,255,255,0.6)] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input */}
+              <div className="px-5 py-4 border-t border-[rgba(46,213,115,0.08)] bg-[rgba(0,0,0,0.6)] z-10">
+                <div className="flex gap-3 items-center">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask anything e.g. show last 5 anomalies..."
+                    className="flex-1 p-3 rounded-xl bg-[rgba(0,0,0,0.5)] border border-[rgba(46,213,115,0.18)] text-white focus:outline-none focus:border-[rgba(46,213,115,0.55)] focus:shadow-[0_0_0_3px_rgba(46,213,115,0.07)] transition-all font-['Inter',system-ui] text-[14px] placeholder-[rgba(255,255,255,0.2)]"
+                    disabled={isTyping}
+                  />
+                  <div className="btn-wrapper" style={{ height: '46px', minWidth: '90px' }}>
+                    <button onClick={handleSend} disabled={!input.trim() || isTyping} className="custom-btn">
+                      <span className="btn-txt" style={{ fontSize: '13px' }}>Send</span>
+                    </button>
+                    <div className="dot"></div>
                   </div>
                 </div>
               </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input */}
-          <div className="p-4 bg-white border-t border-gray-200">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-600"
-              />
-              <button
-                onClick={handleSend}
-                disabled={!input.trim()}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-2 rounded-full hover:shadow-lg transition-all disabled:opacity-50"
-              >
-                <Send className="w-5 h-5" />
-              </button>
             </div>
           </div>
         </div>
       )}
 
       {/* Toggle Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="bg-gradient-to-r from-green-600 to-emerald-600 text-white w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center"
-      >
-        {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
-      </button>
-    </div>
+      {!isOpen && (
+        <div className="fixed bottom-6 left-6 z-40">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="relative bg-[rgba(0,0,0,0.8)] border border-[rgba(46,213,115,0.3)] hover:border-[rgba(46,213,115,0.8)] text-[rgb(46,213,115)] w-14 h-14 rounded-full shadow-[0_0_15px_rgba(46,213,115,0.2)] hover:shadow-[0_0_25px_rgba(46,213,115,0.4)] transition-all hover:scale-110 flex items-center justify-center backdrop-blur-sm"
+          >
+            <div className="toggle-point trigger" style={{ top: '4px', right: '4px', bottom: 'auto', left: 'auto' }}></div>
+            <MessageCircle className="w-6 h-6" />
+          </button>
+        </div>
+      )}
+    </>
   );
 }

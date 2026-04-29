@@ -78,13 +78,17 @@ def execute_query(state: SQLState) -> SQLState:
 
 def format_response(state: SQLState) -> SQLState:
     """Format results as natural language"""
-    if not state.get("results"):
+    results = state.get("results", [])
+    if not results:
         answer = "No results found."
+    elif len(results) > 5:
+        # Too many results to format efficiently via LLM
+        answer = f"Found {len(results)} matches. Here is a summary of the first few: {str(results[:2])}..."
     else:
         prompt = get_result_formatting_prompt(
             state["question"],
             state["sql"],
-            state["results"]
+            results
         )
         answer = llm.generate(prompt, temperature=0.3)
     
