@@ -10,6 +10,7 @@ from db import test_connection, get_database_schema
 from model import OllamaLLM, QueryRequest, QueryResponse
 from config import API_HOST, API_PORT
 from typing import TypedDict
+from validators import is_write_intent
 
 # Initialize FastAPI
 app = FastAPI(
@@ -74,13 +75,32 @@ def query_database(request: QueryRequest):
     """
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
+    if is_write_intent(request.question):
+        return QueryResponse(
+            success=False,
+            question=request.question,
+            sql="",
+            results=[],
+            answer="⛔ This action is not allowed. The chatbot is read-only and cannot delete, update, insert, or modify any data. Please contact your system administrator for data changes.",
+            error="Write operation rejected"
+        )
+
     
     try:
         result = process_question(request.question)
         return QueryResponse(**result)
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Catch recursion limit and any other crash — never show raw error
+        return QueryResponse(
+            success=False,
+            question=request.question,
+            sql="",
+            results=[],
+            answer="❌ I could not understand or answer that question. Please try rephrasing it.",
+            error=str(e)
+        )
+
 
 # Run the application
 if __name__ == "__main__":

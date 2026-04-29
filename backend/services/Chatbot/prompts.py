@@ -3,11 +3,15 @@ from typing import TypedDict
 def get_sql_generation_prompt(user_question: str, schema: str) -> str:
     """
     Generate prompt for converting natural language to SQL
+
     """
+    relevant_tables = _pick_relevant_tables(user_question, schema)
     prompt = f"""You are a PostgreSQL expert. Convert the user's natural language question into a valid SQL query.
 
 DATABASE SCHEMA:
 {schema}
+SCHEMA Tables Releated:
+{relevant_tables}
 
 RULES:
 1. Generate ONLY a SELECT query (no INSERT, UPDATE, DELETE, DROP)
@@ -18,49 +22,6 @@ RULES:
 6. Do not use semicolons at the end
 7. Use double quotes for identifiers if needed (e.g., "table_name")
 
-TABLE HINTS — read carefully before choosing a table:
-
-ANOMALY RULES & DETECTION:
-- "anomaly rules" / "rules" / "how many rules"     → use `anomaly_rules` (natural-language NL rules written by admins, has rule_text, rule_type IN ('anomalous','normal'), is_active, camera_id, lab_id)
-- "Anomaly_Rules" / "trigger rules" / "suppress"   → use `Anomaly_Rules` (structured rules with rule_type IN ('trigger','suppress'), event_type like 'intrusion','fight_detection', conditions JSONB, source IN ('Admin','Learned'))
-- NOTE: There are TWO rule tables. `anomaly_rules` = NL admin rules. `Anomaly_Rules` = structured event rules.
-- "anomaly detection rules" / "anomaly_detection_rules" → use `anomaly_detection_rules`
-- "anomalyrules"                                    → use `anomalyrules`
-
-ANOMALY EVENTS & LOGS:
-- "anomaly definitions" / "anomaly types" / "severity" → use `anomalies` (just id, description, severity_level)
-- "anomaly logs" / "anomaly events" / "when was anomaly detected" → use `anomalies_logs` (has timestamp, camera_id, anomaly_id)
-- "anomaly logs with description" / "anomaly logs with severity"  → use `anomalies_logs_view` (view joining anomalies_logs + anomalies, has description & severity_level)
-
-ANOMALY PIPELINE:
-- "anomaly candidates" / "pending anomalies" / "LLM decisions" → use `anomaly_candidates` (has status IN ('pending','sent_to_llm','resolved','discarded','failed'), alert_decision, severity IN ('LOW','MEDIUM','HIGH'), l2_score)
-- "candidate reviews" / "admin confirmed" / "admin dismissed"  → use `anomaly_candidate_review` (has decision IN ('confirmed','dismissed','uncertain'))
-- "candidate feedback"                                         → use `anomaly_candidate_feedback`
-- "candidate rules" / "rules from candidates"                  → use `anomaly_candidate_rules`
-- "ollama jobs" / "LLM jobs" / "model processing"             → use `ollama_jobs` (has status IN ('queued','running','succeeded','failed'), model_name, prompt)
-- "thresholds" / "l2 threshold" / "anomaly thresholds"        → use `anomaly_thresholds` (has l2_p95, mse_p95, cos_p95)
-
-PEOPLE & ACCESS:
-- "employees" / "staff"                   → use `employees` (name, department_id)
-- "visitors"                              → use `visitors` (name, visit_date, purpose)
-- "detected people" / "detected persons"  → use `detected_people` (links employee_id or visitor_id)
-- "employee lab access" / "who can access lab" → use `employee_lab_access`
-- "department lab access"                 → use `department_lab_access`
-
-ENTRY & ACCESS LOGS:
-- "entry logs" / "access logs" / "who entered" / "authorized" → use `entry_logs` (has authorized BOOLEAN, event_type, location, timestamp)
-- "unknown faces" / "unrecognized people"  → use `unknown_face_events` (has status IN ('pending','assigned','discarded'))
-- "face embeddings" / "face vectors"       → use `face_embeddings`
-
-INFRASTRUCTURE:
-- "cameras" / "which camera"     → use `cameras` (name, location, lab_id)
-- "labs" / "laboratory"          → use `labs`
-- "departments"                  → use `departments`
-- "schedules" / "access times"   → use `schedules` (access_start_time, access_end_time, weekdays/weekends)
-- "edge devices" / "devices"     → use `edge_devices`
-- "scene windows" / "video windows" / "embeddings" → use `scene_window_embeddings` (has is_anomalous, l2_score, cosine_distance)
-- "behavior models" / "normal models" / "AI models" → use `normal_behavior_models` (has is_active, version)
-- "rule conflicts"               → use `rule_conflicts`
 You must correctly interpret temporal intent:
 
 - "latest" / "last" → ORDER BY created_at DESC LIMIT 1
@@ -161,3 +122,41 @@ INSTRUCTIONS:
 ANSWER:"""
     
     return prompt
+
+def _pick_relevant_tables(question: str, schema: str) -> str:
+    q = question.lower()
+    
+    # Map keywords to table names
+    table_keywords = {
+        "anomaly_rules":     ["rule", "rules", "trigger", "suppress"],
+        "anomalies_logs":    ["anomaly", "anomalies", "detected", "log"],
+        "cameras":           ["camera", "cameras"],
+        "employees":         ["employee", "employees", "staff"],
+        "visitors":          ["visitor", "visitors"],
+        "entry_logs":        ["entry", "access", "entered", "authorized"],
+        "detected_people":   ["detected", "people", "person", "face"],
+        "labs":              ["lab", "laboratory"],
+        "departments":       ["department"],
+        "anomaly_candidates":["candidate", "pending", "llm decision"],
+    }
+    
+    matched = set()
+    for table, keywords in table_keywords.items():
+        if any(kw in q for kw in keywords):
+            matched.add(table)
+    
+    # Fallback: send top 3 tables if nothing matched
+    if not matched:
+        matched = {"anomalies_logs", "cameras", "employees"}
+    
+    # Extract only matched table sections from schema string
+    lines = schema.split("\n")
+    result = []
+    include = False
+    for line in lines:
+        if line.startswith("Table: "):
+            include = any(t in line for t in matched)
+        if include:
+            result.append(line)
+    
+    return "\n".join(result)

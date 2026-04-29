@@ -110,7 +110,7 @@ def parse_rule_with_llm(rule_text: str, rule_type: Literal["trigger", "suppress"
                 model=LLM_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 stream=False,
-                options={"temperature": 0.0}
+                options={"temperature": 0.0, "num_predict": 120, "num_ctx": 1024}
             )
 
             raw = (resp.get("message") or {}).get("content", "").strip()
@@ -189,6 +189,7 @@ def _llm_same_subject(rule_a: dict, rule_b: dict) -> tuple[bool, str]:
     # --- Fallback to LLM for synonyms (e.g., 'car' vs 'vehicle') ---
     client = ollama.Client(host=OLLAMA_HOST)
 
+
     prompt = f"""You are a behavior comparator for a surveillance rule engine.
 
 
@@ -238,7 +239,7 @@ STEP 3 - Are the two extracted actions the same behavior or clear synonyms?
             model=LLM_MODEL,
             messages=[{"role": "user", "content": prompt}],
             stream=False,
-            options={"temperature": 0.0}
+            options={"temperature": 0.0, "num_predict": 30, "num_ctx": 512}
         )
 
         raw = (resp.get("message") or {}).get("content", "").strip()

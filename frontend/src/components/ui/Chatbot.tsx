@@ -17,14 +17,33 @@ export default function Chatbot() {
   if (location.pathname === "/login") return null;
 
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      text: "Hey! 👋 Ask me anything about the surveillance system — I can query the database for you!",
-      sender: "bot",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const saved = localStorage.getItem("chat_history");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.map((m: any) => ({
+          ...m,
+          timestamp: new Date(m.timestamp)
+        }));
+      } catch (e) {
+        console.error("Failed to parse chat history", e);
+      }
+    }
+    return [
+      {
+        id: "1",
+        text: "Hey! 👋 Ask me anything about the surveillance system — I can query the database for you!",
+        sender: "bot",
+        timestamp: new Date(),
+      },
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("chat_history", JSON.stringify(messages));
+  }, [messages]);
+
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -90,7 +109,11 @@ export default function Chatbot() {
       {isOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backdropFilter: "blur(40px)", background: "rgba(0,0,0,0.8)" }}
+          style={{
+            backdropFilter: "blur(40px)",
+            background: "rgba(0,0,0,0.8)",
+            display: isOpen ? "flex" : "none",  // ← just hide, don't destroy
+          }}
           onClick={() => setIsOpen(false)}
         >
           <div

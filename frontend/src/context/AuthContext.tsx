@@ -56,6 +56,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [idToken]);
 
+    useEffect(() => {
+        const handleUnauthorized = () => {
+            logout();
+        };
+
+        window.addEventListener('auth:unauthorized', handleUnauthorized);
+        return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    }, []);
+
     const login = (accessToken: string, newIdToken?: string) => {
         localStorage.setItem("access_token", accessToken);
         setToken(accessToken);
@@ -96,6 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const logout = () => {
         localStorage.removeItem("access_token");
         localStorage.removeItem("id_token");
+        localStorage.removeItem("chat_history");
         setToken(null);
         setIdToken(null);
         setUser(null);

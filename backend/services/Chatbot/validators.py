@@ -11,6 +11,15 @@ DANGEROUS_KEYWORDS = [
     "TRUNCATE", "CREATE", "GRANT", "REVOKE",
     "EXECUTE", "EXEC", "CALL"
 ]
+WRITE_INTENT_PHRASES = [
+    "delete", "remove", "drop", "update", "change",
+    "modify", "insert", "add", "create", "alter",
+    "truncate", "clear", "wipe", "reset", "set"
+]
+def is_write_intent(question: str) -> bool:
+    """Detect if the user is trying to modify data, not read it."""
+    q = question.lower()
+    return any(phrase in q for phrase in WRITE_INTENT_PHRASES)
 
 def validate_sql(sql_query: str) -> Tuple[bool, str]:
     """

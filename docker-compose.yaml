@@ -1,45 +1,9 @@
-# x-airflow-common: &airflow-common
-#   image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.10.3}
-#   env_file:
-#     - ./.env
-#   environment: &airflow-common-env
-#     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
-#     AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
-#     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW_DB_CONN:-postgresql+psycopg2://airflow:airflow@postgres-db/airflow}
-#     AIRFLOW__CELERY__RESULT_BACKEND: ${AIRFLOW_CELERY_RESULT_BACKEND:-db+postgresql://airflow:airflow@postgres-db/airflow}
-#     AIRFLOW__CELERY__BROKER_URL: ${AIRFLOW_CELERY_BROKER_URL:-redis://:@redis:6379/0}
-#     AIRFLOW__CORE__FERNET_KEY: ""
-#     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
-#     AIRFLOW__CORE__LOAD_EXAMPLES: "true"
-#     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: "http://airflow-apiserver:8080/execution/"
-#     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
-#     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
-#     AIRFLOW_CONFIG: "/opt/airflow/config/airflow.cfg"
-#   volumes:
-#     - ./airflow/dags:/opt/airflow/dags
-#     - ./airflow/logs:/opt/airflow/logs
-#     - ./airflow/config:/opt/airflow/config
-#     - ./airflow/plugins:/opt/airflow/plugins
-#   user: "${AIRFLOW_UID:-50000}:0"
-#   depends_on: &airflow-common-depends-on
-#     redis:
-#       condition: service_healthy
-#     postgres-db:
-#       condition: service_healthy
-#   deploy:
-#     resources:
-#       limits:
-#         cpus: "1"
-#         memory: 2G
-#   logging:
-#     driver: "json-file"
-#     options:
-#       max-size: "10m"
-#       max-file: "3"
-#   networks:
-#     - data-platform-net
+
 
 services:
+# ---------------------------
+#  Backend Services
+#----------------------------
   backend:
     build:
       context: ./backend
@@ -56,6 +20,10 @@ services:
       - postgres-db
     networks:
       - data-platform-net
+
+  # ---------------------------
+  #  ollama Services
+  #----------------------------
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
@@ -67,19 +35,52 @@ services:
       - ollama-data:/root/.ollama
     environment:
       - OLLAMA_KEEP_ALIVE=-1
-      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_NUM_PARALLEL=4
       - OLLAMA_MAX_LOADED_MODELS=2
       - OLLAMA_GPU_OVERHEAD=0
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     entrypoint:
       - /bin/sh
-    
+      - -c
       - |
         ollama serve &
         sleep 8
-        ollama list | grep -q "qwen2.5:3b" || ollama pull qwen2.5:3b
         ollama list | grep -q "moondream:latest" || ollama pull moondream:latest
+        ollama list | grep -q "llama3.2:1b" || ollama pull llama3.2:1b
+        wait
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - data-platform-net
+  ollama-chatbot:
+    image: ollama/ollama:latest
+    container_name: ollama-chatbot
+    restart: unless-stopped
+    runtime: nvidia
+    ports:
+      - "11436:11434"
+    volumes:
+      - ollama-chatbot-data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=-1
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_GPU_OVERHEAD=0
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        ollama serve &
+        sleep 8
+        ollama list | grep -q "qwen2.5-coder:3b" || ollama pull qwen2.5-coder:3b
         wait
     deploy:
       resources:
@@ -91,6 +92,39 @@ services:
     networks:
       - data-platform-net
 
+  ollama-rules:
+    image: ollama/ollama:latest
+    container_name: ollama-rules
+    restart: unless-stopped
+    runtime: nvidia
+    ports:
+      - "11437:11434"
+    volumes:
+      - ollama-rules-data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=-1
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_GPU_OVERHEAD=0
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        ollama serve &
+        sleep 8
+        ollama list | grep -q "qwen2.5:3b" || ollama pull qwen2.5:3b
+        wait
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - data-platform-net
     # deploy:
     #   resources:
     #     limits:
@@ -108,6 +142,9 @@ services:
     #     limits:
     #       cpus: "2"
     #       memory: 4G
+# ---------------------------
+# Face Detection Services
+#----------------------------
   vector-match:
     build:
       context: .
@@ -130,6 +167,10 @@ services:
       start_period: 20s
     networks:
       - data-platform-net
+
+# ---------------------------
+#  Anomaly Detection Services
+#----------------------------
   anomaly-service:
     build:
       context: ./backend/services/anomaly_service
@@ -158,6 +199,25 @@ services:
     networks:
       - data-platform-net
 
+  anomaly-rules-service:
+    build:
+      context: ./backend/services/Anomaly_Rules
+      dockerfile: Dockerfile
+    environment:
+      DB_DSN: postgresql://lina:123@postgres-db:5432/lina
+      OLLAMA_BASE_URL: http://ollama-rules:11434
+      LLM_MODEL: qwen2.5:3b
+    ports:
+      - "8003:8000"
+    depends_on:
+      - postgres-db
+      - ollama-rules
+    networks:
+      - data-platform-net
+
+# ---------------------------
+#  DevOps Tools
+#----------------------------
   kafka:
     image: apache/kafka:4.1.1
     container_name: kafka
@@ -199,6 +259,7 @@ services:
     - kafka
    networks:
     - data-platform-net
+    
   face-consumer:
    build:
     context: ./streaming/kafka
@@ -254,6 +315,70 @@ services:
     - data-platform-net
     - default
 
+  flinkjobmanager:
+    build: ./streaming/flink-java
+    image: graduation-project-flinkjobmanager
+    command: [ "jobmanager" ]
+    ports:
+      - "8081:8081"
+      - "9249:9249" # Prometheus metrics
+    depends_on:
+      - kafka
+      - postgres-db
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9093
+      - JOB_MANAGER_RPC_ADDRESS=flinkjobmanager
+      - JDBC_URL=jdbc:postgresql://postgres-db:5432/logging_db
+      - JDBC_USER=mohamed
+      - JDBC_PASSWORD=mohamed
+      - FLINK_PARALLELISM=1
+      - CHECKPOINT_INTERVAL_MS=60000
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - data-platform-net
+  
+  flinktaskmanager:
+    build: ./streaming/flink-java
+    image: graduation-project-flinktaskmanager
+    depends_on:
+      - flinkjobmanager
+      - kafka
+      - postgres-db
+    command: [ "taskmanager" ]
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9093
+      - JOB_MANAGER_RPC_ADDRESS=flinkjobmanager
+      - JDBC_URL=jdbc:postgresql://postgres-db:5432/logging_db
+      - JDBC_USER=mohamed
+      - JDBC_PASSWORD=mohamed
+      - FLINK_PARALLELISM=1
+      - CHECKPOINT_INTERVAL_MS=60000
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - data-platform-net
+  # ---------------------------
+  #  Database Services
+  #----------------------------
   postgres-db:
     image: pgvector/pgvector:pg16
     restart: always
@@ -329,6 +454,9 @@ services:
     networks:
       - data-platform-net
 
+  # ---------------------------
+  #  Frontend Services
+  #----------------------------
   frontend:
     build:
       context: ./frontend
@@ -345,37 +473,98 @@ services:
     networks:
       - data-platform-net
 
-  flinkjobmanager:
-    build: ./streaming/flink-java
-    image: graduation-project-flinkjobmanager
-    command: [ "jobmanager" ]
+
+
+
+
+# ---------------------------
+#  Chatbot Service
+#----------------------------
+  chatbot-service:
+    build:
+      context: ./backend/services/Chatbot
+      dockerfile: Dockerfile
+    container_name: chatbot-service
+    restart: unless-stopped
     ports:
-      - "8081:8081"
-      - "9249:9249" # Prometheus metrics
-    depends_on:
-      - kafka
-      - postgres-db
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          cpus: "1"
-          memory: 2G
+      - "8004:8000"
     environment:
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9093
-      - JOB_MANAGER_RPC_ADDRESS=flinkjobmanager
-      - JDBC_URL=jdbc:postgresql://postgres-db:5432/logging_db
-      - JDBC_USER=mohamed
-      - JDBC_PASSWORD=mohamed
-      - FLINK_PARALLELISM=1
-      - CHECKPOINT_INTERVAL_MS=60000
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      - DB_DSN=postgresql://lina:123@postgres-db:5432/lina
+      - OLLAMA_BASE_URL=http://ollama-chatbot:11434
+      - LLM_MODEL=qwen2.5-coder:3b      
+    depends_on:
+      - postgres-db
+      - ollama-chatbot
     networks:
       - data-platform-net
+  #--------------------------
+  # Unused Services
+  #-------------------------- 
+
+  # redis:
+  #   image: redis:7.2-bookworm
+  #   expose:
+  #     - 6379
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 30s
+  #     retries: 50
+  #     start_period: 30s
+  #   restart: always
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: "0.5"
+  #         memory: 512M
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #   networks:
+  #     - data-platform-net
+
+  # x-airflow-common: &airflow-common
+  #   image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.10.3}
+  #   env_file:
+  #     - ./.env
+  #   environment: &airflow-common-env
+  #     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+  #     AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+  #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW_DB_CONN:-postgresql+psycopg2://airflow:airflow@postgres-db/airflow}
+  #     AIRFLOW__CELERY__RESULT_BACKEND: ${AIRFLOW_CELERY_RESULT_BACKEND:-db+postgresql://airflow:airflow@postgres-db/airflow}
+  #     AIRFLOW__CELERY__BROKER_URL: ${AIRFLOW_CELERY_BROKER_URL:-redis://:@redis:6379/0}
+  #     AIRFLOW__CORE__FERNET_KEY: ""
+  #     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+  #     AIRFLOW__CORE__LOAD_EXAMPLES: "true"
+  #     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: "http://airflow-apiserver:8080/execution/"
+  #     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
+  #     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+  #     AIRFLOW_CONFIG: "/opt/airflow/config/airflow.cfg"
+  #   volumes:
+  #     - ./airflow/dags:/opt/airflow/dags
+  #     - ./airflow/logs:/opt/airflow/logs
+  #     - ./airflow/config:/opt/airflow/config
+  #     - ./airflow/plugins:/opt/airflow/plugins
+  #   user: "${AIRFLOW_UID:-50000}:0"
+  #   depends_on: &airflow-common-depends-on
+  #     redis:
+  #       condition: service_healthy
+  #     postgres-db:
+  #       condition: service_healthy
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: "1"
+  #         memory: 2G
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #   networks:
+#     - data-platform-net
 
   # prometheus:
   #   image: prom/prometheus:v3.7.3
@@ -401,93 +590,6 @@ services:
   #   networks:
   #     - data-platform-net
 
-  flinktaskmanager:
-    build: ./streaming/flink-java
-    image: graduation-project-flinktaskmanager
-    depends_on:
-      - flinkjobmanager
-      - kafka
-      - postgres-db
-    command: [ "taskmanager" ]
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          cpus: "1"
-          memory: 2G
-    environment:
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9093
-      - JOB_MANAGER_RPC_ADDRESS=flinkjobmanager
-      - JDBC_URL=jdbc:postgresql://postgres-db:5432/logging_db
-      - JDBC_USER=mohamed
-      - JDBC_PASSWORD=mohamed
-      - FLINK_PARALLELISM=1
-      - CHECKPOINT_INTERVAL_MS=60000
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    networks:
-      - data-platform-net
-
-  anomaly-rules-service:
-    build:
-      context: ./backend/services/Anomaly_Rules
-      dockerfile: Dockerfile
-    environment:
-      DB_DSN: postgresql://lina:123@postgres-db:5432/lina
-      OLLAMA_BASE_URL: http://ollama:11434
-      LLM_MODEL: qwen2.5:3b
-    ports:
-      - "8003:8000"
-    depends_on:
-      - postgres-db
-      - ollama
-    networks:
-      - data-platform-net
-  chatbot-service:
-    build:
-      context: ./backend/services/Chatbot
-      dockerfile: Dockerfile
-    container_name: chatbot-service
-    restart: unless-stopped
-    ports:
-      - "8004:8000"
-    environment:
-      - DB_DSN=postgresql://lina:123@postgres-db:5432/lina
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - LLM_MODEL=qwen2.5:3b       # match whatever model ollama pulls
-    depends_on:
-      - postgres-db
-      - ollama
-    networks:
-      - data-platform-net
-    
-  # redis:
-  #   image: redis:7.2-bookworm
-  #   expose:
-  #     - 6379
-  #   healthcheck:
-  #     test: ["CMD", "redis-cli", "ping"]
-  #     interval: 10s
-  #     timeout: 30s
-  #     retries: 50
-  #     start_period: 30s
-  #   restart: always
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: "0.5"
-  #         memory: 512M
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   networks:
-  #     - data-platform-net
-
 volumes:
   pgdata:
   pgadmin-data:
@@ -496,6 +598,8 @@ volumes:
   minio-data:
   clickhouse-data:
   ollama-data:
+  ollama-chatbot-data:
+  ollama-rules-data:
 
 
 networks:
