@@ -50,7 +50,7 @@ services:
       - ollama-data:/root/.ollama
     environment:
       - OLLAMA_KEEP_ALIVE=-1
-      - OLLAMA_NUM_PARALLEL=4
+      - OLLAMA_NUM_PARALLEL=1
       - OLLAMA_MAX_LOADED_MODELS=2
       - OLLAMA_GPU_OVERHEAD=0
       - NVIDIA_VISIBLE_DEVICES=all
@@ -64,13 +64,13 @@ services:
         ollama list | grep -q "moondream:latest" || ollama pull moondream:latest
         ollama list | grep -q "llama3.2:1b" || ollama pull llama3.2:1b
         wait
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
     networks:
       - data-platform-net
   ollama-chatbot:
@@ -84,7 +84,7 @@ services:
       - ollama-chatbot-data:/root/.ollama
     environment:
       - OLLAMA_KEEP_ALIVE=-1
-      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_NUM_PARALLEL=1
       - OLLAMA_MAX_LOADED_MODELS=1
       - OLLAMA_GPU_OVERHEAD=0
       - NVIDIA_VISIBLE_DEVICES=all
@@ -97,13 +97,13 @@ services:
         sleep 8
         ollama list | grep -q "qwen2.5-coder:3b" || ollama pull qwen2.5-coder:3b
         wait
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
     networks:
       - data-platform-net
 
@@ -118,7 +118,7 @@ services:
       - ollama-rules-data:/root/.ollama
     environment:
       - OLLAMA_KEEP_ALIVE=-1
-      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_NUM_PARALLEL=1
       - OLLAMA_MAX_LOADED_MODELS=1
       - OLLAMA_GPU_OVERHEAD=0
       - NVIDIA_VISIBLE_DEVICES=all
@@ -131,13 +131,13 @@ services:
         sleep 8
         ollama list | grep -q "qwen2.5:3b" || ollama pull qwen2.5:3b
         wait
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
     networks:
       - data-platform-net
     # deploy:

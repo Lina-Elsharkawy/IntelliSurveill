@@ -32,7 +32,7 @@ class OllamaLLM:
                 options={
                     "temperature": temperature,
                     "num_predict": 150,   # was 500 — SQL is short, don't generate more
-                    "num_ctx": 1536,    
+                    "num_ctx": 4096,    
                 }
             )
             

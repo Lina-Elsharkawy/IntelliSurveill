@@ -239,7 +239,7 @@ STEP 3 - Are the two extracted actions the same behavior or clear synonyms?
             model=LLM_MODEL,
             messages=[{"role": "user", "content": prompt}],
             stream=False,
-            options={"temperature": 0.0, "num_predict": 30, "num_ctx": 512}
+            options={"temperature": 0.0}
         )
 
         raw = (resp.get("message") or {}).get("content", "").strip()
