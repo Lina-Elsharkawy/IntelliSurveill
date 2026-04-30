@@ -7,12 +7,11 @@ from langgraph_workflow import process_question
 from db import test_connection, get_database_schema
 from model import OllamaLLM, QueryRequest, QueryResponse
 from config import API_HOST, API_PORT
-from validators import is_write_intent
 
 app = FastAPI(
     title="Surveillance Chatbot",
     description="Natural Language investigation + SQL Query API",
-    version="2.0.0"
+    version="2.1.0"
 )
 
 app.add_middleware(
@@ -26,7 +25,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"status": "running", "service": "Surveillance Chatbot", "version": "2.0.0"}
+    return {"status": "running", "service": "Surveillance Chatbot", "version": "2.1.0"}
 
 
 @app.get("/health")
@@ -54,16 +53,6 @@ def query_database(request: QueryRequest):
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
-    if is_write_intent(request.question):
-        return QueryResponse(
-            success=False,
-            question=request.question,
-            sql="",
-            results=[],
-            answer="⛔ This chatbot is read-only. It cannot delete, update, or modify data.",
-            error="Write operation rejected"
-        )
-
     # Convert ChatMessage objects to plain dicts for the workflow
     history = [
         {"role": m.role, "content": m.content, "sql": m.sql}
@@ -79,7 +68,7 @@ def query_database(request: QueryRequest):
             question=request.question,
             sql="",
             results=[],
-            answer="❌ I could not answer that question. Please try rephrasing it.",
+            answer="I could not answer that question. Please try rephrasing it.",
             error=str(e)
         )
 

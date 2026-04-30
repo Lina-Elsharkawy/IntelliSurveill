@@ -152,12 +152,23 @@ sql
     "how many visitors this week" → sql
 
 last_seen
-  USE FOR: finding the most recent detection of a SPECIFIC NAMED person
+  USE FOR: finding the most recent / latest detection of a SPECIFIC NAMED person
   REQUIRES: a person name
   EXAMPLES:
     "where was Ahmed last seen" → last_seen, name=Ahmed
-    "when was Sara detected" → last_seen, name=Sara
+    "when was Sara last detected" → last_seen, name=Sara
     "where is John" → last_seen, name=John
+    "most recent sighting of Maged" → last_seen, name=Maged
+
+first_seen
+  USE FOR: finding the very first / earliest detection of a SPECIFIC NAMED person
+  REQUIRES: a person name
+  KEYWORDS: first, earliest, initially, "first time", "when did X first", "when was X first"
+  EXAMPLES:
+    "when was Eng Maged first detected" → first_seen, name=Eng Maged
+    "first time Ahmed appeared" → first_seen, name=Ahmed
+    "earliest detection of Sara" → first_seen, name=Sara
+    "when did John first enter" → first_seen, name=John
 
 timeline
   USE FOR: full movement history of a SPECIFIC NAMED person on a date
@@ -250,10 +261,18 @@ _STOP_WORDS = {
 }
 
 def _extract_name_fallback(question: str) -> str | None:
-    for w in question.split()[1:]:
+    words = question.split()[1:]
+    name_parts = []
+    for w in words:
         clean = w.strip("?.,!\"'")
         if clean and clean[0].isupper() and clean.lower() not in _STOP_WORDS and len(clean) > 1:
-            return clean
+            name_parts.append(clean)
+        elif name_parts:
+            # Stop accumulating when a lowercase word breaks the sequence
+            break
+    
+    if name_parts:
+        return " ".join(name_parts)
     return None
 
 
@@ -261,8 +280,13 @@ def _keyword_route(question: str, pre_date: str | None) -> dict:
     q = question.lower()
     name = _extract_name_fallback(question)
 
+    if any(p in q for p in ["first seen","first detected","first time","first appeared",
+                              "earliest","first entered","when did","first visit"]):
+        if name:
+            return {"tool": "first_seen", "name": name, "date": pre_date}
+
     if any(p in q for p in ["last seen","when was","where was","where is",
-                              "recently seen"]):
+                              "recently seen", "most recent", "latest detection"]):
         if name:
             return {"tool": "last_seen", "name": name, "date": pre_date}
 
@@ -318,8 +342,13 @@ def route(question: str) -> dict:
 
     # Build tool-specific params
     if tool == "last_seen":
-        # date is optional for last_seen — None means "all-time most recent"
+        # date is optional — None means "all-time most recent"
         return {"path": "tool", "tool": "last_seen",
+                "params": {"name": name, "target_date": d}}
+
+    if tool == "first_seen":
+        # date is optional — None means "all-time earliest"
+        return {"path": "tool", "tool": "first_seen",
                 "params": {"name": name, "target_date": d}}
 
     if tool == "timeline":
