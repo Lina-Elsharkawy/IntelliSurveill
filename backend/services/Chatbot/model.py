@@ -1,69 +1,65 @@
 """
-Ollama LLM wrapper
+Ollama LLM wrapper + Pydantic models
 """
 import ollama
 from config import OLLAMA_HOST, LLM_MODEL
 from pydantic import BaseModel
-from typing import List, Any, Dict, TypedDict
+from typing import List, Any, Dict, Optional, TypedDict
+
 
 class OllamaLLM:
-    """Wrapper for Ollama API"""
-    
     def __init__(self, model: str = LLM_MODEL, host: str = OLLAMA_HOST):
         self.model = model
-        self.client = ollama.Client(host=host)
-    
+        self.host = host
+
+    def _client(self):
+        return ollama.Client(host=self.host)
+
     def generate(self, prompt: str, temperature: float = 0.0) -> str:
-        """
-        Generate text using Ollama
-        
-        Args:
-            prompt: Input prompt
-            temperature: 0.0 = deterministic, 1.0 = creative
-        
-        Returns:
-            Generated text
-        """
         try:
-            response = self.client.chat(
+            response = self._client().chat(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 stream=False,
-                options={
-                    "temperature": temperature,
-                    "num_ctx": 4096  
-                }
+                options={"temperature": temperature, "num_predict": 400, "num_ctx": 4096}
             )
-            
-            content = response.get("message", {}).get("content", "")
-            return content.strip()
-        
+            return response.get("message", {}).get("content", "").strip()
         except Exception as e:
             raise RuntimeError(f"Ollama generation failed: {str(e)}")
-    
+
     def test_connection(self) -> bool:
-        """Test if Ollama is accessible"""
         try:
-            self.client.list()
+            self._client().list()
             return True
         except Exception as e:
             print(f"Ollama connection failed: {e}")
             return False
-            
-# State definition
+
+
 class SQLState(TypedDict):
-    """State for SQL generation workflow"""
-    question: str           # User's natural language question
-    schema: str            # Database schema
-    sql: str               # Generated SQL query
-    sql_valid: bool        # Whether SQL passed validation
-    error_message: str     # Error message if SQL failed
-    results: list          # Query results
-    final_answer: str      # Natural language response
-    retry_count: int       # Number of retry attempts
+    question: str
+    history: list
+    schema: str
+    sql: str
+    sql_valid: bool
+    error_message: str
+    results: list
+    final_answer: str
+    retry_count: int
+    intent: dict         # set by route_intent node
+    tool_result: dict    # set by run_tool node
+
+
+class ChatMessage(BaseModel):
+    role: str            # "user" or "assistant"
+    content: str         # the message text
+    sql: Optional[str] = None
+
 
 class QueryRequest(BaseModel):
     question: str
+    history: Optional[List[ChatMessage]] = []
+
 
 class QueryResponse(BaseModel):
     success: bool

@@ -25,7 +25,7 @@ const ALL_NAV_ITEMS = [
   { title: "Labs", url: "/labs", Icon: GraduationCap },
   { title: "Analytics", url: "/analytics", Icon: BarChart3 },
   { title: "Activity Log", url: "/activity-log", Icon: ListCheck },
-  { title: "Schedules", url: "/schedules", Icon: Calendar },
+  // { title: "Schedules", url: "/schedules", Icon: Calendar },
   { title: "Settings", url: "/settings", Icon: Settings },
   { title: "Detected people", url: "/admin", Icon: UserCog, adminOnly: false },
   { title: "Users", url: "/admin-users", Icon: Shield, adminOnly: true },

@@ -21,7 +21,7 @@ import PublicRoute from "./PublicRoute";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Departments from "./pages/Departments";
 import Labs from "./pages/Labs";
-import Schedules from "./pages/Schedules"; // ← Import Schedules page
+// import Schedules from "./pages/Schedules"; // ← Import Schedules page
 import AdminUsers from "./pages/AdminUsers";
 import RoleBasedRoute from "@/components/RoleBasedRoute";
 
@@ -52,7 +52,7 @@ const AppRoutes = () => {
       <Route path="/admin" element={<RoleBasedRoute element={<Admin />} allowedRoles={['admin', 'user']} />} />
       <Route path="/departments" element={<PrivateRoute element={<Departments />} />} />
       <Route path="/labs" element={<PrivateRoute element={<Labs />} />} />
-      <Route path="/schedules" element={<PrivateRoute element={<Schedules />} />} /> {/* ← Added */}
+      {/* <Route path="/schedules" element={<PrivateRoute element={<Schedules />} />} /> ← Added */}
       <Route path="/admin-users" element={<RoleBasedRoute element={<AdminUsers />} allowedRoles={['admin']} />} />
 
       <Route path="*" element={<NotFound />} />

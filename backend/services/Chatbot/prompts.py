@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-def get_sql_generation_prompt(user_question: str, schema: str) -> str:
+def get_sql_generation_prompt(user_question: str, schema: str, history: list = None) -> str:
     """
     Generate prompt for converting natural language to SQL
 
@@ -11,6 +11,8 @@ DATABASE SCHEMA:
 {schema}
 SCHEMA Tables Releated:
 {relevant_tables}
+the old context is:
+{history}
 
 RULES:
 1. Generate ONLY a SELECT query (no INSERT, UPDATE, DELETE, DROP)

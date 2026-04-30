@@ -23,7 +23,7 @@ const menuItems = [
   { title: "Detected people", url: "/admin", icon: UserCog },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Activity Log", url: "/activity-log", icon: ListCheck },
-  { title: "Schedules", url: "/schedules", icon: Calendar },
+  // { title: "Schedules", url: "/schedules", icon: Calendar },
 ];
 
 export function DashboardSidebar() {
