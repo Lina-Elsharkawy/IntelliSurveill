@@ -30,18 +30,50 @@ def _resolve_date(target_date: str | None, default_today: bool = True) -> str | 
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 1. PERSON LAST SEEN
+# helpers
 # ─────────────────────────────────────────────────────────────────────────────
-def get_person_last_seen(name: str, target_date: str | None = None) -> dict:
-    """
-    Find the most recent detection of a named person.
 
-    target_date:
-      - YYYY-MM-DD  → restrict to that specific day
-      - None        → search across all time (all-time most recent sighting)
+def _name_where_clause(name: str, params: list) -> str:
     """
-    pattern = f"%{name}%"
-    base_sql = """
+    Build a WHERE fragment that matches ANY word in `name` against
+    employee, visitor, and detected_people name columns (ILIKE).
+
+    Handles prefixed names like "Eng Maged" — splits on whitespace and
+    creates one OR condition per token so "Maged" always matches even when
+    the prefix "Eng" is not stored in the DB.
+
+    Side-effect: appends the required bind values to `params`.
+    """
+    tokens = [t.strip() for t in name.split() if t.strip()]
+    if not tokens:
+        tokens = [name]
+
+    clauses = []
+    for tok in tokens:
+        pattern = f"%{tok}%"
+        clauses.append("(e.name ILIKE %s OR v.name ILIKE %s OR dp.name ILIKE %s)")
+        params += [pattern, pattern, pattern]
+
+    return "(" + " AND ".join(clauses) + ")"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. PERSON LAST / FIRST SEEN  (shared implementation)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _get_person_detection(
+    name: str,
+    target_date: str | None,
+    order: str,          # "DESC" → last seen,  "ASC" → first seen
+    tool_label: str,     # "last_seen" or "first_seen"
+) -> dict:
+    """
+    Core implementation shared by get_person_last_seen and get_person_first_seen.
+    """
+    params: list = []
+    name_clause = _name_where_clause(name, params)
+
+    base_sql = f"""
         SELECT
             el.id                                  AS detection_id,
             COALESCE(e.name, v.name, dp.name)      AS person_name,
@@ -54,18 +86,17 @@ def get_person_last_seen(name: str, target_date: str | None = None) -> dict:
         LEFT JOIN employees e   ON dp.employee_id = e.id
         LEFT JOIN visitors  v   ON dp.visitor_id  = v.id
         LEFT JOIN cameras   c   ON el.camera_id   = c.id
-        WHERE (e.name ILIKE %s OR v.name ILIKE %s OR dp.name ILIKE %s)
+        WHERE {name_clause}
     """
 
     resolved = _resolve_date(target_date, default_today=False)
 
     if resolved:
-        sql = base_sql + " AND DATE(el.\"timestamp\") = %s ORDER BY el.\"timestamp\" DESC LIMIT 1"
-        params = (pattern, pattern, pattern, resolved)
+        sql = base_sql + f' AND DATE(el."timestamp") = %s ORDER BY el."timestamp" {order} LIMIT 1'
+        params.append(resolved)
         date_label = resolved
     else:
-        sql = base_sql + " ORDER BY el.\"timestamp\" DESC LIMIT 1"
-        params = (pattern, pattern, pattern)
+        sql = base_sql + f' ORDER BY el."timestamp" {order} LIMIT 1'
         date_label = "all time"
 
     try:
@@ -79,9 +110,19 @@ def get_person_last_seen(name: str, target_date: str | None = None) -> dict:
                 return {"found": False, "message": msg}
             cols = ["detection_id", "person_name", "camera_name",
                     "camera_location", "timestamp", "evidence_url"]
-            return {"found": True, "tool": "last_seen", "data": dict(zip(cols, row))}
+            return {"found": True, "tool": tool_label, "data": dict(zip(cols, row))}
     except Exception as e:
         return {"found": False, "error": str(e)}
+
+
+def get_person_last_seen(name: str, target_date: str | None = None) -> dict:
+    """Find the most recent detection of a named person."""
+    return _get_person_detection(name, target_date, order="DESC", tool_label="last_seen")
+
+
+def get_person_first_seen(name: str, target_date: str | None = None) -> dict:
+    """Find the very first (earliest) detection of a named person."""
+    return _get_person_detection(name, target_date, order="ASC", tool_label="first_seen")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -93,9 +134,11 @@ def get_person_timeline(name: str, target_date: str | None = None) -> dict:
     Defaults to today when target_date is None.
     """
     resolved = _resolve_date(target_date, default_today=True)
-    pattern = f"%{name}%"
+    params: list = []
+    name_clause = _name_where_clause(name, params)
+    params.append(resolved)
 
-    sql = """
+    sql = f"""
         SELECT
             COALESCE(e.name, v.name, dp.name)  AS person_name,
             c.name                              AS camera_name,
@@ -107,14 +150,14 @@ def get_person_timeline(name: str, target_date: str | None = None) -> dict:
         LEFT JOIN employees e   ON dp.employee_id = e.id
         LEFT JOIN visitors  v   ON dp.visitor_id  = v.id
         LEFT JOIN cameras   c   ON el.camera_id   = c.id
-        WHERE (e.name ILIKE %s OR v.name ILIKE %s OR dp.name ILIKE %s)
+        WHERE {name_clause}
           AND DATE(el."timestamp") = %s
         ORDER BY el."timestamp" ASC
     """
     try:
         with _conn() as conn:
             cur = conn.cursor()
-            cur.execute(sql, (pattern, pattern, pattern, resolved))
+            cur.execute(sql, params)
             rows = cur.fetchall()
             if not rows:
                 return {"found": False, "message": f"No detections for '{name}' on {resolved}."}
