@@ -23,9 +23,11 @@ from tools import (
     get_person_first_seen,
     get_person_timeline,
     get_unknown_faces_today,
+    get_unknown_face_events,
     get_repeated_unknowns,
     get_anomalies_near_face,
     get_people_seen_today,
+    get_table_record_counts,
 )
 
 # ── Lazy singletons ──────────────────────────────────────────────────────────
@@ -41,13 +43,15 @@ def get_llm():
 
 
 TOOL_MAP = {
-    "last_seen":           get_person_last_seen,
-    "first_seen":          get_person_first_seen,
-    "timeline":            get_person_timeline,
-    "unknown_faces":       get_unknown_faces_today,
-    "repeated_unknowns":   get_repeated_unknowns,
-    "anomalies_near_face": get_anomalies_near_face,
-    "people_seen_today":   get_people_seen_today,
+    "last_seen":            get_person_last_seen,
+    "first_seen":           get_person_first_seen,
+    "timeline":             get_person_timeline,
+    "unknown_faces":        get_unknown_faces_today,
+    "unknown_face_events":  get_unknown_face_events,
+    "repeated_unknowns":    get_repeated_unknowns,
+    "anomalies_near_face":  get_anomalies_near_face,
+    "people_seen_today":    get_people_seen_today,
+    "table_record_counts":  get_table_record_counts,
 }
 
 # ── Small-talk detector ──────────────────────────────────────────────────────
@@ -126,7 +130,7 @@ def run_tool(state: SQLState) -> SQLState:
 
 
 def format_tool_result(state: SQLState) -> SQLState:
-    """Turn tool result dict into a natural language answer via LLM."""
+    """Turn tool result dict into a natural language answer."""
     result = state.get("tool_result", {})
     question = state["question"]
 
@@ -137,7 +141,135 @@ def format_tool_result(state: SQLState) -> SQLState:
     tool = result.get("tool", "")
     data = result.get("data", [])
 
-    # Build a readable summary for the LLM to narrate
+    # ─────────────────────────────────────────────────────────────
+    # Deterministic formatter: table record counts
+    # Do NOT send this to the LLM because it may hallucinate
+    # ─────────────────────────────────────────────────────────────
+    if tool == "table_record_counts":
+        q = question.lower()
+
+        empty_tables = [r for r in data if r["record_count"] == 0]
+        top_table = data[0] if data else None
+
+        if "empty" in q:
+            if not empty_tables:
+                answer = "There are no empty tables in the database."
+            else:
+                names = "\n".join(
+                    f"- {r['table_name']}" for r in empty_tables
+                )
+                answer = (
+                    f"There are {len(empty_tables)} empty tables:\n\n"
+                    f"{names}"
+                )
+
+            return {
+                **state,
+                "final_answer": answer,
+                "sql": "[Tool: table_record_counts]",
+                "results": data
+            }
+
+        if "most records" in q or "largest" in q:
+            if not top_table:
+                answer = "I could not find any tables."
+            else:
+                answer = (
+                    f"The table with the most records is "
+                    f"{top_table['table_name']}, with "
+                    f"{top_table['record_count']} records."
+                )
+
+            return {
+                **state,
+                "final_answer": answer,
+                "sql": "[Tool: table_record_counts]",
+                "results": data
+            }
+
+        lines = [
+            f"- {r['table_name']}: {r['record_count']} records"
+            for r in data
+        ]
+
+        answer = (
+            f"Here are the record counts for all {len(data)} public tables:\n\n"
+            + "\n".join(lines)
+        )
+
+        if empty_tables:
+            answer += (
+                "\n\nEmpty tables: "
+                + ", ".join(r["table_name"] for r in empty_tables)
+            )
+
+        return {
+            **state,
+            "final_answer": answer,
+            "sql": "[Tool: table_record_counts]",
+            "results": data
+        }
+
+    # ─────────────────────────────────────────────────────────────
+    # Deterministic formatter: real unknown_face_events table
+    # ─────────────────────────────────────────────────────────────
+    if tool == "unknown_face_events":
+        if not data:
+            if result.get("days_back"):
+                answer = (
+                    f"No unknown face events were found in the last "
+                    f"{result.get('days_back')} days."
+                )
+            else:
+                answer = "No unknown face events were found."
+
+            return {
+                **state,
+                "final_answer": answer,
+                "sql": "[Tool: unknown_face_events]",
+                "results": []
+            }
+
+        lines = []
+        for r in data:
+            event_id = r.get("id", "N/A")
+            created_at = r.get("created_at", "N/A")
+            status = r.get("status", "N/A")
+            assigned = r.get("assigned_detected_id")
+            quality = r.get("quality_score", "N/A")
+            best_sim = r.get("best_similarity_score", "N/A")
+
+            review_state = (
+                "unreviewed"
+                if assigned is None
+                else f"assigned to detected_id={assigned}"
+            )
+
+            lines.append(
+                f"- Event {event_id}: {created_at}, status={status}, "
+                f"{review_state}, quality={quality}, best_similarity={best_sim}"
+            )
+
+        if result.get("days_back"):
+            heading = (
+                f"Latest {len(data)} unknown face events from the last "
+                f"{result.get('days_back')} days:"
+            )
+        else:
+            heading = f"Latest {len(data)} unknown face events:"
+
+        answer = heading + "\n\n" + "\n".join(lines)
+
+        return {
+            **state,
+            "final_answer": answer,
+            "sql": "[Tool: unknown_face_events]",
+            "results": data
+        }
+
+    # ─────────────────────────────────────────────────────────────
+    # Existing tool formatters that can still use the LLM
+    # ─────────────────────────────────────────────────────────────
     if tool in ("last_seen", "first_seen"):
         d = data
         label = "Last seen" if tool == "last_seen" else "First detected"
@@ -147,29 +279,45 @@ def format_tool_result(state: SQLState) -> SQLState:
             f"Time: {d.get('timestamp')}\n"
             f"Evidence: {d.get('evidence_url') or 'N/A'}"
         )
+
     elif tool == "timeline":
-        lines = [f"  {r['timestamp']} — {r['camera_name']} ({r['camera_location']})" for r in data]
+        lines = [
+            f"  {r['timestamp']} — {r['camera_name']} ({r['camera_location']})"
+            for r in data
+        ]
         summary = (
             f"Timeline for {data[0]['person_name'] if data else 'person'} "
             f"on {result.get('date')} ({result.get('count')} detections):\n"
             + "\n".join(lines)
         )
+
     elif tool == "unknown_faces":
-        lines = [f"  {r['timestamp']} — {r['camera_name']} ({r['camera_location']})" for r in data[:50]]
+        lines = [
+            f"  {r['timestamp']} — {r['camera_name']} ({r['camera_location']})"
+            for r in data[:50]
+        ]
         summary = (
             f"Unknown faces on {result.get('date')}: {result.get('count')} total.\n"
             + "\n".join(lines)
         )
+
     elif tool == "repeated_unknowns":
         lines = [
             f"  {r['camera_name']} on {r['day']}: {r['appearances']} appearances "
             f"({r['first_seen']} → {r['last_seen']})"
             for r in data
         ]
-        summary = f"Repeated unknown visitors in last {result.get('days_back')} days:\n" + "\n".join(lines)
+        summary = (
+            f"Repeated unknown visitors in last {result.get('days_back')} days:\n"
+            + "\n".join(lines)
+        )
+
     elif tool == "anomalies_near_face":
         if not data:
-            summary = f"No anomalies found within {result.get('window_seconds')}s of {result.get('reference_time')}."
+            summary = (
+                f"No anomalies found within {result.get('window_seconds')}s "
+                f"of {result.get('reference_time')}."
+            )
         else:
             lines = [
                 f"  {r['event_type']} at {r['camera_name']} — {r['detected_at']} "
@@ -178,15 +326,21 @@ def format_tool_result(state: SQLState) -> SQLState:
             ]
             summary = (
                 f"{result.get('count')} anomalies near the reference time "
-                f"({result.get('reference_time')}):\n" + "\n".join(lines)
+                f"({result.get('reference_time')}):\n"
+                + "\n".join(lines)
             )
+
     elif tool == "people_seen_today":
         lines = [
             f"  {r['person_name']} ({r['person_type']}): {r['detections']} detections, "
             f"first at {r['first_seen']}, last at {r['last_seen']}, cameras: {r['cameras_seen']}"
             for r in data
         ]
-        summary = f"People seen on {result.get('date')} ({result.get('count')} people):\n" + "\n".join(lines)
+        summary = (
+            f"People seen on {result.get('date')} ({result.get('count')} people):\n"
+            + "\n".join(lines)
+        )
+
     else:
         summary = str(data[:10])
 
@@ -202,6 +356,7 @@ Do not make up any information. If the data is empty, say so clearly.
 ANSWER:"""
 
     answer = get_llm().generate(prompt, temperature=0.2)
+
     return {
         **state,
         "final_answer": answer,
@@ -239,8 +394,20 @@ def check_sql_safety(state: SQLState) -> SQLState:
 
 def validate_sql_query(state: SQLState) -> SQLState:
     is_valid, error_msg = validate_sql(state["sql"])
-    return {**state, "sql_valid": is_valid, "error_message": "" if is_valid else error_msg}
 
+    if is_valid:
+        return {
+            **state,
+            "sql_valid": True,
+            "error_message": ""
+        }
+
+    return {
+        **state,
+        "sql_valid": False,
+        "error_message": error_msg,
+        "retry_count": state.get("retry_count", 0) + 1
+    }
 
 def execute_query(state: SQLState) -> SQLState:
     result = execute_sql_safely(state["sql"])
@@ -272,7 +439,21 @@ def reject_write_sql(state: SQLState) -> SQLState:
         f"_Technical reason: {reason}_"
     )
     return {**state, "final_answer": answer, "results": []}
-
+def give_up_sql(state: SQLState) -> SQLState:
+    """
+    Final fallback when SQL generation/execution failed after retries.
+    Always returns a useful answer instead of 'No answer generated'.
+    """
+    answer = (
+        "I could not answer this because the generated SQL failed after retrying.\n\n"
+        f"Last SQL attempted:\n{state.get('sql', '')}\n\n"
+        f"Error:\n{state.get('error_message', 'Unknown error')}"
+    )
+    return {
+        **state,
+        "final_answer": answer,
+        "results": state.get("results", [])
+    }
 
 # ── Routing functions ────────────────────────────────────────────────────────
 
@@ -317,6 +498,7 @@ def create_workflow():
     wf.add_node("validate",           validate_sql_query)
     wf.add_node("execute",            execute_query)
     wf.add_node("format",             format_sql_response)
+    wf.add_node("give_up",            give_up_sql)
 
     wf.set_entry_point("route_intent")
 
@@ -347,8 +529,9 @@ def create_workflow():
     )
     wf.add_conditional_edges(
         "execute", should_retry,
-        {"format": "format", "retry": "generate", "give_up": END}
+        {"format": "format", "retry": "generate", "give_up": "give_up"}
     )
+    wf.add_edge("give_up", END)
     wf.add_edge("format", END)
 
     return wf.compile()

@@ -27,14 +27,20 @@ RULES:
 
 You must correctly interpret temporal intent:
 
-- "latest" / "last" → ORDER BY created_at DESC LIMIT 1
-- "first" → ORDER BY created_at ASC LIMIT 1
-- "last N" → ORDER BY created_at DESC LIMIT N
-- "first N" → ORDER BY created_at ASC LIMIT N
-- "top N" → ORDER BY created_at DESC LIMIT N
-- "most recent N" → ORDER BY created_at DESC LIMIT N
-- "recent" → ORDER BY created_at DESC
-- "oldest" → ORDER BY created_at ASC
+- Do NOT assume every table has created_at.
+- For ordering by time, use the actual timestamp/date column shown in the schema.
+- Prefer these known columns:
+  * entry_logs: "timestamp"
+  * anomalies_logs: "timestamp"
+  * unknown_face_events: created_at if available, otherwise "timestamp" if available
+  * anomaly_candidates: created_at
+  * anomaly_candidate_review: reviewed_at or created_at if available
+  * anomaly_rules: created_at
+  * ollama_jobs: created_at if available
+- "latest" / "last" / "most recent" → ORDER BY the correct time column DESC
+- "first" / "earliest" / "oldest" → ORDER BY the correct time column ASC
+- "latest N" / "last N" / "most recent N" → ORDER BY the correct time column DESC LIMIT N
+- If no time column exists, order by id DESC for latest and id ASC for first.
 
 If no N is specified, default:
 - "latest", "recent", "last" → LIMIT 1
@@ -131,16 +137,26 @@ def _pick_relevant_tables(question: str, schema: str) -> str:
     
     # Map keywords to table names
     table_keywords = {
-        "anomaly_rules":     ["rule", "rules", "trigger", "suppress"],
-        "anomalies_logs":    ["anomaly", "anomalies", "detected", "log"],
-        "cameras":           ["camera", "cameras"],
-        "employees":         ["employee", "employees", "staff"],
-        "visitors":          ["visitor", "visitors"],
-        "entry_logs":        ["entry", "access", "entered", "authorized"],
-        "detected_people":   ["detected", "people", "person", "face"],
-        "labs":              ["lab", "laboratory"],
-        "departments":       ["department"],
-        "anomaly_candidates":["candidate", "pending", "llm decision"],
+        "anomaly_rules":          ["rule", "rules", "trigger", "suppress"],
+        "rule_conflicts":         ["conflict", "conflicts", "contradict", "contradiction"],
+        "anomalies":              ["anomaly", "anomalies", "severity"],
+        "anomalies_logs":         ["anomaly log", "anomaly logs", "incident", "incidents"],
+        "anomaly_candidates":     ["candidate", "pending", "llm decision"],
+        "anomaly_thresholds":     ["threshold", "thresholds"],
+        "normal_behavior_models": ["model", "models", "normal behavior"],
+        "cameras":                ["camera", "cameras"],
+        "employees":              ["employee", "employees", "staff"],
+        "visitors":               ["visitor", "visitors"],
+        "entry_logs":             ["entry", "access", "entered", "authorized"],
+        "detected_people":        ["detected", "people", "person", "face"],
+        "unknown_face_events":    ["unknown face", "unknown faces", "stranger", "unidentified", "unreviewed"],
+        "face_embeddings":        ["embedding", "embeddings", "face embedding", "face embeddings"],
+        "labs":                   ["lab", "laboratory"],
+        "departments":            ["department", "departments"],
+        "employee_lab_access":    ["employee lab access", "employee access"],
+        "department_lab_access":  ["department lab access", "department access"],
+        "schedules":              ["schedule", "schedules", "scheduled"],
+    "scene_window_embeddings":["scene", "window", "scene embedding", "scene embeddings"],
     }
     
     matched = set()

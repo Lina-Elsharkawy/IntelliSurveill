@@ -67,43 +67,47 @@ def get_database_schema() -> str:
 
 def execute_sql_safely(sql_query: str, params: tuple = None) -> Dict[str, Any]:
     """
-    Execute SQL query with safety checks
-    
-    Returns:
-        dict with 'success', 'data', 'error', 'row_count'
+    Execute read-only SQL query safely.
+    Supports SELECT and WITH queries only.
     """
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     try:
-        # Execute with timeout
-        cursor.execute("SET statement_timeout TO 30000")  # 30 seconds
-        cursor.execute(sql_query, params)
-        
-        # Fetch results if it's a SELECT
-        if sql_query.strip().upper().startswith("SELECT"):
-            columns = [desc[0] for desc in cursor.description]
-            rows = cursor.fetchall()
-            
-            # Convert to list of dicts
-            data = [dict(zip(columns, row)) for row in rows]
-            
+        cursor.execute("SET statement_timeout TO 30000")
+
+        stripped = sql_query.strip()
+        first_word = stripped.split()[0].upper() if stripped else ""
+
+        if first_word not in ("SELECT", "WITH"):
             return {
-                "success": True,
-                "data": data,
-                "row_count": len(data),
-                "error": None
+                "success": False,
+                "data": [],
+                "row_count": 0,
+                "error": f"Only SELECT/WITH read-only queries are allowed, got: {first_word}"
             }
-        else:
-            # For non-SELECT queries (shouldn't happen in read-only mode)
-            conn.commit()
+
+        cursor.execute(sql_query, params)
+
+        if cursor.description is None:
             return {
                 "success": True,
                 "data": [],
-                "row_count": cursor.rowcount,
+                "row_count": 0,
                 "error": None
             }
-    
+
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        data = [dict(zip(columns, row)) for row in rows]
+
+        return {
+            "success": True,
+            "data": data,
+            "row_count": len(data),
+            "error": None
+        }
+
     except Exception as e:
         conn.rollback()
         return {
@@ -112,7 +116,7 @@ def execute_sql_safely(sql_query: str, params: tuple = None) -> Dict[str, Any]:
             "row_count": 0,
             "error": str(e)
         }
-    
+
     finally:
         cursor.close()
         conn.close()

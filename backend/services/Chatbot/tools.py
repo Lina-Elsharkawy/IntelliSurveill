@@ -4,6 +4,7 @@ Each function is a precise, hand-written SQL query for a specific
 investigation task — more reliable than asking a small LLM to write them.
 """
 import psycopg2
+from psycopg2 import sql as pg_sql
 from datetime import date, timedelta
 from config import DB_DSN
 
@@ -28,6 +29,109 @@ def _resolve_date(target_date: str | None, default_today: bool = True) -> str | 
             pass
     return date.today().isoformat() if default_today else None
 
+def get_unknown_face_events(
+    limit: int = 10,
+    days_back: int | None = None,
+    only_unreviewed: bool | None = None,
+) -> dict:
+    """
+    Query the real unknown_face_events table.
+
+    Unknown face event = row in unknown_face_events.
+    Unreviewed unknown face event = assigned_detected_id IS NULL.
+    """
+    where_clauses = []
+    params = []
+
+    if days_back is not None:
+        where_clauses.append("created_at >= NOW() - (%s * INTERVAL '1 day')")
+        params.append(days_back)
+
+    if only_unreviewed is True:
+        where_clauses.append("assigned_detected_id IS NULL")
+    elif only_unreviewed is False:
+        where_clauses.append("assigned_detected_id IS NOT NULL")
+
+    where_sql = ""
+    if where_clauses:
+        where_sql = "WHERE " + " AND ".join(where_clauses)
+
+    sql = f"""
+        SELECT *
+        FROM unknown_face_events
+        {where_sql}
+        ORDER BY created_at DESC
+        LIMIT %s
+    """
+    params.append(limit)
+
+    try:
+        with _conn() as conn:
+            cur = conn.cursor()
+            cur.execute(sql, params)
+
+            columns = [desc[0] for desc in cur.description]
+            rows = cur.fetchall()
+
+            data = [dict(zip(columns, row)) for row in rows]
+
+            return {
+                "found": True,
+                "tool": "unknown_face_events",
+                "count": len(data),
+                "days_back": days_back,
+                "only_unreviewed": only_unreviewed,
+                "data": data,
+            }
+
+    except Exception as e:
+        return {"found": False, "error": str(e)}
+def get_table_record_counts() -> dict:
+    """
+    Count rows in every public table.
+    Used for questions like:
+    - Which table has the most records?
+    - Which tables are empty?
+    - How many records are in each table?
+    """
+    try:
+        with _conn() as conn:
+            cur = conn.cursor()
+
+            cur.execute("""
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                  AND table_type = 'BASE TABLE'
+                ORDER BY table_name
+            """)
+
+            tables = [row[0] for row in cur.fetchall()]
+            data = []
+
+            for table_name in tables:
+                query = pg_sql.SQL("SELECT COUNT(*) FROM {}").format(
+                    pg_sql.Identifier(table_name)
+                )
+                cur.execute(query)
+                record_count = cur.fetchone()[0]
+
+                data.append({
+                    "table_name": table_name,
+                    "record_count": record_count
+                })
+
+            data.sort(key=lambda x: x["record_count"], reverse=True)
+
+            return {
+                "found": True,
+                "tool": "table_record_counts",
+                "count": len(data),
+                "data": data
+            }
+
+    except Exception as e:
+        return {"found": False, "error": str(e)}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # helpers

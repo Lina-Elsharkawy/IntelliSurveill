@@ -295,13 +295,13 @@ def _keyword_route(question: str, pre_date: str | None) -> dict:
         if name:
             return {"tool": "timeline", "name": name, "date": pre_date}
 
+    if any(p in q for p in ["repeated unknown","came more than once","appeared more than",
+                               "came back","multiple times","more than once","repeat visitor"]):
+        return {"tool": "repeated_unknowns", "name": None, "date": None}
+
     if any(p in q for p in ["unknown face","unknown person","stranger","unidentified",
                               "not identified"]):
         return {"tool": "unknown_faces", "name": None, "date": pre_date}
-
-    if any(p in q for p in ["repeated unknown","came more than once","appeared more than",
-                              "came back","multiple times","more than once","repeat visitor"]):
-        return {"tool": "repeated_unknowns", "name": None, "date": None}
 
     if any(p in q for p in ["anomaly near","anomaly when","incident near","same time as",
                               "anomaly around","anomaly with"]):
@@ -327,6 +327,69 @@ def route(question: str) -> dict:
           "params": {...}
         }
     """
+    q = question.lower()
+
+    # ─────────────────────────────────────────────────────────────
+    # Deterministic metadata routing
+    # Do not let the LLM invent SQL for row counts across all tables.
+    # ─────────────────────────────────────────────────────────────
+    if (
+        "which table has the most records" in q
+        or "table has the most records" in q
+        or "tables are currently empty" in q
+        or "which tables are empty" in q
+        or "empty tables" in q
+        or "records in each table" in q
+        or "record count for each table" in q
+        or "how many records are in each table" in q
+    ):
+        return {
+            "path": "tool",
+            "tool": "table_record_counts",
+            "params": {}
+        }
+
+    # ─────────────────────────────────────────────────────────────
+    # Deterministic unknown-face-event routing
+    # Avoid LLM mistakes such as:
+    #   - WHERE status = 'active'
+    #   - ignoring "last week"
+    #   - confusing unknown_face_events with entry_logs
+    # ─────────────────────────────────────────────────────────────
+    if "unknown face event" in q or "unknown face events" in q:
+        params = {"limit": 10}
+
+        # Extract explicit limit if user says "latest 20", "last 5", etc.
+        m = re.search(r"\b(?:latest|last|show me|show)\s+(\d+)\b", q)
+        if m:
+            try:
+                params["limit"] = int(m.group(1))
+            except ValueError:
+                params["limit"] = 10
+
+        if "last week" in q or "last 7 days" in q or "past week" in q:
+            params["days_back"] = 7
+
+        if "today" in q:
+            params["days_back"] = 1
+
+        if "last 24 hours" in q or "past 24 hours" in q:
+            params["days_back"] = 1
+
+        if "unreviewed" in q or "not reviewed" in q or "not been reviewed" in q:
+            params["only_unreviewed"] = True
+
+        if "reviewed" in q and not (
+            "unreviewed" in q or "not reviewed" in q or "not been reviewed" in q
+        ):
+            params["only_unreviewed"] = False
+
+        return {
+            "path": "tool",
+            "tool": "unknown_face_events",
+            "params": params
+        }
+
     # Step 1: fast regex date resolution
     pre_date = extract_date(question)
 
@@ -335,42 +398,93 @@ def route(question: str) -> dict:
 
     tool = classified.get("tool", "sql")
     name = classified.get("name")
-    d    = classified.get("date")   # None = "not mentioned"
+    d = classified.get("date")   # None = "not mentioned"
 
     if tool == "sql":
-        return {"path": "sql", "tool": None, "params": {}}
+        return {
+            "path": "sql",
+            "tool": None,
+            "params": {}
+        }
 
-    # Build tool-specific params
+    # ─────────────────────────────────────────────────────────────
+    # Tool-specific params
+    # ─────────────────────────────────────────────────────────────
+
     if tool == "last_seen":
         # date is optional — None means "all-time most recent"
-        return {"path": "tool", "tool": "last_seen",
-                "params": {"name": name, "target_date": d}}
+        return {
+            "path": "tool",
+            "tool": "last_seen",
+            "params": {
+                "name": name,
+                "target_date": d
+            }
+        }
 
     if tool == "first_seen":
         # date is optional — None means "all-time earliest"
-        return {"path": "tool", "tool": "first_seen",
-                "params": {"name": name, "target_date": d}}
+        return {
+            "path": "tool",
+            "tool": "first_seen",
+            "params": {
+                "name": name,
+                "target_date": d
+            }
+        }
 
     if tool == "timeline":
-        return {"path": "tool", "tool": "timeline",
-                "params": {"name": name, "target_date": d or date.today().isoformat()}}
+        return {
+            "path": "tool",
+            "tool": "timeline",
+            "params": {
+                "name": name,
+                "target_date": d or date.today().isoformat()
+            }
+        }
 
     if tool == "unknown_faces":
-        return {"path": "tool", "tool": "unknown_faces",
-                "params": {"target_date": d or date.today().isoformat()}}
+        # TEMP SAFETY:
+        # Do not use the old handwritten unknown_faces tool because it queries
+        # entry_logs + detected_people instead of the real unknown_face_events table.
+        # Let generic unknown-face wording go through SQL unless the user explicitly
+        # says "unknown face events", which is handled above.
+        return {
+            "path": "sql",
+            "tool": None,
+            "params": {}
+        }
 
     if tool == "repeated_unknowns":
-        return {"path": "tool", "tool": "repeated_unknowns", "params": {}}
+        return {
+            "path": "tool",
+            "tool": "repeated_unknowns",
+            "params": {}
+        }
 
     if tool == "anomalies_near_face":
         params: dict = {}
         if name:
             params["person_name"] = name
-        return {"path": "tool", "tool": "anomalies_near_face", "params": params}
+
+        return {
+            "path": "tool",
+            "tool": "anomalies_near_face",
+            "params": params
+        }
 
     if tool == "people_seen_today":
-        return {"path": "tool", "tool": "people_seen_today",
-                "params": {"target_date": d or date.today().isoformat()}}
+        return {
+            "path": "tool",
+            "tool": "people_seen_today",
+            "params": {
+                "target_date": d or date.today().isoformat()
+            }
+        }
 
     # Safety net
-    return {"path": "sql", "tool": None, "params": {}}
+    return {
+        "path": "sql",
+        "tool": None,
+        "params": {}
+    }
