@@ -1,29 +1,26 @@
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { apiGet, apiPost, apiDelete, apiPatch } from "@/lib/api";
+import {
+    getAnomalyRules,
+    deactivateAnomalyRule,
+    reactivateRulePreview,
+    reactivateAnomalyRule,
+    deleteAnomalyRule,
+    previewNewRule,
+    addAnomalyRule,
+    resolveAndReactivateRule,
+    resolveAndAddRule,
+    AnomalyRule,
+    ConflictRule,
+    PreviewResult
+} from "@/services/anomalyRulesService";
 
 import { ConflictModal } from "@/components/anomaly/ConflictModal";
 import { RuleCard } from "@/components/anomaly/RuleCard";
 import { AddRuleForm } from "@/components/anomaly/AddRuleForm";
-export type ConflictRule = {
-    rule_id: number;
-    rule_text: string;
-    rule_type: string;
-    event_type: string;
-    location: string;
-    has_type_conflict: boolean;
-};
-
-export type PreviewResult = {
-    parsed: any;
-    conflicts: ConflictRule[];
-    has_conflicts: boolean;
-    duplicate?: ConflictRule;
-    has_duplicate?: boolean;
-};
 
 export default function AnomalyRules() {
-    const [rules, setRules] = useState<any[]>([]);
+    const [rules, setRules] = useState<AnomalyRule[]>([]);
     const [ruleInput, setRuleInput] = useState("");
     const [ruleType, setRuleType] = useState<"trigger" | "suppress">("trigger");
     const [loading, setLoading] = useState(false);
@@ -40,8 +37,8 @@ export default function AnomalyRules() {
 
     const fetchRules = async () => {
         try {
-            const data = await apiGet("/api/anomaly-rules");
-            setRules(Array.isArray(data) ? data : []);
+            const data = await getAnomalyRules();
+            setRules(data);
         } catch (e) {
             console.error("Error fetching rules:", e);
         }
@@ -54,11 +51,11 @@ export default function AnomalyRules() {
         try {
             if (rule.active) {
                 // Deactivate directly — no conflict check needed
-                await apiPatch(`/api/anomaly-rules/${rule.rule_id}/deactivate`, {});
+                await deactivateAnomalyRule(rule.rule_id);
                 await fetchRules();
             } else {
                 // Reactivating — check for conflicts first
-                const result = await apiPost<PreviewResult>(`/api/anomaly-rules/reactivate-preview/${rule.rule_id}`, {});
+                const result = await reactivateRulePreview(rule.rule_id);
 
                 if (result.has_conflicts || result.has_duplicate) {
                     // Format the duplicate as a conflict to reuse the same modal
@@ -81,7 +78,7 @@ export default function AnomalyRules() {
                     setSelectedToDeactivate(result.conflicts.map((c: ConflictRule) => c.rule_id));
                     setShowConflictModal(true);
                 } else {
-                    await apiPatch(`/api/anomaly-rules/${rule.rule_id}/reactivate`, {});
+                    await reactivateAnomalyRule(rule.rule_id);
                     await fetchRules();
                 }
             }
@@ -93,7 +90,7 @@ export default function AnomalyRules() {
     const deleteRule = async (idx: number) => {
         const rule = rules[idx];
         try {
-            await apiDelete(`/api/anomaly-rules/${rule.rule_id}`);
+            await deleteAnomalyRule(rule.rule_id);
             await fetchRules();
         } catch (e) {
             console.error("Error deleting rule:", e);
@@ -106,10 +103,7 @@ export default function AnomalyRules() {
         if (!text) return;
         setLoading(true);
         try {
-            const result = await apiPost<PreviewResult>("/api/anomaly-rules/preview", {
-                rule_text: text,
-                rule_type: ruleType
-            });
+            const result = await previewNewRule(text, ruleType);
 
             if (result.has_conflicts || result.has_duplicate) {
                 // Format the duplicate as a conflict to reuse the same modal
@@ -128,7 +122,7 @@ export default function AnomalyRules() {
                 setShowConflictModal(true);
             } else {
                 // No conflicts — add directly
-                await apiPost("/api/anomaly-rules", { rule_text: text, rule_type: ruleType });
+                await addAnomalyRule(text, ruleType);
                 setRuleInput('');
                 await fetchRules();
             }
@@ -143,17 +137,10 @@ export default function AnomalyRules() {
         try {
             if (reactivatingRuleId !== null) {
                 // We were reactivating an existing rule, resolve it atomically
-                await apiPost("/api/anomaly-rules/resolve-and-reactivate", {
-                    rule_id: reactivatingRuleId,
-                    deactivate_rule_ids: selectedToDeactivate
-                });
+                await resolveAndReactivateRule(reactivatingRuleId, selectedToDeactivate);
             } else {
                 // We were adding a new rule, resolve it atomically
-                await apiPost("/api/anomaly-rules/resolve-and-add", {
-                    rule_text: ruleInput.trim(),
-                    rule_type: ruleType,
-                    deactivate_rule_ids: selectedToDeactivate
-                });
+                await resolveAndAddRule(ruleInput.trim(), ruleType, selectedToDeactivate);
                 setRuleInput('');
             }
 

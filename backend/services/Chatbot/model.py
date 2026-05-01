@@ -36,7 +36,7 @@ class OllamaLLM:
             return False
 
 
-class SQLState(TypedDict):
+class SQLState(TypedDict, total=False):
     question: str
     history: list
     schema: str

@@ -1,13 +1,9 @@
 import React from "react";
 
+import { AnomalyRule } from "@/services/anomalyRulesService";
+
 interface RuleCardProps {
-    rule: {
-        rule_id: number;
-        rule_text: string;
-        rule_type: string;
-        event_type: string;
-        active: boolean;
-    };
+    rule: AnomalyRule;
     displayId: number;
     onToggle: () => void;
     onDelete: () => void;

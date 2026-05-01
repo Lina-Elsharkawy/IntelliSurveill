@@ -6,17 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { apiGet } from "@/lib/api"
-
-type AnomalyCandidate = {
-  id: number
-  status: string
-  narrative?: string
-  imageRef?: string
-  createdAt: string
-  cameraId?: string
-  severity?: "high" | "medium" | "low"
-}
+import { getAnomalyCandidates, AnomalyCandidate } from "@/services/anomalyCandidatesService"
+import { AnomalyDetailModal } from "@/components/anomaly/AnomalyDetailModal"
 
 const Anomaly = () => {
   const [anomalies, setAnomalies] = useState<AnomalyCandidate[]>([])
@@ -28,29 +19,14 @@ const Anomaly = () => {
   const fetchAnomalies = async () => {
     try {
       setError(null)
-      const data = await apiGet<any[]>("/api/anomaly-candidates")
-
-      const mappedAnomalies: AnomalyCandidate[] = data.map((a) => ({
-        ...a,
-        severity: determineSeverity(a),
-      }))
-      
-      setAnomalies(mappedAnomalies)
+      const data = await getAnomalyCandidates()
+      setAnomalies(data)
     } catch (err: any) {
       console.error("Failed to fetch anomalies:", err)
       setError(err.message || "Failed to load anomalies")
     } finally {
       setLoading(false)
     }
-  }
-
-  const determineSeverity = (anomaly: any): "high" | "medium" | "low" => {
-    if (anomaly.status === "pending" || anomaly.status === "sent_to_llm") {
-      return "high"
-    } else if (anomaly.status === "resolved") {
-      return "low"
-    }
-    return "medium"
   }
 
   useEffect(() => {
@@ -253,66 +229,12 @@ const Anomaly = () => {
         </Card>
       </div>
 
-      {selectedAnomaly && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[2000] p-4 animate-in fade-in duration-300">
-          <div className="bg-background border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="sticky top-0 bg-background/80 backdrop-blur-md border-b border-border p-6 flex items-center justify-between z-10">
-              <div className="flex items-center gap-4">
-                <div className={`w-3 h-3 rounded-full animate-pulse ${getSeverityClass(selectedAnomaly.severity!) === 'red' ? 'bg-red-500' : 'bg-blue-500'}`} />
-                <h2 className="text-2xl font-bold text-foreground">Anomaly #{selectedAnomaly.id}</h2>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setSelectedAnomaly(null)} className="rounded-full hover:bg-secondary">
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-
-            <div className="p-8 space-y-8">
-              {selectedAnomaly.imageRef ? (
-                <div className="rounded-xl overflow-hidden border-2 border-border shadow-lg">
-                  <img src={selectedAnomaly.imageRef} alt={`Anomaly ${selectedAnomaly.id}`} className="w-full h-auto object-cover max-h-[400px]" />
-                </div>
-              ) : (
-                <div className="w-full h-64 bg-secondary rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-border">
-                  <Camera className="w-16 h-16 text-muted-foreground/30 mb-2" />
-                  <p className="text-muted-foreground text-sm">Visual evidence not available</p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-1">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Status</p>
-                  <Badge variant="secondary" className="px-3 py-1 font-mono">{selectedAnomaly.status.replace('_', ' ')}</Badge>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Camera Source</p>
-                  <p className="text-foreground font-medium flex items-center gap-2"><Camera className="w-4 h-4 text-primary" /> {selectedAnomaly.cameraId || "Unknown Asset"}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Severity</p>
-                  <Badge className={`${getSeverityClass(selectedAnomaly.severity!)} text-white`}>{selectedAnomaly.severity?.toUpperCase()}</Badge>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Detection Time</p>
-                  <p className="text-foreground font-medium flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> {formatDate(selectedAnomaly.createdAt)}</p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Detailed Narrative</p>
-                <div className="text-foreground bg-secondary/50 p-6 rounded-xl border border-border leading-relaxed italic text-sm">
-                  "{selectedAnomaly.narrative || "System awaiting detailed LLM analysis of the visual data stream..."}"
-                </div>
-              </div>
-
-              <div className="flex gap-4 pt-4 border-t border-border">
-                <Button variant="outline" className="flex-1 h-12 font-bold" onClick={() => setSelectedAnomaly(null)}>Close View</Button>
-                <Button className="flex-1 h-12 bg-primary hover:bg-primary/90 font-bold shadow-lg shadow-primary/20">Acknowledge</Button>
-                <Button className="flex-1 h-12 bg-success hover:bg-success/90 font-bold shadow-lg shadow-success/20">Resolve Anomaly</Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <AnomalyDetailModal 
+        selectedAnomaly={selectedAnomaly} 
+        onClose={() => setSelectedAnomaly(null)} 
+        getSeverityClass={getSeverityClass} 
+        formatDate={formatDate} 
+      />
     </DashboardLayout>
   )
 }

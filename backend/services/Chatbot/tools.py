@@ -86,6 +86,120 @@ def get_unknown_face_events(
 
     except Exception as e:
         return {"found": False, "error": str(e)}
+
+def get_unknown_detection_count(target_date: str | None = None, hour: int | None = None) -> dict:
+    """
+    Count unknown face detections/events from unknown_face_events.
+
+    By default this counts today's unknown face events. If hour is provided,
+    it counts the whole hour bucket, e.g. hour=13 means 13:00:00 to 13:59:59.
+    """
+    resolved = _resolve_date(target_date, default_today=True)
+    params: list = [resolved]
+    where = ["DATE(created_at) = %s"]
+    if hour is not None:
+        where.append("EXTRACT(HOUR FROM created_at) = %s")
+        params.append(int(hour))
+    sql = f"""
+        SELECT COUNT(*) AS count
+        FROM unknown_face_events
+        WHERE {' AND '.join(where)}
+    """
+    try:
+        with _conn() as conn:
+            cur = conn.cursor()
+            cur.execute(sql, params)
+            count = cur.fetchone()[0]
+            return {
+                "found": True,
+                "tool": "unknown_detection_count",
+                "data": {
+                    "count": count,
+                    "target_date": resolved,
+                    "hour": hour,
+                    "source_table": "unknown_face_events",
+                    "meaning": "Unknown face events/detections",
+                },
+            }
+    except Exception as e:
+        return {"found": False, "error": str(e)}
+
+
+def get_known_face_detection_count(target_date: str | None = None, hour: int | None = None) -> dict:
+    """
+    Count known face detections from entry_logs joined to detected_people.
+
+    Known = detected_people.employee_id IS NOT NULL OR visitor_id IS NOT NULL.
+    This matches the schema's known identity relationship.
+    """
+    resolved = _resolve_date(target_date, default_today=True)
+    params: list = [resolved]
+    where = [
+        'DATE(el."timestamp") = %s',
+        "(dp.employee_id IS NOT NULL OR dp.visitor_id IS NOT NULL)",
+    ]
+    if hour is not None:
+        where.append('EXTRACT(HOUR FROM el."timestamp") = %s')
+        params.append(int(hour))
+    sql = f"""
+        SELECT COUNT(*) AS count
+        FROM entry_logs el
+        JOIN detected_people dp ON el.detected_id = dp.id
+        WHERE {' AND '.join(where)}
+    """
+    try:
+        with _conn() as conn:
+            cur = conn.cursor()
+            cur.execute(sql, params)
+            count = cur.fetchone()[0]
+            return {
+                "found": True,
+                "tool": "known_face_detection_count",
+                "data": {
+                    "count": count,
+                    "target_date": resolved,
+                    "hour": hour,
+                    "source_table": "entry_logs + detected_people",
+                    "meaning": "Known detections where employee_id or visitor_id is present",
+                },
+            }
+    except Exception as e:
+        return {"found": False, "error": str(e)}
+
+
+def get_face_detection_count(target_date: str | None = None, hour: int | None = None) -> dict:
+    """Count all face/person detections from entry_logs for a date and optional hour."""
+    resolved = _resolve_date(target_date, default_today=True)
+    params: list = [resolved]
+    where = ['DATE(el."timestamp") = %s']
+    if hour is not None:
+        where.append('EXTRACT(HOUR FROM el."timestamp") = %s')
+        params.append(int(hour))
+    sql = f"""
+        SELECT COUNT(*) AS count
+        FROM entry_logs el
+        WHERE {' AND '.join(where)}
+    """
+    try:
+        with _conn() as conn:
+            cur = conn.cursor()
+            cur.execute(sql, params)
+            count = cur.fetchone()[0]
+            return {
+                "found": True,
+                "tool": "face_detection_count",
+                "data": {
+                    "count": count,
+                    "target_date": resolved,
+                    "hour": hour,
+                    "source_table": "entry_logs",
+                    "meaning": "All entry-log detections",
+                },
+            }
+    except Exception as e:
+        return {"found": False, "error": str(e)}
+
+
 def get_table_record_counts() -> dict:
     """
     Count rows in every public table.
@@ -463,3 +577,392 @@ def get_people_seen_today(target_date: str | None = None) -> dict:
             }
     except Exception as e:
         return {"found": False, "error": str(e)}
+# ─────────────────────────────────────────────────────────────────────────────
+# Additional investigation tools for LangGraph tool-first architecture
+# These functions are defensive: they inspect schema where possible and return a
+# helpful message instead of crashing if optional tables/columns are missing.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _table_exists(cur, table_name: str) -> bool:
+    cur.execute("""
+        SELECT EXISTS (
+            SELECT 1 FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_name = %s
+        )
+    """, (table_name,))
+    return bool(cur.fetchone()[0])
+
+
+def _column_exists(cur, table_name: str, column_name: str) -> bool:
+    cur.execute("""
+        SELECT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = %s AND column_name = %s
+        )
+    """, (table_name, column_name))
+    return bool(cur.fetchone()[0])
+
+
+def _columns(cur, table_name: str) -> set[str]:
+    cur.execute("""
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = %s
+    """, (table_name,))
+    return {r[0] for r in cur.fetchall()}
+
+
+def _rows_to_dicts(cur, rows):
+    cols = [desc[0] for desc in cur.description]
+    return [dict(zip(cols, r)) for r in rows]
+
+
+def get_unknown_face_event_details(event_id: int) -> dict:
+    """Return one unknown_face_events row with its source entry log and camera context."""
+    try:
+        with _conn() as conn:
+            cur = conn.cursor()
+            if not _table_exists(cur, "unknown_face_events"):
+                return {"found": False, "message": "The unknown_face_events table does not exist."}
+            cur.execute("""
+                SELECT
+                    ufe.id,
+                    ufe.entry_log_id,
+                    ufe.status,
+                    ufe.assigned_detected_id,
+                    ufe.embedding_model,
+                    ufe.notes,
+                    ufe.created_at,
+                    el."timestamp" AS event_timestamp,
+                    el.camera_id,
+                    c.name AS camera_name,
+                    c.location AS camera_location,
+                    el.image_video_ref
+                FROM unknown_face_events ufe
+                LEFT JOIN entry_logs el ON ufe.entry_log_id = el.id
+                LEFT JOIN cameras c ON el.camera_id = c.id
+                WHERE ufe.id = %s
+                LIMIT 1
+            """, (event_id,))
+            row = cur.fetchone()
+            if not row:
+                return {"found": False, "message": f"No unknown face event found with id={event_id}."}
+            data = _rows_to_dicts(cur, [row])[0]
+            return {"found": True, "tool": "unknown_face_event_details", "event_id": event_id, "data": data}
+    except Exception as e:
+        return {"found": False, "error": str(e)}
+
+
+def get_latest_anomalies(limit: int = 10, days_back: int | None = None) -> dict:
+    """Latest anomalies from anomalies_logs joined to anomalies/cameras when available."""
+    try:
+        limit = max(1, min(100, int(limit or 10)))
+        with _conn() as conn:
+            cur = conn.cursor()
+            if not _table_exists(cur, "anomalies_logs"):
+                return {"found": False, "message": "The anomalies_logs table does not exist."}
+            where = ""
+            params = []
+            if days_back:
+                where = "WHERE al.\"timestamp\" >= NOW() - (%s * INTERVAL '1 day')"
+                params.append(days_back)
+            sql = f"""
+                SELECT
+                    al.id AS anomaly_log_id,
+                    al.\"timestamp\" AS timestamp,
+                    al.camera_id,
+                    c.name AS camera_name,
+                    c.location AS camera_location,
+                    a.description AS description,
+                    a.severity_level AS severity
+                FROM anomalies_logs al
+                LEFT JOIN anomalies a ON al.anomaly_id = a.id
+                LEFT JOIN cameras c ON al.camera_id = c.id
+                {where}
+                ORDER BY al.\"timestamp\" DESC
+                LIMIT %s
+            """
+            params.append(limit)
+            cur.execute(sql, params)
+            rows = cur.fetchall()
+            return {"found": True, "tool": "latest_anomalies", "count": len(rows), "data": _rows_to_dicts(cur, rows)}
+    except Exception as e:
+        return {"found": False, "error": str(e)}
+
+
+def get_anomalies_near_unknown_event(event_id: int, window_seconds: int = 60) -> dict:
+    """Find anomaly logs near the entry_log timestamp/camera of an unknown face event."""
+    try:
+        window_seconds = max(1, min(3600, int(window_seconds or 60)))
+        with _conn() as conn:
+            cur = conn.cursor()
+            if not _table_exists(cur, "unknown_face_events"):
+                return {"found": False, "message": "The unknown_face_events table does not exist."}
+            cur.execute("""
+                SELECT
+                    ufe.id,
+                    ufe.entry_log_id,
+                    COALESCE(el."timestamp", ufe.created_at) AS reference_time,
+                    el.camera_id
+                FROM unknown_face_events ufe
+                LEFT JOIN entry_logs el ON ufe.entry_log_id = el.id
+                WHERE ufe.id = %s
+                LIMIT 1
+            """, (event_id,))
+            ref = cur.fetchone()
+            if not ref:
+                return {"found": False, "message": f"No unknown face event found with id={event_id}."}
+
+            _, entry_log_id, ref_ts, ref_cam = ref
+            camera_filter = "AND al.camera_id = %s" if ref_cam is not None else ""
+            params = [ref_ts, ref_ts, window_seconds]
+            if ref_cam is not None:
+                params.append(ref_cam)
+
+            sql = f"""
+                SELECT
+                    al.id AS anomaly_log_id,
+                    al."timestamp" AS timestamp,
+                    al.camera_id,
+                    c.name AS camera_name,
+                    c.location AS camera_location,
+                    a.description AS description,
+                    a.severity_level AS severity,
+                    ABS(EXTRACT(EPOCH FROM (al."timestamp" - %s::timestamptz))) AS seconds_apart
+                FROM anomalies_logs al
+                LEFT JOIN anomalies a ON al.anomaly_id = a.id
+                LEFT JOIN cameras c ON al.camera_id = c.id
+                WHERE ABS(EXTRACT(EPOCH FROM (al."timestamp" - %s::timestamptz))) <= %s
+                {camera_filter}
+                ORDER BY seconds_apart ASC
+                LIMIT 20
+            """
+            cur.execute(sql, params)
+            rows = cur.fetchall()
+            return {
+                "found": True,
+                "tool": "anomalies_near_unknown_event",
+                "event_id": event_id,
+                "entry_log_id": entry_log_id,
+                "reference_time": str(ref_ts),
+                "camera_id": ref_cam,
+                "window_seconds": window_seconds,
+                "count": len(rows),
+                "data": _rows_to_dicts(cur, rows),
+            }
+    except Exception as e:
+        return {"found": False, "error": str(e)}
+
+
+def get_camera_activity_summary(target_date: str | None = None, days_back: int | None = None, limit: int = 20) -> dict:
+    """Detection counts grouped by camera from entry_logs."""
+    try:
+        limit = max(1, min(100, int(limit or 20)))
+        with _conn() as conn:
+            cur = conn.cursor()
+            if not _table_exists(cur, "entry_logs"):
+                return {"found": False, "message": "The entry_logs table does not exist."}
+            where = []
+            params = []
+            if target_date:
+                where.append('DATE(el."timestamp") = %s')
+                params.append(target_date)
+            elif days_back:
+                where.append('el."timestamp" >= NOW() - (%s * INTERVAL \'1 day\')')
+                params.append(days_back)
+            where_sql = "WHERE " + " AND ".join(where) if where else ""
+            sql = f"""
+                SELECT
+                    c.id AS camera_id,
+                    COALESCE(c.name, 'Camera ' || el.camera_id::text) AS camera_name,
+                    c.location AS camera_location,
+                    COUNT(*) AS detections,
+                    MIN(el.\"timestamp\") AS first_seen,
+                    MAX(el.\"timestamp\") AS last_seen
+                FROM entry_logs el
+                LEFT JOIN cameras c ON el.camera_id = c.id
+                {where_sql}
+                GROUP BY c.id, c.name, c.location, el.camera_id
+                ORDER BY detections DESC
+                LIMIT %s
+            """
+            params.append(limit)
+            cur.execute(sql, params)
+            rows = cur.fetchall()
+            return {"found": True, "tool": "camera_activity_summary", "count": len(rows), "data": _rows_to_dicts(cur, rows)}
+    except Exception as e:
+        return {"found": False, "error": str(e)}
+
+
+def get_daily_security_summary(target_date: str | None = None) -> dict:
+    """Compact daily summary across detections, unknown events, and anomalies."""
+    resolved = _resolve_date(target_date, default_today=True)
+    data = {"date": resolved}
+    try:
+        with _conn() as conn:
+            cur = conn.cursor()
+            if _table_exists(cur, "entry_logs"):
+                cur.execute('SELECT COUNT(*) FROM entry_logs WHERE DATE("timestamp") = %s', (resolved,))
+                data["entry_log_detections"] = cur.fetchone()[0]
+            if _table_exists(cur, "unknown_face_events"):
+                cols = _columns(cur, "unknown_face_events")
+                ts_col = "created_at" if "created_at" in cols else ("timestamp" if "timestamp" in cols else None)
+                if ts_col:
+                    cur.execute(f"SELECT COUNT(*) FROM unknown_face_events WHERE DATE({ts_col}) = %s", (resolved,))
+                    data["unknown_face_events"] = cur.fetchone()[0]
+            if _table_exists(cur, "anomalies_logs"):
+                cur.execute('SELECT COUNT(*) FROM anomalies_logs WHERE DATE("timestamp") = %s', (resolved,))
+                data["anomaly_logs"] = cur.fetchone()[0]
+            if _table_exists(cur, "cameras") and _table_exists(cur, "entry_logs"):
+                cur.execute('''
+                    SELECT COALESCE(c.name, 'Camera ' || el.camera_id::text) AS camera_name, COUNT(*) AS detections
+                    FROM entry_logs el
+                    LEFT JOIN cameras c ON el.camera_id = c.id
+                    WHERE DATE(el."timestamp") = %s
+                    GROUP BY c.name, el.camera_id
+                    ORDER BY detections DESC
+                    LIMIT 5
+                ''', (resolved,))
+                data["top_cameras"] = _rows_to_dicts(cur, cur.fetchall())
+            return {"found": True, "tool": "daily_security_summary", "date": resolved, "data": data}
+    except Exception as e:
+        return {"found": False, "error": str(e)}
+
+
+def _unknown_event_embedding_exists(cur, event_id: int) -> bool:
+    """unknown_face_events stores the 512-d embedding directly in this schema."""
+    if not _table_exists(cur, "unknown_face_events"):
+        return False
+    cur.execute("SELECT 1 FROM unknown_face_events WHERE id = %s LIMIT 1", (event_id,))
+    return cur.fetchone() is not None
+
+
+def find_similar_unknown_faces(event_id: int, threshold: float = 0.60, limit: int = 10) -> dict:
+    """Find similar unknown_face_events using direct pgvector cosine distance on ufe.embedding."""
+    try:
+        limit = max(1, min(100, int(limit or 10)))
+        threshold = float(threshold or 0.60)
+        max_distance = 1.0 - threshold
+        with _conn() as conn:
+            cur = conn.cursor()
+            if not _table_exists(cur, "unknown_face_events"):
+                return {"found": False, "message": "The unknown_face_events table does not exist."}
+            if not _unknown_event_embedding_exists(cur, event_id):
+                return {"found": False, "message": f"No unknown face event found with id={event_id}."}
+
+            cur.execute("""
+                WITH ref AS (
+                    SELECT embedding
+                    FROM unknown_face_events
+                    WHERE id = %s
+                    LIMIT 1
+                )
+                SELECT
+                    ufe.id AS event_id,
+                    ufe.entry_log_id,
+                    ufe.status,
+                    ufe.assigned_detected_id,
+                    ufe.created_at,
+                    el."timestamp" AS event_timestamp,
+                    el.camera_id,
+                    c.name AS camera_name,
+                    c.location AS camera_location,
+                    1 - (ufe.embedding <=> ref.embedding) AS similarity,
+                    (ufe.embedding <=> ref.embedding) AS distance
+                FROM unknown_face_events ufe
+                CROSS JOIN ref
+                LEFT JOIN entry_logs el ON ufe.entry_log_id = el.id
+                LEFT JOIN cameras c ON el.camera_id = c.id
+                WHERE ufe.id <> %s
+                  AND (ufe.embedding <=> ref.embedding) <= %s
+                ORDER BY ufe.embedding <=> ref.embedding ASC
+                LIMIT %s
+            """, (event_id, event_id, max_distance, limit))
+            rows = cur.fetchall()
+            return {
+                "found": True,
+                "tool": "similar_unknown_faces",
+                "event_id": event_id,
+                "threshold": threshold,
+                "count": len(rows),
+                "data": _rows_to_dicts(cur, rows),
+            }
+    except Exception as e:
+        return {"found": False, "error": str(e)}
+
+
+def find_possible_identity_match(event_id: int, threshold: float = 0.55, limit: int = 5) -> dict:
+    """Find closest known people by comparing unknown_face_events.embedding to face_embeddings.embedding."""
+    try:
+        limit = max(1, min(50, int(limit or 5)))
+        threshold = float(threshold or 0.55)
+        max_distance = 1.0 - threshold
+        with _conn() as conn:
+            cur = conn.cursor()
+            if not _table_exists(cur, "unknown_face_events"):
+                return {"found": False, "message": "The unknown_face_events table does not exist."}
+            if not _table_exists(cur, "face_embeddings"):
+                return {"found": False, "message": "The face_embeddings table does not exist."}
+            if not _unknown_event_embedding_exists(cur, event_id):
+                return {"found": False, "message": f"No unknown face event found with id={event_id}."}
+
+            cur.execute("""
+                WITH ref AS (
+                    SELECT embedding
+                    FROM unknown_face_events
+                    WHERE id = %s
+                    LIMIT 1
+                )
+                SELECT
+                    dp.id AS detected_id,
+                    COALESCE(e.name, v.name, dp.name, 'Unknown') AS person_name,
+                    CASE WHEN e.id IS NOT NULL THEN 'employee'
+                         WHEN v.id IS NOT NULL THEN 'visitor'
+                         ELSE 'detected_person' END AS person_type,
+                    fe.id AS face_embedding_id,
+                    fe.entry_log_id,
+                    fe.is_authoritative,
+                    fe.quality_score,
+                    1 - (fe.embedding <=> ref.embedding) AS similarity,
+                    (fe.embedding <=> ref.embedding) AS distance
+                FROM face_embeddings fe
+                JOIN detected_people dp ON fe.detected_id = dp.id
+                LEFT JOIN employees e ON dp.employee_id = e.id
+                LEFT JOIN visitors v ON dp.visitor_id = v.id
+                CROSS JOIN ref
+                WHERE (e.id IS NOT NULL OR v.id IS NOT NULL OR dp.name IS NOT NULL)
+                  AND (fe.embedding <=> ref.embedding) <= %s
+                ORDER BY fe.embedding <=> ref.embedding ASC
+                LIMIT %s
+            """, (event_id, max_distance, limit))
+            rows = cur.fetchall()
+            return {
+                "found": True,
+                "tool": "possible_identity_match",
+                "event_id": event_id,
+                "threshold": threshold,
+                "count": len(rows),
+                "data": _rows_to_dicts(cur, rows),
+            }
+    except Exception as e:
+        return {"found": False, "error": str(e)}
+
+
+def investigate_unknown_face_event(event_id: int, threshold: float = 0.60, limit: int = 10) -> dict:
+    """Composite investigation: event context + similar unknowns + possible identities + nearby anomalies."""
+    details = get_unknown_face_event_details(event_id)
+    similar = find_similar_unknown_faces(event_id, threshold=threshold, limit=limit)
+    identity = find_possible_identity_match(event_id, threshold=max(0.0, threshold - 0.05), limit=5)
+    anomalies = get_anomalies_near_unknown_event(event_id, window_seconds=60)
+    found = any(r.get("found") for r in [details, similar, identity, anomalies])
+    return {
+        "found": found,
+        "tool": "investigate_unknown_face_event",
+        "event_id": event_id,
+        "data": {
+            "details": details,
+            "similar_unknown_faces": similar,
+            "possible_identity_matches": identity,
+            "nearby_anomalies": anomalies,
+        },
+    }
