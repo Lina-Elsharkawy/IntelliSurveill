@@ -6,8 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-
-const ANOMALY_API_BASE = "http://127.0.0.1:8002"
+import { apiGet } from "@/lib/api"
 
 type AnomalyCandidate = {
   id: number
@@ -29,15 +28,9 @@ const Anomaly = () => {
   const fetchAnomalies = async () => {
     try {
       setError(null)
-      const res = await fetch(`${ANOMALY_API_BASE}/anomaly-candidates`)
+      const data = await apiGet<any[]>("/api/anomaly-candidates")
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`)
-      }
-
-      const data = await res.json()
-      
-      const mappedAnomalies: AnomalyCandidate[] = data.map((a: any) => ({
+      const mappedAnomalies: AnomalyCandidate[] = data.map((a) => ({
         ...a,
         severity: determineSeverity(a),
       }))

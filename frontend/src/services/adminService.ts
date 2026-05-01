@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPatch } from "@/lib/api";
+import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
 import type { AnomalyCandidate, SuccessMessage } from "@/types/types";
 
 /* -------------------- Anomalies -------------------- */
@@ -46,43 +46,11 @@ export async function assignRoles(userId: string, roleIds: string[]): Promise<an
 }
 
 export async function removeRoles(userId: string, roleIds: string[]): Promise<any> {
-    const token = localStorage.getItem('access_token');
-    const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
-
-    const response = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(userId)}/roles`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ roles: roleIds })
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to remove roles');
-    }
-
-    return response.json();
+    return apiDelete(`/api/admin/users/${encodeURIComponent(userId)}/roles`, { roles: roleIds });
 }
 
 export async function deleteUser(userId: string): Promise<any> {
-    const token = localStorage.getItem('access_token');
-    const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
-
-    const response = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(userId)}`, {
-        method: 'DELETE',
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to delete user');
-    }
-
-    return response.json();
+    return apiDelete(`/api/admin/users/${encodeURIComponent(userId)}`);
 }
 
 export async function createUser(email: string, password: string, name?: string): Promise<Auth0User> {

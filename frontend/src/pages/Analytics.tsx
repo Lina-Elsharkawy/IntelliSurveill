@@ -1,6 +1,3 @@
-// src/pages/Analytics.tsx
-'use client';
-
 import { useState, useEffect, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";

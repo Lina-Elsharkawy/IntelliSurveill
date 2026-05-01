@@ -16,20 +16,19 @@ import NotFound from "./pages/NotFound";
 import Chatbot from "./components/ui/Chatbot";
 import Login from "./pages/Login";
 import ActivityLog from "./pages/ActivityLog";
-import PrivateRoute from "./PrivateRoute";
-import PublicRoute from "./PublicRoute";
+import PrivateRoute from "@/components/routing/PrivateRoute";
+import PublicRoute from "@/components/routing/PublicRoute";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Departments from "./pages/Departments";
 import Labs from "./pages/Labs";
-// import Schedules from "./pages/Schedules"; // ← Import Schedules page
 import AdminUsers from "./pages/AdminUsers";
-import RoleBasedRoute from "@/components/RoleBasedRoute";
+import RoleBasedRoute from "@/components/routing/RoleBasedRoute";
 
 const queryClient = new QueryClient();
 
 // Create a wrapper component to use the hook
 const AppRoutes = () => {
-  const { isAuthenticated, roles } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const getHomeElement = () => {
     if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -52,7 +51,6 @@ const AppRoutes = () => {
       <Route path="/admin" element={<RoleBasedRoute element={<Admin />} allowedRoles={['admin', 'user']} />} />
       <Route path="/departments" element={<PrivateRoute element={<Departments />} />} />
       <Route path="/labs" element={<PrivateRoute element={<Labs />} />} />
-      {/* <Route path="/schedules" element={<PrivateRoute element={<Schedules />} />} /> ← Added */}
       <Route path="/admin-users" element={<RoleBasedRoute element={<AdminUsers />} allowedRoles={['admin']} />} />
 
       <Route path="*" element={<NotFound />} />
@@ -60,18 +58,21 @@ const AppRoutes = () => {
   );
 };
 
-const App = () => {
+const ChatbotWrapper = () => {
   const location = useLocation();
   // Hide chatbot on admin users page
   const showChatbot = location.pathname !== '/admin-users';
+  return showChatbot ? <Chatbot /> : null;
+};
 
+const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        {showChatbot && <Chatbot />}
         <AuthProvider>
+          <ChatbotWrapper />
           <AppRoutes />
         </AuthProvider>
       </TooltipProvider>

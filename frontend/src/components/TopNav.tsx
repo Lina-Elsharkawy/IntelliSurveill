@@ -6,30 +6,12 @@
 
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import {
-  LayoutDashboard, Camera, AlertTriangle, BarChart3,
-  ListCheck, UserCog, Building, GraduationCap, Calendar,
-  LogOut, Shield, Settings, User, FileText
-} from "lucide-react";
+import { LogOut, Shield, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { NAV_ITEMS } from "@/config/navItems";
 
 const G = "rgb(46,213,115)";
 const GA = (a: number) => `rgba(46,213,115,${a})`;
-
-const ALL_NAV_ITEMS = [
-  { title: "Dashboard", url: "/dashboard", Icon: LayoutDashboard },
-  { title: "Live Cameras", url: "/cameras", Icon: Camera },
-  { title: "Anomalies", url: "/anomaly", Icon: AlertTriangle },
-  { title: "Anomaly Rules", url: "/anomaly-rules", Icon: FileText },
-  { title: "Departments", url: "/departments", Icon: Building },
-  { title: "Labs", url: "/labs", Icon: GraduationCap },
-  { title: "Analytics", url: "/analytics", Icon: BarChart3 },
-  { title: "Activity Log", url: "/activity-log", Icon: ListCheck },
-  // { title: "Schedules", url: "/schedules", Icon: Calendar },
-  { title: "Settings", url: "/settings", Icon: Settings },
-  { title: "Detected people", url: "/admin", Icon: UserCog, adminOnly: false },
-  { title: "Users", url: "/admin-users", Icon: Shield, adminOnly: true },
-];
 
 export function TopNav() {
   const [open, setOpen] = useState(false);
@@ -43,7 +25,7 @@ export function TopNav() {
   const userRole = roles[0] || "viewer";
   const isAdmin = roles.includes("admin");
 
-  const NAV_ITEMS = ALL_NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
+  const filteredNavItems = NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <>
@@ -190,7 +172,7 @@ export function TopNav() {
 
         {/* Menu Items */}
         <nav style={{ display: "flex", flexDirection: "column", gap: 4, padding: "0 12px" }}>
-          {NAV_ITEMS.map((item, i) => (
+          {filteredNavItems.map((item, i) => (
             <NavLink
               key={item.url}
               to={item.url}

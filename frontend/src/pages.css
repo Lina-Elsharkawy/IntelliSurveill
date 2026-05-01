@@ -100,13 +100,6 @@
 .anomaly-page-wrapper .anomaly-card:hover { transform: scale(1.05); z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
 .anomaly-page-wrapper .anomaly-cards-container:hover > .anomaly-card:not(:hover) { filter: blur(8px); transform: scale(0.95); opacity: 0.6; }
 
-/* --- Alerts Page --- */
-.alerts-page-wrapper .anomaly-cards { display: flex; flex-direction: column; gap: 15px; }
-.alerts-page-wrapper .anomaly-card { display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; min-height: 100px; border-radius: 10px; color: white; cursor: pointer; transition: all 400ms; padding: 1.5rem; position: relative; overflow: hidden; }
-.alerts-page-wrapper .anomaly-card .tip { font-size: 1em; font-weight: 700; margin-bottom: 0.5rem; }
-.alerts-page-wrapper .anomaly-card .second-text { font-size: 0.7em; opacity: 0.8; }
-.alerts-page-wrapper .anomaly-card:hover { transform: scale(1.05); }
-.alerts-page-wrapper .anomaly-cards:hover > .anomaly-card:not(:hover) { filter: blur(10px); transform: scale(0.95); }
 
 /* --- Admin Users Page --- */
 .admin-users-page .admin-btn { width: 50px; height: 50px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(0,0,0,0.3); cursor: pointer; transition: width 0.3s ease, border-radius 0.3s ease, background-color 0.3s ease; overflow: hidden; position: relative; font-family: 'Outfit', sans-serif; }

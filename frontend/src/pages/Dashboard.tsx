@@ -1,4 +1,5 @@
 import { Camera, AlertTriangle, Activity, Shield } from "lucide-react";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { StatsCard } from "@/components/StatsCard";
 import { CameraCard } from "@/components/CameraFeed";
 import { AlertItem } from "@/components/AlertItem";
@@ -22,6 +23,7 @@ const Dashboard = () => {
   ];
 
   return (
+    <DashboardLayout>
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -97,6 +99,7 @@ const Dashboard = () => {
         </div>
       </div>
     </div>
+    </DashboardLayout>
   );
 };
 

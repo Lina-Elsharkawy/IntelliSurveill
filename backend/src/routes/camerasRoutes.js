@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const camerasController = require('../controllers/CameraControllers');
+const camerasController = require('../controllers/cameraController');
 // Route to get all cameras
 router.get('/get_all_cameras', camerasController.getCameras);
 // Route to get a single camera by ID

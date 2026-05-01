@@ -6,7 +6,7 @@ const {
     getJobsByCandidate,
     createJob,
     updateJob,
-} = require('../controllers/OllamaJobController');
+} = require('../controllers/ollamaJobController');
 
 // Get all jobs
 router.get('/', getAllJobs);

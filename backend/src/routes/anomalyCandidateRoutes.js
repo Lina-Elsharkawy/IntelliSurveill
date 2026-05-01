@@ -5,7 +5,7 @@ const {
     getAllCandidates,
     getCandidateById,
     deleteCandidate,
-} = require('../controllers/AnomalyCandidateController');
+} = require('../controllers/anomalyCandidateController');
 
 // Get all anomaly candidates
 router.get('/', getAllCandidates);

@@ -6,11 +6,9 @@ interface PrivateRouteProps {
 }
 
 const PrivateRoute = ({ element }: PrivateRouteProps) => {
-    const { isAuthenticated, roles } = useAuth();
+    const { isAuthenticated } = useAuth();
 
     if (!isAuthenticated) return <Navigate to="/login" replace />;
-
-    // Admins are naturally also users, so they are allowed to access regular user routes.
 
     return element;
 };

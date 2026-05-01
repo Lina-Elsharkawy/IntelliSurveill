@@ -2,8 +2,7 @@
  * Barrel export for all API services.
  */
 
-// Anomalies
-export * from './anomalies';
+
 
 // Anomaly Config
 export * from './anomaly-config';
@@ -20,17 +19,11 @@ export * from './detected-people';
 // Employees
 export * from './employees';
 
-// Health
-export * from './health';
-
 // Labs
 export * from './labs';
 
 // Logs
 export * from './logs';
-
-// RAG
-export * from './rag';
 
 // Schedules
 export * from './schedules';
@@ -40,3 +33,9 @@ export * from './visitors';
 
 // Notifications
 export * from './notifications';
+
+// Admin Service
+export * from './adminService';
+
+// Analytics Service
+export * from './analyticsService';

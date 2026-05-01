@@ -11,7 +11,6 @@ const RoleBasedRoute = ({ element, allowedRoles }: Props) => {
 
     if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-    // Check if user has any of the allowed roles
     const hasAccess = roles ? roles.some(role => allowedRoles.includes(role)) : false;
 
     return hasAccess ? element : <Navigate to="/dashboard" replace />;

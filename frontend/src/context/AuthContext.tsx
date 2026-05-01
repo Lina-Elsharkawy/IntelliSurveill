@@ -13,6 +13,22 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * Extracts roles from a decoded JWT token.
+ * Handles multiple possible claim locations and normalizes to string[].
+ */
+function extractRolesFromToken(token: string): string[] {
+    try {
+        const decoded: any = jwtDecode(token);
+        let roles = decoded["https://myapp.com/roles"] || decoded.roles || [];
+        if (typeof roles === 'string') roles = [roles];
+        if (!Array.isArray(roles)) roles = [];
+        return roles;
+    } catch {
+        return [];
+    }
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const navigate = useNavigate();
     const [token, setToken] = useState<string | null>(() => localStorage.getItem("access_token"));
@@ -20,19 +36,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<any | null>(null);
     const [roles, setRoles] = useState<string[]>(() => {
         const t = localStorage.getItem("id_token");
-        if (t) {
-            try {
-                const decoded: any = jwtDecode(t);
-                let extracted = decoded["https://myapp.com/roles"] || decoded.roles || [];
-                if (typeof extracted === 'string') extracted = [extracted];
-                const finalRoles = Array.isArray(extracted) ? extracted : [];
-
-                return finalRoles;
-            } catch (e) {
-                return [];
-            }
-        }
-        return [];
+        return t ? extractRolesFromToken(t) : [];
     });
 
     useEffect(() => {
@@ -40,16 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             try {
                 const decoded: any = jwtDecode(idToken);
                 setUser(decoded);
-
-                let extractedRoles = decoded["https://myapp.com/roles"] || decoded.roles || [];
-
-                if (typeof extractedRoles === 'string') {
-                    extractedRoles = [extractedRoles];
-                } else if (!Array.isArray(extractedRoles)) {
-                    extractedRoles = [];
-                }
-
-                setRoles(extractedRoles);
+                setRoles(extractRolesFromToken(idToken));
             } catch (err) {
                 console.error("Invalid id_token", err);
             }
@@ -74,26 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setIdToken(newIdToken);
 
             try {
-                const decoded: any = jwtDecode(newIdToken);
-
-                // Try multiple paths for roles
-                let userRoles = decoded["https://myapp.com/roles"] || decoded.roles || [];
-
-                // Handle case where roles is a string
-
-                // Handle case where roles is a string
-                if (typeof userRoles === 'string') {
-                    userRoles = [userRoles];
-                }
-
-                // Ensure it's an array
-                if (!Array.isArray(userRoles)) {
-                    userRoles = [];
-                }
-
-                setRoles(userRoles);
-
-                // Admin users go to dashboard — they can reach /admin-users via the TopNav icon
+                setRoles(extractRolesFromToken(newIdToken));
             } catch (e) {
                 console.error("Error decoding id_token during login", e);
             }
