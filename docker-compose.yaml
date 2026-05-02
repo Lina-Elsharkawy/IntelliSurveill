@@ -11,6 +11,7 @@ services:
       - "8554:8554"
       - "8889:8889"
       - "8189:8189/udp"
+      - "10000:10000/udp"
     volumes:
       - ./mediamtx.yml:/mediamtx.yaml
     command: /mediamtx.yaml
