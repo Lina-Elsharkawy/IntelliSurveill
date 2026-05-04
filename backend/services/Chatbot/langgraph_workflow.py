@@ -23,6 +23,7 @@ from prompts import get_sql_generation_prompt, get_error_correction_prompt, get_
 from intent_router import route
 from capabilities import required_params, tool_type
 from tools import (
+    get_all_known_people,
     get_person_last_seen,
     get_person_first_seen,
     get_person_timeline,
@@ -43,6 +44,14 @@ from tools import (
     find_similar_unknown_faces,
     find_possible_identity_match,
     investigate_unknown_face_event,
+    get_anomaly_candidates,
+    get_anomaly_candidate_review,
+    get_ollama_jobs,
+    get_scene_window_embeddings,
+    get_anomaly_rules,
+    get_edge_devices,
+    get_normal_behavior_models,
+    get_rule_conflicts,
 )
 
 _llm = None
@@ -57,6 +66,9 @@ def get_llm():
 
 
 TOOL_MAP = {
+    # Registry
+    "all_known_people": get_all_known_people,
+
     # New canonical tool names
     "person_last_seen": get_person_last_seen,
     "person_first_seen": get_person_first_seen,
@@ -74,6 +86,14 @@ TOOL_MAP = {
     "camera_activity_summary": get_camera_activity_summary,
     "daily_security_summary": get_daily_security_summary,
     "table_record_counts": get_table_record_counts,
+    "anomaly_candidates": get_anomaly_candidates,
+    "anomaly_candidate_review": get_anomaly_candidate_review,
+    "ollama_jobs": get_ollama_jobs,
+    "scene_window_embeddings": get_scene_window_embeddings,
+    "anomaly_rules": get_anomaly_rules,
+    "edge_devices": get_edge_devices,
+    "normal_behavior_models": get_normal_behavior_models,
+    "rule_conflicts": get_rule_conflicts,
 
     # Vector tools
     "similar_unknown_faces": find_similar_unknown_faces,
@@ -332,22 +352,91 @@ def format_tool_result(state: SQLState) -> SQLState:
     data = result.get("data", [])
 
     # Deterministic formatters for factual outputs.
+    if tool == "all_known_people":
+        rows = data if isinstance(data, list) else []
+        if not rows:
+            answer = "No known people (employees or visitors) found in the registry."
+        else:
+            employees = [r for r in rows if r.get("person_type") == "employee"]
+            visitors = [r for r in rows if r.get("person_type") == "visitor"]
+            enrolled = [r for r in rows if r.get("person_type") == "enrolled"]
+            lines = []
+            if employees:
+                lines.append(f"**Employees ({len(employees)}):**")
+                for r in employees:
+                    dept = f", dept: {r['department']}" if r.get("department") else ""
+                    lines.append(f"  - {r['name']}{dept}")
+            if visitors:
+                lines.append(f"**Visitors ({len(visitors)}):**")
+                for r in visitors:
+                    visit = f", visit date: {r['visit_date']}" if r.get("visit_date") else ""
+                    purpose = f", purpose: {r['purpose']}" if r.get("purpose") else ""
+                    lines.append(f"  - {r['name']}{visit}{purpose}")
+            if enrolled:
+                lines.append(f"**Enrolled Profiles ({len(enrolled)}):**")
+                for r in enrolled:
+                    lines.append(f"  - {r['name']}, source: {r.get('department', 'Unknown')}")
+            answer = f"Known people in the system ({len(rows)} total):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
     if tool == "table_record_counts":
         rows = data if isinstance(data, list) else []
         empty = [r for r in rows if r.get("record_count") == 0]
         top = rows[0] if rows else None
         q = question.lower()
-        if "empty" in q:
+
+        # Build a fast lookup: table_name → record_count
+        counts = {r["table_name"]: r["record_count"] for r in rows}
+
+        # ── Specific entity count: "how many departments/labs/rules/..." ──────
+        # Map question keywords → table name(s) to look up
+        _ENTITY_TABLE_MAP = {
+            "department": "departments",
+            "departments": "departments",
+            "lab": "labs",
+            "labs": "labs",
+            "rule": "anomaly_rules",
+            "rules": "anomaly_rules",
+            "schedule": "schedules",
+            "schedules": "schedules",
+            "camera": "cameras",
+            "cameras": "cameras",
+            "employee": "employees",
+            "employees": "employees",
+            "visitor": "visitors",
+            "visitors": "visitors",
+            "entry log": "entry_logs",
+            "entry logs": "entry_logs",
+            "anomaly log": "anomalies_logs",
+            "anomaly logs": "anomalies_logs",
+            "unknown face": "unknown_face_events",
+            "unknown faces": "unknown_face_events",
+        }
+        matched_table = None
+        for keyword, tname in _ENTITY_TABLE_MAP.items():
+            if keyword in q:
+                matched_table = tname
+                break
+
+        if matched_table:
+            count = counts.get(matched_table)
+            if count is not None:
+                # Friendly singular/plural label
+                friendly = matched_table.replace("_", " ").rstrip("s")
+                answer = f"There {'is' if count == 1 else 'are'} **{count}** {matched_table.replace('_', ' ')} in the system."
+            else:
+                answer = f"I couldn't find a table named '{matched_table}' in the database."
+        elif "empty" in q:
             answer = "There are no empty tables in the database." if not empty else (
                 f"There are {len(empty)} empty tables:\n\n" + "\n".join(f"- {r['table_name']}" for r in empty)
             )
         elif "most records" in q or "largest" in q:
             answer = "I could not find any tables." if not top else (
-                f"The table with the most records is {top['table_name']}, with {top['record_count']} records."
+                f"The table with the most records is **{top['table_name']}**, with {top['record_count']:,} records."
             )
         else:
             answer = "Here are the record counts:\n\n" + "\n".join(
-                f"- {r['table_name']}: {r['record_count']} records" for r in rows
+                f"- {r['table_name']}: {r['record_count']:,} records" for r in rows
             )
         return {**state, "final_answer": answer, "results": rows}
 
@@ -450,6 +539,21 @@ def format_tool_result(state: SQLState) -> SQLState:
             answer = f"Found {len(rows)} nearby anomaly/anomalies:\n\n" + "\n".join(
                 f"- {r.get('timestamp') or r.get('detected_at')}: {r.get('description') or r.get('event_type')} "
                 f"at {r.get('camera_name', 'N/A')} ({r.get('seconds_apart', 'N/A')}s apart)"
+                for r in rows
+            )
+        return {**state, "final_answer": answer, "results": rows}
+
+    if tool in {"repeated_unknowns", "repeated_unknown_faces"}:
+        rows = data if isinstance(data, list) else []
+        if not rows:
+            days = result.get('days_back', 7)
+            answer = f"No repeated unknown visitors were found in the last {days} day(s)."
+        else:
+            days = result.get('days_back', 7)
+            answer = f"Repeated unknown visitors in the last {days} day(s) ({len(rows)} group(s)):\n\n" + "\n".join(
+                f"- {r.get('camera_name', 'N/A')} on {r.get('day', 'N/A')}: "
+                f"{r.get('appearances', 'N/A')} appearances, "
+                f"first={r.get('first_seen', 'N/A')}, last={r.get('last_seen', 'N/A')}"
                 for r in rows
             )
         return {**state, "final_answer": answer, "results": rows}

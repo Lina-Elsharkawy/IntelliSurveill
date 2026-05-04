@@ -1,5 +1,3 @@
-
-
 services:
   # ---------------------------
   # Mediamtx Service
@@ -16,9 +14,9 @@ services:
     command: /mediamtx.yaml
     restart: unless-stopped
 
-# ---------------------------
+  # ---------------------------
   # Backend Services
-# ---------------------------
+  # ---------------------------
   backend:
     build:
       context: ./backend
@@ -95,7 +93,8 @@ services:
       - |
         ollama serve &
         sleep 8
-        ollama list | grep -q "qwen2.5-coder:3b" || ollama pull qwen2.5-coder:3b
+        ollama list | grep -q "qwen2.5-coder:3b" && ollama rm qwen2.5-coder:3b
+        ollama list | grep -q "qwen2.5-coder:7b" || ollama pull qwen2.5-coder:7b
         wait
     # deploy:
     #   resources:
@@ -157,9 +156,9 @@ services:
     #     limits:
     #       cpus: "2"
     #       memory: 4G
-# ---------------------------
-# Face Detection Services
-#----------------------------
+    # ---------------------------
+    # Face Detection Services
+    #----------------------------
   vector-match:
     build:
       context: .
@@ -175,7 +174,7 @@ services:
       postgres-db:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')\" || exit 1"]
+      test: [ "CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')\" || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -183,9 +182,9 @@ services:
     networks:
       - data-platform-net
 
-# ---------------------------
-#  Anomaly Detection Services
-#----------------------------
+  # ---------------------------
+  #  Anomaly Detection Services
+  #----------------------------
   anomaly-service:
     build:
       context: ./backend/services/anomaly_service
@@ -193,8 +192,8 @@ services:
     working_dir: /app
     volumes:
       - ./backend/services:/app/services
-      - ./datasets:/datasets 
-      - ./backend/services/anomaly_service/models:/app/models 
+      - ./datasets:/datasets
+      - ./backend/services/anomaly_service/models:/app/models
     environment:
       DB_DSN: postgresql://lina:123@postgres-db:5432/lina
       DATABASE_URL: postgresql://lina:123@postgres-db:5432/lina
@@ -230,9 +229,9 @@ services:
     networks:
       - data-platform-net
 
-# ---------------------------
-#  DevOps Tools
-#----------------------------
+  # ---------------------------
+  #  DevOps Tools
+  #----------------------------
   kafka:
     image: apache/kafka:4.1.1
     container_name: kafka
@@ -263,72 +262,72 @@ services:
       - data-platform-net
 
   kafka-topic-init:
-   image: python:3.11-slim
-   working_dir: /app
-   volumes:
-    - ./streaming/kafka:/app
-   env_file:
-    - ./streaming/kafka/.env
-   command: sh -c "pip install -r requirements.txt && python create_topics.py --bootstrap-servers kafka:9093"
-   depends_on:
-    - kafka
-   networks:
-    - data-platform-net
-    
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./streaming/kafka:/app
+    env_file:
+      - ./streaming/kafka/.env
+    command: sh -c "pip install -r requirements.txt && python create_topics.py --bootstrap-servers kafka:9093"
+    depends_on:
+      - kafka
+    networks:
+      - data-platform-net
+
   face-consumer:
-   build:
-    context: ./streaming/kafka
-    dockerfile: Dockerfile.face-consumer
-   environment:
-    KAFKA_BOOTSTRAP_SERVERS: kafka:9093
-    KAFKA_TOPICS: face_events,anomaly_events
-    KAFKA_GROUP_ID: backend-consumer
-    BACKEND_MATCH_URL: http://vector-match:8000/match
-    EVIDENCE_GATEWAY_UPLOAD: http://evidence-gateway:8010/evidence/upload
-    S3_BUCKET: evidence
-   depends_on:
-     kafka:
-      condition: service_started
-     evidence-gateway:
-      condition: service_started
-     vector-match:
-      condition: service_started
-     anomaly-service:
-      condition: service_started
-   networks:
-    - default
-    - data-platform-net
-  
+    build:
+      context: ./streaming/kafka
+      dockerfile: Dockerfile.face-consumer
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9093
+      KAFKA_TOPICS: face_events,anomaly_events
+      KAFKA_GROUP_ID: backend-consumer
+      BACKEND_MATCH_URL: http://vector-match:8000/match
+      EVIDENCE_GATEWAY_UPLOAD: http://evidence-gateway:8010/evidence/upload
+      S3_BUCKET: evidence
+    depends_on:
+      kafka:
+        condition: service_started
+      evidence-gateway:
+        condition: service_started
+      vector-match:
+        condition: service_started
+      anomaly-service:
+        condition: service_started
+    networks:
+      - default
+      - data-platform-net
+
   minio:
     image: minio/minio:latest
     container_name: minio
     command: server /data --console-address ":9001"
     ports:
-     - "9000:9000"   # S3 API
-     - "9001:9001"   # Web console
+      - "9000:9000" # S3 API
+      - "9001:9001" # Web console
     env_file:
-     - ./streaming/minio/.env
+      - ./streaming/minio/.env
     volumes:
-     - minio-data:/data
+      - minio-data:/data
     networks:
       - data-platform-net
   evidence-gateway:
-   build: 
-    context: ./edge/services/evidence_gateway
-   working_dir: /app
-   env_file:
-    - ./streaming/minio/.env
-   environment:
-    MINIO_ENDPOINT: http://minio:9000
-    S3_BUCKET: evidence
-    PORT: 8010
-   depends_on:
-    - minio
-   ports:
-    - "8010:8010"
-   networks:
-    - data-platform-net
-    - default
+    build:
+      context: ./edge/services/evidence_gateway
+    working_dir: /app
+    env_file:
+      - ./streaming/minio/.env
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      S3_BUCKET: evidence
+      PORT: 8010
+    depends_on:
+      - minio
+    ports:
+      - "8010:8010"
+    networks:
+      - data-platform-net
+      - default
 
   flinkjobmanager:
     build: ./streaming/flink-java
@@ -361,7 +360,7 @@ services:
         max-file: "3"
     networks:
       - data-platform-net
-  
+
   flinktaskmanager:
     build: ./streaming/flink-java
     image: graduation-project-flinktaskmanager
@@ -488,13 +487,9 @@ services:
     networks:
       - data-platform-net
 
-
-
-
-
-# ---------------------------
-#  Chatbot Service
-#----------------------------
+  # ---------------------------
+  #  Chatbot Service
+  #----------------------------
   chatbot-service:
     build:
       context: ./backend/services/Chatbot
@@ -506,7 +501,7 @@ services:
     environment:
       - DB_DSN=postgresql://lina:123@postgres-db:5432/lina
       - OLLAMA_BASE_URL=http://ollama-chatbot:11434
-      - LLM_MODEL=qwen2.5-coder:3b      
+      - LLM_MODEL=qwen2.5-coder:7b
     depends_on:
       - postgres-db
       - ollama-chatbot
@@ -579,7 +574,7 @@ services:
   #       max-size: "10m"
   #       max-file: "3"
   #   networks:
-#     - data-platform-net
+  #     - data-platform-net
 
   # prometheus:
   #   image: prom/prometheus:v3.7.3
@@ -616,8 +611,8 @@ volumes:
   ollama-chatbot-data:
   ollama-rules-data:
 
-
 networks:
   data-platform-net:
     driver: bridge
+
 # testing

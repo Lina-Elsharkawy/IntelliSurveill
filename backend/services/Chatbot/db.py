@@ -1,26 +1,36 @@
 """
 Database connection and schema management
 """
+import time
+import logging
 import psycopg2
 from psycopg2 import sql
 from typing import List, Dict, Any
 from config import DB_DSN
 from typing import TypedDict
 
+logger = logging.getLogger(__name__)
+
 def get_db_connection():
     """Create a database connection"""
-    return psycopg2.connect(DB_DSN)
+    conn = psycopg2.connect(DB_DSN)
+    with conn.cursor() as cur:
+        cur.execute("SET TIME ZONE 'Africa/Cairo'")
+    return conn
 
-# Cache schema in memory — fetched once per process lifetime
+# Cache schema in memory with TTL — refreshes every 5 minutes so new tables
+# are picked up without a service restart.
 _schema_cache: str | None = None
+_schema_cache_time: float = 0.0
+_SCHEMA_TTL_SECONDS = 300  # 5 minutes
 
 def get_database_schema() -> str:
     """
     Fetch the database schema as a text description.
-    Cached after the first call so the LLM prompt stays fast.
+    Cached with a 5-minute TTL so schema changes are picked up eventually.
     """
-    global _schema_cache
-    if _schema_cache is not None:
+    global _schema_cache, _schema_cache_time
+    if _schema_cache is not None and (time.time() - _schema_cache_time) < _SCHEMA_TTL_SECONDS:
         return _schema_cache
 
     conn = get_db_connection()
@@ -59,6 +69,8 @@ def get_database_schema() -> str:
                 schema_description.append(f"  - {col_name}: {data_type} ({nullable})")
         
         _schema_cache = "\n".join(schema_description)
+        _schema_cache_time = time.time()
+        logger.info("Schema cache refreshed (%d tables)", len(tables))
         return _schema_cache
     
     finally:

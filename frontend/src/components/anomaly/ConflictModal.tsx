@@ -1,5 +1,5 @@
 import React from "react";
-import { PreviewResult } from "@/pages/AnomalyRules";
+import { PreviewResult } from "@/services/anomalyRulesService";
 
 interface ConflictModalProps {
     show: boolean;

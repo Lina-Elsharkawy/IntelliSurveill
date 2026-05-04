@@ -161,5 +161,6 @@ def sanitize_sql(sql_query: str) -> str:
         sql_query,
         reindent=True,
         keyword_case="upper",
+        strip_comments=True,
     )
     return formatted.strip()

@@ -113,6 +113,14 @@ SUPPORTED_INTENTS: dict[str, dict] = {
         "description": "Anomalies near an unknown-face event timestamp/camera.",
     },
 
+    # Registry lookups
+    "all_known_people": {
+        "tool": "all_known_people",
+        "tool_type": "normal",
+        "required_params": [],
+        "description": "List all known people (employees + visitors) from the registry.",
+    },
+
     # Summaries / metadata
     "camera_activity_summary": {
         "tool": "camera_activity_summary",
@@ -133,6 +141,56 @@ SUPPORTED_INTENTS: dict[str, dict] = {
         "description": "Record counts for all public database tables.",
     },
 
+    # New Admin / System Tables
+    "anomaly_candidates": {
+        "tool": "anomaly_candidates",
+        "tool_type": "normal",
+        "required_params": [],
+        "description": "Pending and reviewed anomaly candidates.",
+    },
+    "anomaly_candidate_review": {
+        "tool": "anomaly_candidate_review",
+        "tool_type": "normal",
+        "required_params": [],
+        "description": "Decisions on anomaly candidates.",
+    },
+    "ollama_jobs": {
+        "tool": "ollama_jobs",
+        "tool_type": "normal",
+        "required_params": [],
+        "description": "Ollama background job queue status.",
+    },
+    "scene_window_embeddings": {
+        "tool": "scene_window_embeddings",
+        "tool_type": "normal",
+        "required_params": [],
+        "description": "Camera scene windows flagged as anomalous.",
+    },
+    "anomaly_rules": {
+        "tool": "anomaly_rules",
+        "tool_type": "normal",
+        "required_params": [],
+        "description": "Active intrusion/anomaly rules.",
+    },
+    "edge_devices": {
+        "tool": "edge_devices",
+        "tool_type": "normal",
+        "required_params": [],
+        "description": "Registered edge devices.",
+    },
+    "normal_behavior_models": {
+        "tool": "normal_behavior_models",
+        "tool_type": "normal",
+        "required_params": [],
+        "description": "Active normal behavior models.",
+    },
+    "rule_conflicts": {
+        "tool": "rule_conflicts",
+        "tool_type": "normal",
+        "required_params": [],
+        "description": "Pending rule conflicts.",
+    },
+
     # Non-tool routes
     "small_talk": {
         "tool": None,
@@ -149,6 +207,10 @@ SUPPORTED_INTENTS: dict[str, dict] = {
 }
 
 INTENT_ALIASES = {
+    "list_known_people": "all_known_people",
+    "list_employees": "all_known_people",
+    "list_visitors": "all_known_people",
+    "known_people": "all_known_people",
     # Backward compatibility with older tool names
     "last_seen": "person_last_seen",
     "first_seen": "person_first_seen",
