@@ -16,7 +16,9 @@ export default function Chatbot() {
   const location = useLocation();
   if (location.pathname === "/login") return null;
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(() => {
+    return localStorage.getItem("chatbot_open") === "true";
+  });
   const [messages, setMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem("chat_history");
     if (saved) {
@@ -44,15 +46,30 @@ export default function Chatbot() {
     localStorage.setItem("chat_history", JSON.stringify(messages));
   }, [messages]);
 
+  useEffect(() => {
+    localStorage.setItem("chatbot_open", isOpen.toString());
+  }, [isOpen]);
+
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
-  useEffect(() => { scrollToBottom(); }, [messages]);
+  const isInitialMount = useRef(true);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Use a small timeout to ensure DOM is ready
+      const timer = setTimeout(() => {
+        scrollToBottom(isInitialMount.current ? "auto" : "smooth");
+        if (isInitialMount.current) isInitialMount.current = false;
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, messages]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -70,8 +87,17 @@ export default function Chatbot() {
     setInput("");
     setIsTyping(true);
 
+    const history = messages.map(m => ({
+      role: m.sender === "user" ? "user" : "assistant",
+      content: m.text,
+      sql: m.sql
+    }));
+
     try {
-      const result = await apiPost<any>("/api/chatbot/query", { question });
+      const result = await apiPost<any>("/api/chatbot/query", { 
+        question, 
+        history 
+      });
 
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),

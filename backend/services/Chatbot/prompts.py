@@ -47,7 +47,7 @@ RULES:
 5. Think step-by-step. First, write your reasoning in SQL comments starting with `-- `. Then, write the final SQL query. Do not use markdown backticks.
 6. Do not use semicolons at the end
 7. Use double quotes for identifiers if needed (e.g., "table_name")
-8. ALWAYS filter by `table_schema = 'public'` when querying `information_schema.tables` or `information_schema.columns`.
+8. ONLY add `table_schema = 'public'` when querying `information_schema.tables` or `information_schema.columns`
 9. If you need to count tables, your query MUST exactly be: `SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'`
 
 You must correctly interpret temporal intent:
@@ -167,7 +167,7 @@ anomaly_candidates (id, scene_window_embedding_id, reason, status, severity, ale
 
 Events flagged by the AI awaiting LLM or Admin validation.  
 
-anomaly_rules (id, rule_text, rule_type [trigger/suppress], event_type [intrusion/loitering/fight/etc.], conditions [JSONB], source [Admin/Learned])
+anomaly_rules (id, rule_text, rule_type [trigger/suppress], event_type [intrusion/loitering/fight/etc.], conditions [JSONB], source [Admin/Learned], active [BOOLEAN] -- NOTE: column is "active" NOT "is_active")
 
 Natural language rules that guide the LLM's reasoning process.  
 

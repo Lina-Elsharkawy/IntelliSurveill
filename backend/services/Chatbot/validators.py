@@ -28,9 +28,12 @@ _WRITE_INTENT_PATTERNS = [
     r'\b(delete|drop|truncate|wipe)\b\s+\w',
     # Explicit modification command with object: "update employee", "alter table"
     r'\b(update|alter|modify)\b\s+\w',
-    # Clear data commands: "clear all entries", "remove the user"
+    # Clear/remove data commands — broadened to cover bare objects too
     r'\b(clear|remove)\s+(all|the|every)\b',
-    # Explicit SQL injection attempts: "insert into", "add a new record"
+    r'\b(remove|drop)\s+(table|tables|database|db|records?|data|logs?)\b',
+    r'\b(remove|drop)\s+(the\s+)?(anomaly|entry|employee|visitor|camera|rule|schedule)\b',
+    r'\b(clear|wipe)\s+(the\s+)?(database|table|log|records?|data|entries|everything)\b',
+    # Explicit SQL injection attempts: "insert into" (NOT "inserted" — past tense is a read question)
     r'\binsert\s+into\b',
     r'\badd\s+(a\s+)?(new\s+)?(record|row|entry|employee|visitor|camera)\b',
     # DDL injection: "create table", "create a table"
@@ -39,6 +42,12 @@ _WRITE_INTENT_PATTERNS = [
     r'\b(grant|revoke)\b\s+\w',
     # Explicit value assignment: "set x to y", "reset password"
     r'\b(reset|set)\s+\w+\s+(to|=)\b',
+]
+
+# Questions using past-tense "inserted/added/created" are read-only historical queries.
+# e.g. "when was Lina first inserted?" / "how many times was X inserted?"
+_WRITE_SAFE_OVERRIDES = [
+    re.compile(r'\b(inserted|added|created|logged)\b', re.IGNORECASE),
 ]
 
 _WRITE_PATTERNS_COMPILED = [
@@ -61,6 +70,9 @@ def is_write_intent(question: str) -> bool:
       - "insert into employees values ..."
       - "drop the anomaly_rules table"
     """
+    # If any past-tense historical keyword is present, this is a read question — never block it.
+    if any(p.search(question) for p in _WRITE_SAFE_OVERRIDES):
+        return False
     return any(p.search(question) for p in _WRITE_PATTERNS_COMPILED)
 
 

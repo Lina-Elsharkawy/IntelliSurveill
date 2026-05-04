@@ -120,7 +120,7 @@ def get_unknown_face_events(
 
             return {
                 "found": True,
-                "tool": "unknown_face_events",
+                "tool": "latest_unknown_face_events",
                 "count": len(data),
                 "days_back": days_back,
                 "only_unreviewed": only_unreviewed,
@@ -1177,9 +1177,25 @@ def get_scene_window_embeddings(is_anomalous: bool | None = None, limit: int = 2
     except Exception as e:
         return {"found": False, "error": str(e)}
 
-def get_anomaly_rules(is_active: bool | None = None, limit: int = 20) -> dict:
-    where = "WHERE is_active = %s" if is_active is not None else ""
-    params = [is_active, limit] if is_active is not None else [limit]
+def get_anomaly_rules(
+    is_active: bool | None = None,
+    rule_type: str | None = None,
+    rule_id: int | None = None,
+    limit: int = 20,
+) -> dict:
+    conditions: list[str] = []
+    params: list = []
+    if is_active is not None:
+        conditions.append("active = %s")
+        params.append(is_active)
+    if rule_type is not None:
+        conditions.append("rule_type = %s")
+        params.append(rule_type)
+    if rule_id is not None:
+        conditions.append("id = %s")
+        params.append(rule_id)
+    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+    params.append(limit)
     sql = f"SELECT * FROM anomaly_rules {where} ORDER BY created_at DESC LIMIT %s"
     try:
         with _conn() as conn:
