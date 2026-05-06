@@ -103,7 +103,8 @@ def ollama_generate(
             "temperature":    0.1,
             "top_p":          0.9,
             "repeat_penalty": 1.1,
-            "num_predict":    150,
+            "num_predict":    512,
+            "num_ctx":    512,
         },
     }
     if images:
@@ -345,9 +346,14 @@ def main() -> None:
                         model  = model_name or VLM_MODEL,
                         prompt = (
                             prompt or
-                            "Describe what is happening in this image. "
-                            "Focus on people, actions and movements. "
-                            "Be factual and concise."
+                            "You are a surveillance analyst reviewing security camera footage. "
+                            "Look carefully at this image and describe: "
+                            "1. How many people are visible and where are they located? "
+                            "2. What is each person doing with their hands and body? "
+                            "3. Is anyone touching, taking, or interfering with objects or property? "
+                            "4. Is there any suspicious, aggressive, or unusual behavior? "
+                            "5. Any weapons, stolen items, or dangerous objects visible? "
+                            "Be very specific and detailed. Describe exactly what you see."
                         ),
                         images = image_bytes,
                     )
@@ -394,7 +400,13 @@ def main() -> None:
                 # ----------------------------------------------------------
                 elif job_type == "llm_reason":
                     narrative     = request_json.get("narrative", "")
-                    rule_metadata = request_json.get("rule_metadata") or {}
+                    rule_metadata = dict(request_json.get("rule_metadata") or {})  # make a mutable copy
+
+                    active_rows = conn.execute(
+                        "SELECT rule_text, rule_type FROM Anomaly_Rules WHERE active = TRUE ORDER BY id ASC"
+                    ).fetchall()
+                    rule_metadata["anomalous_rules"] = [r[0] for r in active_rows if r[1] == "trigger"]
+                    rule_metadata["normal_rules"]    = [r[0] for r in active_rows if r[1] == "suppress"]
 
                     prompts = build_reasoning_prompts(narrative, rule_metadata)
 

@@ -5,7 +5,7 @@ import time
 # ============================================================
 # CONFIG
 # ============================================================
-IMAGE_PATH  = r"E:\AI-Edge\Graduation-Project\datasets\anomaly_test\Fight1\frames\win_21.jpg"   # ← change this
+IMAGE_PATH  = r"E:\AI-Edge\Graduation-Project\datasets\anomaly_test\Fight3\frames\win_31.jpg"   # ← change this
 OLLAMA_HOST = "http://localhost:11435"
 VLM_MODEL   = "openbmb/minicpm-v4.5:8b"
 
@@ -20,7 +20,7 @@ def load_image(image_path):
         return []
 
     # resize for performance (important for your GPU)
-    img = cv2.resize(img, (512, 512))
+    img = cv2.resize(img, (224, 224))
 
     # encode to jpg bytes
     _, buf = cv2.imencode(
@@ -59,10 +59,8 @@ def run_vlm(client, images):
             "temperature": 0.1,
             "top_p": 0.9,
             "repeat_penalty": 1.1,
-
-            # 🔥 VERY IMPORTANT for your GPU
-            "num_predict": 512,
-            "num_ctx": 512
+            "num_predict": 120,   # ↓ MUCH smaller
+            "num_ctx": 768        # ↑ give breathing space
         }
     )
 
