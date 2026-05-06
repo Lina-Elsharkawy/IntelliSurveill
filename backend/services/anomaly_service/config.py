@@ -43,8 +43,8 @@ OLLAMA_HOST = (
     or "http://localhost:11435"
 ).rstrip("/")
  
-VLM_MODEL            = os.getenv("VLM_MODEL") or os.getenv("OLLAMA_VLM_MODEL") or "moondream:latest"
-LLM_MODEL            = os.getenv("LLM_MODEL") or os.getenv("OLLAMA_MODEL")     or "llama3.2:1b"
+VLM_MODEL            = os.getenv("VLM_MODEL") or os.getenv("OLLAMA_VLM_MODEL") or "openbmb/minicpm-v4.5:8b"
+LLM_MODEL            = os.getenv("LLM_MODEL") or os.getenv("OLLAMA_MODEL")     or "qwen3:8b"
 DEFAULT_OLLAMA_MODEL = os.getenv("DEFAULT_OLLAMA_MODEL", LLM_MODEL)
  
 # ---------------------------------------------------------------------------

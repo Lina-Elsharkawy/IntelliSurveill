@@ -60,8 +60,10 @@ services:
       - |
         ollama serve &
         sleep 8
-        ollama list | grep -q "moondream:latest" || ollama pull moondream:latest
-        ollama list | grep -q "llama3.2:1b" || ollama pull llama3.2:1b
+        ollama list | grep -q "moondream:latest" && ollama rm moondream:latest
+        ollama list | grep -q "llama3.2:1b" && ollama rm llama3.2:1b
+        ollama list | grep -q "openbmb/minicpm-v4.5:8b" || ollama pull openbmb/minicpm-v4.5:8b
+        ollama list | grep -q "qwen3:8b" || ollama pull qwen3:8b
         wait
     # deploy:
     #   resources:
@@ -201,8 +203,8 @@ services:
       OLLAMA_BASE_URL: http://ollama:11434
       MINIO_ENDPOINT: http://minio:9000
       S3_BUCKET: evidence
-      VLM_MODEL: moondream
-      LLM_MODEL: llama3.2:1b
+      VLM_MODEL: openbmb/minicpm-v4.5:8b
+      LLM_MODEL: qwen3:8b
     env_file:
       - ./backend/.env
     ports:
