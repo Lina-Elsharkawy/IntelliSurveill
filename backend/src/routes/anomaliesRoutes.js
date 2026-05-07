@@ -13,4 +13,19 @@ router.delete('/delete_anomaly/:id', anomaliesController.deleteAnomaly);
 // Route to update anomaly detection configuration
 router.post('/config', configController.updateConfig);
 
+const anomalyProxyController = require('../controllers/anomalyProxyController');
+
+// Proxy routes for anomaly-service
+router.get('/', (req, res, next) => {
+    console.log('HIT PROXY /');
+    next();
+}, anomalyProxyController.getAnomalies);
+
+router.get('/:id', (req, res, next) => {
+    console.log('HIT PROXY /:id with id=', req.params.id);
+    next();
+}, anomalyProxyController.getAnomalyById);
+
+router.post('/:id/review', anomalyProxyController.reviewAnomaly);
+
 module.exports = router;

@@ -62,25 +62,68 @@ def _ensure_bucket(client: Minio, bucket: str) -> None:
 
 
 def _build_object_key(
-    kind:        str,
-    camera_id:   int,
-    event_id:    str,
-    ext:         str,
-    frame_index: Optional[int],
+    kind: str,
+    camera_id: int,
+    event_id: str,
+    ext: str,
+    frame_index: Optional[int] = None,
+    track_id: Optional[int] = None,
 ) -> str:
-    ext = (ext or "jpg").lstrip(".").lower()
+    """
+    Compute the object key for a given upload type.
 
+    Supported kinds:
+
+      * face   – single face JPEG per event
+      * anomaly – person‐crop frames from the deprecated student pipeline
+      * person_clip – MP4 clip of the tracked person (requires track_id)
+      * context_clip – MP4 clip of the scene around the person (requires track_id)
+      * representative_frame – single representative JPEG for the tubelet (requires track_id)
+      * metadata – JSON metadata for the tubelet (requires track_id)
+      * misc – fallback for unknown kinds
+
+    For the new tubelet types, the key structure is:
+
+      tubelets/cam_{camera_id}/track_{track_id}/{event_id}/<file>
+
+    where <file> is one of person.mp4, context.mp4, representative.jpg or metadata.json.
+    """
+    # Normalize extension: default to jpg for images, mp4 for clips, json for metadata.
+    ext = (ext or "").lstrip(".").lower()
+
+    # Legacy face upload: one image per event
     if kind == "face":
-        # One image per event
-        return f"faces/cam_{camera_id}/{event_id}.{ext}"
+        use_ext = ext or "jpg"
+        return f"faces/cam_{camera_id}/{event_id}.{use_ext}"
 
+    # Legacy anomaly upload: frames from the old pipeline
     if kind == "anomaly":
-        # 16 person-crop frames per event, organized by event_id folder
+        use_ext = ext or "jpg"
         if frame_index is not None:
-            return f"anomalies/cam_{camera_id}/{event_id}/frame_{frame_index:06d}.{ext}"
-        return f"anomalies/cam_{camera_id}/{event_id}/{event_id}.{ext}"
+            return f"anomalies/cam_{camera_id}/{event_id}/frame_{frame_index:06d}.{use_ext}"
+        return f"anomalies/cam_{camera_id}/{event_id}/{event_id}.{use_ext}"
 
-    return f"misc/cam_{camera_id}/{event_id}.{ext}"
+    # New dual‐stream upload types
+    if kind in ("person_clip", "context_clip", "representative_frame", "metadata"):
+        if track_id is None:
+            raise ValueError(f"track_id is required for kind={kind}")
+        base_path = f"tubelets/cam_{camera_id}/track_{track_id}/{event_id}"
+        if kind == "person_clip":
+            use_ext = ext or "mp4"
+            return f"{base_path}/person.{use_ext}"
+        if kind == "context_clip":
+            use_ext = ext or "mp4"
+            return f"{base_path}/context.{use_ext}"
+        if kind == "representative_frame":
+            use_ext = ext or "jpg"
+            return f"{base_path}/representative.{use_ext}"
+        if kind == "metadata":
+            use_ext = ext or "json"
+            return f"{base_path}/metadata.{use_ext}"
+
+    # Default fallback: store in misc
+    use_ext = ext or "jpg"
+    return f"misc/cam_{camera_id}/{event_id}.{use_ext}"
 def _parse_s3_ref(ref: str) -> tuple[str, str]:
     """
     Parse s3://bucket/object/key.jpg into (bucket, object_key).
@@ -151,15 +194,42 @@ async def upload_evidence(
     file:        UploadFile      = File(...),
     event_id:    str             = Form(...),
     camera_id:   int             = Form(...),
-    kind:        str             = Form(...),        # "face" | "anomaly"
+    kind:        str             = Form(...),
     frame_index: Optional[int]  = Form(None),
     ext:         Optional[str]  = Form(None),
+    track_id:    Optional[int]  = Form(None),
 ) -> JSONResponse:
+    """
+    Upload a piece of evidence to MinIO.
+
+    ``kind`` determines how the object key is constructed.  Supported values are:
+
+      * ``face`` – single face image per event
+      * ``anomaly`` – deprecated anomaly frame uploads
+      * ``person_clip`` – MP4 clip of a person tubelet (requires ``track_id``)
+      * ``context_clip`` – MP4 clip of the scene around the person (requires ``track_id``)
+      * ``representative_frame`` – JPEG snapshot for the tubelet (requires ``track_id``)
+      * ``metadata`` – JSON metadata for the tubelet (requires ``track_id``)
+
+    If an unknown ``kind`` is supplied, the object will be stored in the
+    ``misc`` folder.
+    """
     kind = (kind or "").strip().lower()
-    if kind not in ("face", "anomaly"):
+    allowed_kinds = {
+        "face",
+        "anomaly",
+        "person_clip",
+        "context_clip",
+        "representative_frame",
+        "metadata",
+    }
+    if kind not in allowed_kinds:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid kind={kind!r}. Must be 'face' or 'anomaly'.",
+            detail=(
+                f"Invalid kind={kind!r}. Must be one of: "
+                f"{', '.join(sorted(allowed_kinds))}."
+            ),
         )
 
     # Read and validate
@@ -180,12 +250,24 @@ async def upload_evidence(
 
     sha256 = hashlib.sha256(data).hexdigest()
 
-    # Determine extension
-    use_ext = ext or os.path.splitext(file.filename or "")[1].lstrip(".") or "jpg"
+    # Determine extension: fall back to file suffix when ext is not provided
+    use_ext = ext or os.path.splitext(file.filename or "")[1].lstrip(".")
+    # Build the object key.  Pass track_id to allow tubelet uploads.  Any
+    # ValueError will be surfaced as a 400 HTTP error.
+    try:
+        object_key = _build_object_key(
+            kind=kind,
+            camera_id=int(camera_id),
+            event_id=event_id,
+            ext=use_ext or "",
+            frame_index=frame_index,
+            track_id=track_id,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    object_key   = _build_object_key(kind, int(camera_id), event_id, use_ext, frame_index)
     content_type = _guess_content_type(
-        file.filename or f"{event_id}.{use_ext}", file.content_type
+        file.filename or f"{event_id}.{use_ext or 'bin'}", file.content_type
     )
 
     # Upload to MinIO

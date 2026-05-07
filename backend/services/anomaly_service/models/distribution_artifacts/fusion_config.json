@@ -1,0 +1,29 @@
+{
+  "person_weight": 0.65,
+  "context_weight": 0.35,
+  "score_normalization": "robust_iqr",
+  "person_normalization_stats": {
+    "median": 57.79245185852051,
+    "q25": 47.61773204803467,
+    "q75": 73.39496040344238,
+    "iqr": 25.777228355407715
+  },
+  "context_normalization_stats": {
+    "median": 57.302785873413086,
+    "q25": 47.263102531433105,
+    "q75": 72.75192451477051,
+    "iqr": 25.488821983337402
+  },
+  "initial_person_normalization_stats": {
+    "median": 56.5941276550293,
+    "q25": 46.464420318603516,
+    "q75": 72.66674041748047,
+    "iqr": 26.202320098876953
+  },
+  "initial_context_normalization_stats": {
+    "median": 55.739646911621094,
+    "q25": 45.76392364501953,
+    "q75": 71.5862808227539,
+    "iqr": 25.822357177734375
+  }
+}

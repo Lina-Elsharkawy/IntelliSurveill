@@ -1,0 +1,15 @@
+[property]
+gpu-id=0
+net-scale-factor=0.00392156862745098
+model-color-format=0
+model-engine-file=/opt/anomaly/models/yolov8n_fp16.engine
+batch-size=1
+network-mode=2
+network-type=100
+process-mode=1
+gie-unique-id=1
+output-tensor-meta=1
+infer-dims=3;640;640
+maintain-aspect-ratio=1
+symmetric-padding=1
+interval=1

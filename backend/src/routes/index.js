@@ -18,6 +18,7 @@ const ollamaJobsRouter = require('./ollamaJobRoutes');
 const notificationsRouter = require('./notificationsRoutes');
 const anomalyRulesRouter = require('./anomalyRulesRoutes');
 const chatbotRouter = require('./chatbotRoutes');
+const evidenceRouter = require('./evidenceRoutes');
 
 router.use('/admin', adminRouter);
 router.use('/anomalies', anomaliesRouter);
@@ -36,6 +37,7 @@ router.use('/ollama-jobs', ollamaJobsRouter);
 router.use('/notifications', notificationsRouter);
 router.use('/anomaly-rules', anomalyRulesRouter);
 router.use('/chatbot', chatbotRouter);
+router.use('/evidence', evidenceRouter);
 
 // DIAGNOSTIC ROUTE
 router.post('/diag-test', (req, res) => {

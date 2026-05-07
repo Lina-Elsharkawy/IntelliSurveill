@@ -197,14 +197,39 @@ services:
       - ./backend/services:/app/services
       - ./datasets:/datasets
       - ./backend/services/anomaly_service/models:/app/models
+      - ./backend/services/anomaly_service/models/distribution_artifacts:/models/distribution_artifacts:ro
     environment:
       DB_DSN: postgresql://lina:123@postgres-db:5432/lina
       DATABASE_URL: postgresql://lina:123@postgres-db:5432/lina
-      OLLAMA_BASE_URL: http://ollama:11434
+      EVIDENCE_GATEWAY_OBJECT_URL: http://evidence-gateway:8010/evidence/object
       MINIO_ENDPOINT: http://minio:9000
       S3_BUCKET: evidence
+
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_BASE_URL: http://ollama:11434
       VLM_MODEL: openbmb/minicpm-v4.5:8b
       LLM_MODEL: qwen3:8b
+
+      VIDEO_ENCODER_MODEL: MCG-NJU/videomae-base
+      VIDEO_ENCODER_DEVICE: cuda
+      VIDEO_ENCODER_USE_FP16: "1"
+
+      TUBELET_FRAMES: "16"
+      SAMPLE_FPS: "8"
+      STRIDE: "16"
+      PERSON_SIZE: "224"
+      CONTEXT_SIZE: "224"
+      PERSON_PADDING: "0.20"
+      CONTEXT_SCALE: "2.5"
+
+      DISTRIBUTION_ARTIFACTS_DIR: /models/distribution_artifacts
+      DISTRIBUTION_THRESHOLD_NAME: p97
+
+      HIGH_SPEED_THRESHOLD: "0.24"
+      ABRUPT_ANGLE_THRESHOLD: "120"
+      MIN_TURN_SPEED: "0.08"
+      MAX_TRACK_GAP: "6"
+      CANDIDATE_COOLDOWN_SEC: "5"
     env_file:
       - ./backend/.env
     ports:
@@ -215,7 +240,34 @@ services:
       - ollama
     networks:
       - data-platform-net
+  reasoning-worker:
+    build:
+      context: ./backend/services/anomaly_service
+      dockerfile: Dockerfile
+    working_dir: /app
+    command: python ollama_worker.py
+    volumes:
+      - ./backend/services:/app/services
+    environment:
+      DB_DSN: postgresql://lina:123@postgres-db:5432/lina
+      DATABASE_URL: postgresql://lina:123@postgres-db:5432/lina
+      EVIDENCE_GATEWAY_OBJECT_URL: http://evidence-gateway:8010/evidence/object
+      MINIO_ENDPOINT: http://minio:9000
+      S3_BUCKET: evidence
 
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_BASE_URL: http://ollama:11434
+      VLM_MODEL: openbmb/minicpm-v4.5:8b
+      LLM_MODEL: qwen3:8b
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - postgres-db
+      - minio
+      - ollama
+      - anomaly-service
+    networks:
+      - data-platform-net
   anomaly-rules-service:
     build:
       context: ./backend/services/Anomaly_Rules
@@ -263,6 +315,7 @@ services:
         max-file: "3"
     networks:
       - data-platform-net
+      - default
 
   kafka-topic-init:
     image: python:3.11-slim
@@ -277,28 +330,25 @@ services:
     networks:
       - data-platform-net
 
-  face-consumer:
+  event-consumer:
     build:
       context: ./streaming/kafka
       dockerfile: Dockerfile.face-consumer
+    container_name: graduation-project-event-consumer-1
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9093
       KAFKA_TOPICS: face_events,anomaly_events
       KAFKA_GROUP_ID: backend-consumer
       BACKEND_MATCH_URL: http://vector-match:8000/match
+      ANOMALY_INGEST_URL: http://anomaly-service:8000/ingest/person-context-tubelet
       EVIDENCE_GATEWAY_UPLOAD: http://evidence-gateway:8010/evidence/upload
       S3_BUCKET: evidence
     depends_on:
-      kafka:
-        condition: service_started
-      evidence-gateway:
-        condition: service_started
-      vector-match:
-        condition: service_started
-      anomaly-service:
-        condition: service_started
+      - kafka
+      - vector-match
+      - anomaly-service
+      - evidence-gateway
     networks:
-      - default
       - data-platform-net
 
   minio:
@@ -324,6 +374,7 @@ services:
       MINIO_ENDPOINT: http://minio:9000
       S3_BUCKET: evidence
       PORT: 8010
+      MAX_UPLOAD_BYTES: "104857600"
     depends_on:
       - minio
     ports:

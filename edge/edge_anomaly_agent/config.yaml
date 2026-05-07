@@ -1,19 +1,20 @@
 camera:
   type: rtsp
   rtsp_url: "rtsp://imhotep:Siemens24!@172.21.0.35:554/stream1"
-  width: 640
-  height: 480
-  fps: 10
+  width: 1920
+  height: 1080
+  fps: 8
+  latency: 500
 # Edge device identity
 device_key: "jetson_nano_01"
 camera_id: 2
 
 kafka:
-  bootstrap_servers: "172.21.0.238:9092"
+  bootstrap_servers: "172.21.0.243:9092"
   topic_anomaly: "anomaly_events"
 
 evidence_gateway:
-  upload_url: "http://172.21.0.238:8010/evidence/upload"
+  upload_url: "http://172.21.0.243:8010/evidence/upload"
 
 anomaly:
   # --- Motion detection (MOG2) ---
@@ -37,14 +38,14 @@ anomaly:
   tracker_max_missed: 8      # 0.8s at 10fps before track expires
 
   # --- Tubelet windowing ---
-  window_stride: 8           # stride between windows (num_frames=16 from checkpoint)
-  crop_pad: 0.1              # padding around person bounding box
+  window_stride: 16           # stride between windows (num_frames=16 from checkpoint)
+  crop_pad: 0.20              # padding around person bounding box
 
   # --- Cooldown ---
-  cooldown_sec: 2.0          # min seconds between published events per track
+  cooldown_sec: 10.0          # min seconds between published events per track
 
   # --- Evidence upload ---
-  jpg_quality: 85
+  jpg_quality: 95
 
   # --- Logging ---
   print_every_sec: 5.0

@@ -7,9 +7,16 @@ from kafka import KafkaConsumer
 
 BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9093")
 BACKEND_MATCH_URL = os.getenv("BACKEND_MATCH_URL", "http://vector-match:8000/match")
+# ---------------------------------------------------------------------------
+# Set the default ingest URL for the new anomaly pipeline.
+#
+# The old pipeline posted to /ingest/scene_embedding.  The new dual‐stream
+# distribution pipeline exposes /ingest/person-context-tubelet.  Use the
+# environment variable to override if needed, but default to the new
+# endpoint.
 ANOMALY_INGEST_URL = os.getenv(
     "ANOMALY_INGEST_URL",
-    "http://anomaly-service:8000/ingest/scene_embedding",
+    "http://anomaly-service:8000/ingest/person-context-tubelet",
 )
 GROUP_ID = os.getenv("KAFKA_GROUP_ID", "backend-consumer")
 TOPICS = [
@@ -134,35 +141,104 @@ def handle_face_event(event: dict) -> bool:
 # Anomaly event handler — updated for v3 pipeline
 # ---------------------------------------------------------------------------
 
+def _as_list(value: Any) -> list:
+    """Return value as a list only when it is already a list; otherwise []."""
+    return value if isinstance(value, list) else []
+
+
+def _extract_motion_stats(event: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Extract motion stats from either top-level event fields or metadata.
+
+    The edge/Jetson should send these values, not embeddings.  The backend
+    anomaly-service will use them for high-speed, abrupt-direction, and
+    track-instability gates.
+    """
+    metadata = event.get("metadata") or {}
+    if not isinstance(metadata, dict):
+        metadata = {}
+
+    motion_stats = event.get("motion_stats") or metadata.get("motion_stats") or {}
+    if not isinstance(motion_stats, dict):
+        motion_stats = {}
+
+    # Backward/edge-friendly fallbacks: allow common motion keys at top level
+    # or inside metadata without requiring the edge script to wrap them first.
+    for key in (
+        "max_speed_norm",
+        "speed_norm",
+        "max_speed",
+        "max_turn_angle",
+        "turn_angle",
+        "turn_speed",
+        "max_turn_speed",
+        "track_gap_count",
+        "gap_count",
+        "lost_frames",
+        "track_instability_reason",
+        "instability_reason",
+    ):
+        if key not in motion_stats:
+            if key in event:
+                motion_stats[key] = event[key]
+            elif key in metadata:
+                motion_stats[key] = metadata[key]
+
+    return motion_stats
+
+
 def _build_anomaly_ingest_payload(event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """
-    Build the payload for the backend anomaly ingest service.
+    Build the payload for the new backend anomaly ingest service.
 
-    v3 Kafka event fields (from kafka_producer.py):
-        device_key         : str
-        event_key          : str
-        camera_id          : int
-        track_id           : int
-        window_start_ts    : ISO8601 str
-        window_end_ts      : ISO8601 str
-        embedding          : list[float]
-        embedding_dim      : int
-        embedding_model    : str
-        frames             : list[str]
-        processing_time_ms : int
-        metadata           : dict
+    IMPORTANT ARCHITECTURE RULE:
+    The Jetson/edge pipeline must NOT send embeddings.
+
+    The edge should send evidence references and motion metadata only.  This
+    consumer forwards those references to anomaly-service, and anomaly-service
+    extracts VideoMAE person/context embeddings on the backend.
+
+    Accepted anomaly event fields:
+      - device_key
+      - event_key or event_id
+      - camera_id
+      - track_id
+      - window_start_ts
+      - window_end_ts
+      - person_frames / context_frames
+      - frames                  (legacy alias, used for both person/context)
+      - representative_frame_ref
+      - person_clip_ref / context_clip_ref
+      - person_bbox_sequence
+      - motion_stats
+      - metadata
+
+    This function deliberately does NOT forward:
+      - embedding
+      - embedding_dim
+      - embedding_model
+      - precomputed_person_embedding
+      - precomputed_context_embedding
     """
     event_key = event.get("event_key") or event.get("event_id")
     if not event_key:
-        print("[ANOM][DROP] missing event_key")
+        print("[ANOM][DROP] missing event_key/event_id")
         return None
+
+    metadata = event.get("metadata") or {}
+    if not isinstance(metadata, dict):
+        metadata = {}
 
     device_key = (
         event.get("device_key")
-        or (event.get("metadata") or {}).get("device_key")
+        or metadata.get("device_key")
         or DEFAULT_DEVICE_KEY
     )
-    camera_id = int(event.get("camera_id", 0))
+
+    try:
+        camera_id = int(event.get("camera_id", 0))
+    except Exception:
+        camera_id = 0
 
     track_id = event.get("track_id")
     if track_id is not None:
@@ -171,100 +247,101 @@ def _build_anomaly_ingest_payload(event: Dict[str, Any]) -> Optional[Dict[str, A
         except Exception:
             track_id = None
 
-    window_start_ts = event.get("window_start_ts")
-    window_end_ts = event.get("window_end_ts")
+    window_start_ts = event.get("window_start_ts") or event.get("start_ts")
+    window_end_ts = event.get("window_end_ts") or event.get("end_ts")
     if not window_start_ts:
         print(f"[ANOM][DROP] missing window_start_ts for event_key={event_key}")
         return None
 
-    embedding = event.get("embedding")
-    embedding_model = event.get("embedding_model") or "student-v3-multiscale"
-    embedding_dim = event.get("embedding_dim")
+    # Preferred new fields.
+    person_frames = _as_list(event.get("person_frames"))
+    context_frames = _as_list(event.get("context_frames"))
 
-    if not isinstance(embedding, list) or len(embedding) == 0:
+    # Legacy/edge-friendly alias: if the edge sends only `frames`, use them
+    # for both person and context until the edge script starts sending true
+    # wider context crops separately.
+    legacy_frames = _as_list(event.get("frames"))
+    if legacy_frames:
+        if not person_frames:
+            person_frames = legacy_frames
+        if not context_frames:
+            context_frames = legacy_frames
+
+    person_clip_ref = event.get("person_clip_ref")
+    context_clip_ref = event.get("context_clip_ref")
+    representative_frame_ref = event.get("representative_frame_ref")
+
+    # Backward convenience: if no representative frame was supplied, use the
+    # middle frame from whichever frame list exists. This lets VLM reasoning
+    # work even before the edge script has a dedicated representative upload.
+    if not representative_frame_ref:
+        candidate_frames = context_frames or person_frames
+        if candidate_frames:
+            representative_frame_ref = candidate_frames[len(candidate_frames) // 2]
+
+    if not (person_frames or context_frames or person_clip_ref or context_clip_ref):
         print(
-            f"[ANOM][DROP] missing or empty embedding for event_key={event_key} "
-            f"keys={list(event.keys())}"
+            f"[ANOM][DROP] no evidence refs for event_key={event_key}; "
+            "need person_frames/context_frames/frames or person_clip_ref/context_clip_ref"
         )
         return None
 
-    declared_dim = None
-    if embedding_dim is not None:
-        try:
-            declared_dim = int(embedding_dim)
-        except Exception:
-            print(
-                f"[ANOM][WARN] invalid embedding_dim={embedding_dim!r} "
-                f"for event_key={event_key}"
-            )
+    person_bbox_sequence = event.get("person_bbox_sequence")
+    if person_bbox_sequence is None:
+        person_bbox_sequence = metadata.get("person_bbox_sequence") or []
+    if not isinstance(person_bbox_sequence, list):
+        person_bbox_sequence = []
 
-    if declared_dim is not None and len(embedding) != declared_dim:
-        print(
-            f"[ANOM][WARN] embedding length {len(embedding)} != "
-            f"embedding_dim {declared_dim} for event_key={event_key}"
-        )
+    motion_stats = _extract_motion_stats(event)
 
-    try:
-        embedding = [float(x) for x in embedding]
-    except Exception as e:
-        print(f"[ANOM][DROP] invalid embedding values for event_key={event_key}: {e}")
-        return None
-
-    frames = event.get("frames") or []
-    if not isinstance(frames, list):
-        print(
-            f"[ANOM][WARN] malformed frames field for event_key={event_key}: "
-            f"{type(frames).__name__}"
-        )
-        frames = []
-
-    expected_frames = ((event.get("metadata") or {}).get("num_frames"))
-    try:
-        expected_frames = int(expected_frames) if expected_frames is not None else None
-    except Exception:
-        expected_frames = None
-
-    if expected_frames is not None and frames and len(frames) != expected_frames:
-        print(
-            f"[ANOM][WARN] frames count {len(frames)} != expected {expected_frames} "
-            f"for event_key={event_key}"
-        )
+    # Preserve useful metadata, but explicitly mark that embeddings are not
+    # expected from the edge in the new architecture.
+    clean_metadata = dict(metadata)
+    clean_metadata.update({
+        "edge_sent_embeddings": False,
+        "backend_extracts_videomae": True,
+    })
 
     payload: Dict[str, Any] = {
         "device_key": str(device_key),
         "event_key": str(event_key),
         "camera_id": camera_id,
         "window_start_ts": str(window_start_ts),
-        "window_end_ts": str(window_end_ts) if window_end_ts else None,
-        "embedding": embedding,
-        "embedding_dim": len(embedding),
-        "embedding_model": str(embedding_model),
-        "frames": frames if frames else None,
+        "metadata": clean_metadata,
+        "motion_stats": motion_stats,
+        "person_bbox_sequence": person_bbox_sequence,
     }
 
+    if window_end_ts:
+        payload["window_end_ts"] = str(window_end_ts)
     if track_id is not None:
         payload["track_id"] = track_id
+    if person_frames:
+        payload["person_frames"] = person_frames
+    if context_frames:
+        payload["context_frames"] = context_frames
+    if person_clip_ref:
+        payload["person_clip_ref"] = str(person_clip_ref)
+    if context_clip_ref:
+        payload["context_clip_ref"] = str(context_clip_ref)
+    if representative_frame_ref:
+        payload["representative_frame_ref"] = str(representative_frame_ref)
 
-    metadata = event.get("metadata")
-    if metadata:
-        payload["metadata"] = metadata
-
-    return {k: v for k, v in payload.items() if v is not None}
-
+    return payload
 
 def handle_anomaly_event(event: dict) -> bool:
     event_key = event.get("event_key") or event.get("event_id")
     camera_id = event.get("camera_id", "?")
     track_id = event.get("track_id", "?")
-    frames = event.get("frames") or []
+    frames = event.get("frames") or event.get("person_frames") or event.get("context_frames") or []
     frames_n = len(frames) if isinstance(frames, list) else 0
-    emb_dim = event.get("embedding_dim") or (
-        len(event["embedding"]) if isinstance(event.get("embedding"), list) else "?"
-    )
+    has_clip = bool(event.get("person_clip_ref") or event.get("context_clip_ref"))
+    has_rep = bool(event.get("representative_frame_ref"))
 
     print(
         f"[ANOM] event_key={event_key} camera={camera_id} "
-        f"track={track_id} emb_dim={emb_dim} frames={frames_n}"
+        f"track={track_id} frames={frames_n} clips={has_clip} representative={has_rep} "
+        f"edge_embeddings=not_expected"
     )
 
     payload = _build_anomaly_ingest_payload(event)
@@ -277,7 +354,7 @@ def handle_anomaly_event(event: dict) -> bool:
 
     ek = payload.get("event_key")
     try:
-        r = requests.post(ANOMALY_INGEST_URL, json=payload, timeout=10)
+        r = requests.post(ANOMALY_INGEST_URL, json=payload, timeout=120)
         if r.status_code != 200:
             print(f"[ANOM][HTTP] event_key={ek} {r.status_code} {r.text}")
             return False

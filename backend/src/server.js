@@ -40,9 +40,13 @@ app.use('/llm', llmRouter);
 
 // Protect all API routes below
 app.use('/api', (req, res, next) => {
+  if (req.url.startsWith('/evidence')) {
+    // Bypass auth for evidence proxy so <img src> and <a href> work
+    return next();
+  }
   console.log(`🔒 [AUTH-CHECK] ${req.method} ${req.url}`);
-  next();
-}, checkJwt, apiRoutes);
+  checkJwt(req, res, next);
+}, apiRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
