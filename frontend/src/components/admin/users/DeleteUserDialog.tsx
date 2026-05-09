@@ -26,7 +26,7 @@ export function DeleteUserDialog({ isOpen, onOpenChange, user, onSuccess }: Dele
         if (!user) return;
         setIsDeleting(true);
         try {
-            await deleteUser(user.user_id);
+            await deleteUser(user.user_id, user.name || user.email);
             toast({ title: "Success", description: "User deleted." });
             onOpenChange(false);
             onSuccess(user.user_id);

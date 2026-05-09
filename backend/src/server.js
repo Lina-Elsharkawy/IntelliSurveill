@@ -5,12 +5,13 @@ const models = require('./models'); // import model index
 const checkJwt = require('./middleware/auth');
 const authRouter = require('./routes/authRoutes');
 const apiRoutes = require('./routes/index');
+const { auditMiddleware } = require('./middleware/auditMiddleware');
 const app = express();
 
 
 app.use(cors({
   origin: 'http://localhost:8080',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
@@ -23,7 +24,7 @@ app.use((req, res, next) => {
   });
   next();
 });
-
+// Audit middleware is placed AFTER checkJwt (see below) so req.auth is populated
 // Public access for login
 app.use('/auth', authRouter);
 
@@ -41,7 +42,7 @@ app.get('/health', async (req, res) => {
 const llmRouter = require('./services/llm/llmRoutes');
 app.use('/llm', llmRouter);
 
-// Protect all API routes below
+// Protect all API routes — checkJwt first, then audit, then routes
 app.use('/api', (req, res, next) => {
   if (req.url.startsWith('/evidence')) {
     // Bypass auth for evidence proxy so <img src> and <a href> work
@@ -49,7 +50,7 @@ app.use('/api', (req, res, next) => {
   }
   console.log(`🔒 [AUTH-CHECK] ${req.method} ${req.url}`);
   checkJwt(req, res, next);
-}, apiRoutes);
+}, auditMiddleware, apiRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

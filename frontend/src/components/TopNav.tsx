@@ -123,10 +123,6 @@ export function TopNav() {
                 <div style={{ fontSize: 9, color: GA(0.5), textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4, fontWeight: 600 }}>System Privileges</div>
                 <div style={{ fontSize: 13, fontFamily: "'Outfit'", color: "#fff" }}>{roles.join(", ") || "Standard User"}</div>
               </div>
-              <div style={{ padding: "14px 20px", background: "rgba(255,255,255,0.02)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.05)" }}>
-                <div style={{ fontSize: 9, color: GA(0.5), textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4, fontWeight: 600 }}>Account Status</div>
-                <div style={{ fontSize: 13, fontFamily: "'Outfit'", color: G, fontWeight: 600 }}>Active Node</div>
-              </div>
             </div>
 
             <button onClick={() => setShowProfile(false)} style={{ marginTop: 30, width: "100%", padding: "12px", background: G, color: "#000", border: "none", borderRadius: 12, fontFamily: "'Outfit'", fontWeight: 700, cursor: "pointer", transition: "0.2s" }} onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"} onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>Close</button>

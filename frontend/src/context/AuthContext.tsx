@@ -8,6 +8,7 @@ interface AuthContextType {
     roles: string[];
     login: (token: string, idToken?: string) => void;
     logout: () => void;
+    updateUserLocally: (updatedData: any) => void;
     isAuthenticated: boolean;
 }
 
@@ -74,7 +75,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 console.error("Error decoding id_token during login", e);
             }
         }
-
         navigate("/dashboard");
     };
 
@@ -89,10 +89,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         window.location.href = "/login"; // hard redirect
     };
 
+    const updateUserLocally = (updatedData: any) => {
+        setUser((prev: any) => ({
+            ...prev,
+            ...updatedData
+        }));
+    };
+
     const isAuthenticated = !!token;
 
     return (
-        <AuthContext.Provider value={{ user, token, roles, login, logout, isAuthenticated }}>
+        <AuthContext.Provider value={{ user, token, roles, login, logout, updateUserLocally, isAuthenticated }}>
             {children}
         </AuthContext.Provider>
     );

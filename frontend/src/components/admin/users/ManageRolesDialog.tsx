@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import { assignRoles, removeRoles, getUserRoles, Auth0User, Auth0Role } from "@/services/adminService";
+import { updateRoles, getUserRoles, Auth0User, Auth0Role } from "@/services/adminService";
 
 interface ManageRolesDialogProps {
     isOpen: boolean;
@@ -68,9 +68,18 @@ export function ManageRolesDialog({ isOpen, onOpenChange, user, allRoles, onSucc
             const toAdd = currentIds.filter(id => !originalIds.includes(id));
             const toRemove = originalIds.filter(id => !currentIds.includes(id));
 
-            // Execute remove first, then add to ensure clean state
-            if (toRemove.length) await removeRoles(user.user_id, toRemove);
-            if (toAdd.length) await assignRoles(user.user_id, toAdd);
+            // Execute single update to sync roles and audit log properly
+            if (toRemove.length > 0 || toAdd.length > 0) {
+                const oldRoleNames = originalRoles.map(r => r.name);
+                const newRoleNames = currentUserRoles.map(r => r.name);
+                
+                await updateRoles(user.user_id, {
+                    addRoles: toAdd,
+                    removeRoles: toRemove,
+                    oldRoleNames,
+                    newRoleNames
+                });
+            }
 
             toast({ title: "Success", description: "Roles updated." });
             onOpenChange(false);

@@ -113,8 +113,9 @@ const AdminUsers = () => {
                 {/* Header */}
                 <div className="flex justify-between items-center mb-8 mt-2">
                     <div>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 800, color: "rgba(46,213,115,0.6)", letterSpacing: 5, textTransform: "uppercase", marginBottom: 4 }}>System · Core</div>
-                        <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 42, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1 }}>User Management</h1>
+                        <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 36, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>
+                            User Management
+                        </h1>
                     </div>
                     <div className="flex gap-4">
                         {/* Animated Refresh Button */}

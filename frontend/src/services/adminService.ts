@@ -49,8 +49,13 @@ export async function removeRoles(userId: string, roleIds: string[]): Promise<an
     return apiDelete(`/api/admin/users/${encodeURIComponent(userId)}/roles`, { roles: roleIds });
 }
 
-export async function deleteUser(userId: string): Promise<any> {
-    return apiDelete(`/api/admin/users/${encodeURIComponent(userId)}`);
+export async function updateRoles(userId: string, data: { addRoles: string[], removeRoles: string[], oldRoleNames: string[], newRoleNames: string[] }): Promise<any> {
+    const { apiPut } = await import("@/lib/api");
+    return apiPut(`/api/admin/users/${encodeURIComponent(userId)}/roles`, data);
+}
+
+export async function deleteUser(userId: string, name?: string): Promise<any> {
+    return apiDelete(`/api/admin/users/${encodeURIComponent(userId)}`, { name });
 }
 
 export async function createUser(email: string, password: string, name?: string): Promise<Auth0User> {

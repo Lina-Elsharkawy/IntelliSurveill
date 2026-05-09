@@ -26,7 +26,7 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Departments", url: "/departments", Icon: Building },
   { title: "Labs", url: "/labs", Icon: GraduationCap },
   { title: "Analytics", url: "/analytics", Icon: BarChart3 },
-  { title: "Activity Log", url: "/activity-log", Icon: ListCheck },
+  { title: "Activity Log", url: "/activity-log", Icon: ListCheck, adminOnly: false },
   { title: "Settings", url: "/settings", Icon: Settings },
   { title: "Detected people", url: "/admin", Icon: UserCog, adminOnly: false },
   { title: "Users", url: "/admin-users", Icon: Shield, adminOnly: true },

@@ -86,6 +86,37 @@ exports.removeRoles = async (req, res) => {
     }
 };
 
+exports.updateRoles = async (req, res) => {
+    try {
+        const token = await getManagementApiToken();
+        const { id } = req.params;
+        const { addRoles, removeRoles, oldRoleNames, newRoleNames } = req.body;
+
+        if (removeRoles && removeRoles.length > 0) {
+            await axios.delete(`${getBaseUrl()}/api/v2/users/${encodeURIComponent(id)}/roles`, {
+                headers: { Authorization: `Bearer ${token}` },
+                data: { roles: removeRoles }
+            });
+        }
+
+        if (addRoles && addRoles.length > 0) {
+            await axios.post(`${getBaseUrl()}/api/v2/users/${encodeURIComponent(id)}/roles`, { roles: addRoles }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        }
+
+        // Generate clean audit message
+        const oldStr = oldRoleNames?.length ? oldRoleNames.join(', ') : 'None';
+        const newStr = newRoleNames?.length ? newRoleNames.join(', ') : 'None';
+        req.auditDescription = `Updated Roles from ${oldStr} to ${newStr}`;
+
+        res.json({ message: 'Roles updated successfully' });
+    } catch (error) {
+        res.status(error.response?.status || 500).json({ error: error.response?.data?.message || 'Failed to update roles' });
+    }
+};
+
+
 exports.deleteUser = async (req, res) => {
     try {
         const token = await getManagementApiToken();
@@ -157,6 +188,12 @@ exports.updateUser = async (req, res) => {
         if (email) updateData.email = email;
         if (password) updateData.password = password;
         if (name) updateData.name = name;
+
+        // Auth0 requires connection and client_id when updating email or password
+        if (email || password) {
+            updateData.connection = 'Username-Password-Authentication';
+            updateData.client_id = process.env.AUTH0_CLIENT_ID;
+        }
 
         if (Object.keys(updateData).length === 0) {
             return res.status(400).json({ error: 'No data to update' });

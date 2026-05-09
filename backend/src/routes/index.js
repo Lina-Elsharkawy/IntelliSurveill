@@ -20,7 +20,9 @@ const anomalyRulesRouter = require('./anomalyRulesRoutes');
 const chatbotRouter = require('./chatbotRoutes');
 const evidenceRouter = require('./evidenceRoutes');
 const backupRouter = require('./backupRoutes');
+const auditLogRouter = require('./Auditlogroutes');
 
+router.use('/audit-logs', auditLogRouter);
 router.use('/admin', adminRouter);
 router.use('/anomalies', anomaliesRouter);
 router.use('/cameras', camerasRouter);

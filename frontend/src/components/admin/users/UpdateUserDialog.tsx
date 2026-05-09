@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -22,6 +23,7 @@ interface UpdateUserDialogProps {
 
 export function UpdateUserDialog({ isOpen, onOpenChange, user, onSuccess }: UpdateUserDialogProps) {
     const { toast } = useToast();
+    const { user: currentUser, updateUserLocally } = useAuth();
     const [updateEmail, setUpdateEmail] = useState("");
     const [updateName, setUpdateName] = useState("");
     const [updatePassword, setUpdatePassword] = useState("");
@@ -63,6 +65,15 @@ export function UpdateUserDialog({ isOpen, onOpenChange, user, onSuccess }: Upda
             }
 
             await updateUser(user.user_id, updateData);
+            
+            // If the updated user is the current logged-in user, update the context
+            if (currentUser && currentUser.sub === user.user_id) {
+                updateUserLocally({
+                    name: updateName || updateData.name,
+                    email: updateEmail || updateData.email
+                });
+            }
+
             toast({ title: "Success", description: "User updated successfully." });
             onOpenChange(false);
             onSuccess();

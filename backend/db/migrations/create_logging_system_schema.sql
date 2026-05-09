@@ -471,6 +471,24 @@ CREATE TABLE rule_conflicts (
     status VARCHAR DEFAULT 'pending', -- pending, resolved, ignored
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+-- ============================================
+-- Audit Logs Table
+-- Tracks all user-driven actions in the system
+-- ============================================
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id           BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    user_email   TEXT NOT NULL,
+    action       TEXT NOT NULL,        -- e.g. 'CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT'
+    resource     TEXT,                 -- e.g. 'camera', 'employee', 'anomaly_candidate', 'rule'
+    resource_id  TEXT,                 -- stringified ID of the affected entity (nullable for login/logout)
+    details      JSONB,                -- arbitrary context: old/new values, extra info
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS audit_logs_user_idx     ON audit_logs (user_email);
+CREATE INDEX IF NOT EXISTS audit_logs_action_idx   ON audit_logs (action);
+CREATE INDEX IF NOT EXISTS audit_logs_resource_idx ON audit_logs (resource);
+CREATE INDEX IF NOT EXISTS audit_logs_created_idx  ON audit_logs (created_at DESC);
 
 CREATE INDEX IF NOT EXISTS ollama_jobs_status_idx
 ON ollama_jobs (status);

@@ -14,6 +14,7 @@ router.post('/users', adminController.createUser);
 router.patch('/users/:id', adminController.updateUser);
 router.delete('/users/:id', adminController.deleteUser);
 router.get('/users/:id/roles', adminController.getUserRoles);
+router.put('/users/:id/roles', adminController.updateRoles);
 router.post('/users/:id/roles', adminController.assignRoles);
 router.delete('/users/:id/roles', adminController.removeRoles);
 

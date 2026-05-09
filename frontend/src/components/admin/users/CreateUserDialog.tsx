@@ -39,6 +39,15 @@ export function CreateUserDialog({ isOpen, onOpenChange, onSuccess, allRoles }: 
             return;
         }
 
+        if (!selectedRoleId) {
+            toast({
+                title: "Validation Error",
+                description: "You must assign a system role to the user.",
+                variant: "destructive"
+            });
+            return;
+        }
+
         setIsCreating(true);
         try {
             const user = await createUser(newUserEmail, newUserPassword, newUserName || undefined);
