@@ -536,6 +536,8 @@ services:
     environment:
       - VITE_API_BASE_URL=http://localhost:3000
       - CHOKIDAR_USEPOLLING=true # Often needed for HMR inside Docker on Windows
+    # env_file:
+    #   - ./frontend/.env
     depends_on:
       - backend
     networks:
@@ -559,6 +561,32 @@ services:
     depends_on:
       - postgres-db
       - ollama-chatbot
+    networks:
+      - data-platform-net
+
+  # ---------------------------
+  #  S3 Backup Service
+  #----------------------------
+  s3-backup:
+    build: ./services/s3_backup
+    env_file:
+      - ./services/s3_backup/.env
+    volumes:
+      - s3-backup-state:/data
+    ports:
+      - "8020:8020"
+    depends_on:
+      - minio
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - data-platform-net
   #--------------------------
@@ -664,9 +692,8 @@ volumes:
   ollama-data:
   ollama-chatbot-data:
   ollama-rules-data:
+  s3-backup-state:
 
 networks:
   data-platform-net:
     driver: bridge
-
-# testing

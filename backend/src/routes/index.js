@@ -19,6 +19,7 @@ const notificationsRouter = require('./notificationsRoutes');
 const anomalyRulesRouter = require('./anomalyRulesRoutes');
 const chatbotRouter = require('./chatbotRoutes');
 const evidenceRouter = require('./evidenceRoutes');
+const backupRouter = require('./backupRoutes');
 
 router.use('/admin', adminRouter);
 router.use('/anomalies', anomaliesRouter);
@@ -38,7 +39,7 @@ router.use('/notifications', notificationsRouter);
 router.use('/anomaly-rules', anomalyRulesRouter);
 router.use('/chatbot', chatbotRouter);
 router.use('/evidence', evidenceRouter);
-
+router.use('/backup', backupRouter);
 // DIAGNOSTIC ROUTE
 router.post('/diag-test', (req, res) => {
     console.log('🔴 DIAGNOSTIC POST SUCCESS');

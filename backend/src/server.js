@@ -2,16 +2,19 @@ const express = require('express');
 const cors = require('cors');
 const sequelize = require('./db/connection');
 const models = require('./models'); // import model index
-
 const checkJwt = require('./middleware/auth');
 const authRouter = require('./routes/authRoutes');
 const apiRoutes = require('./routes/index');
-
 const app = express();
 
-app.use(cors());
-app.use(express.json());
 
+app.use(cors({
+  origin: 'http://localhost:8080',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+app.use(express.json());
 // Global logging middleware
 app.use((req, res, next) => {
   console.log(`[REQUEST] ${req.method} ${req.url}`);
@@ -22,7 +25,7 @@ app.use((req, res, next) => {
 });
 
 // Public access for login
-app.use('/auth', authRouter); 
+app.use('/auth', authRouter);
 
 // Public health route
 app.get('/health', async (req, res) => {

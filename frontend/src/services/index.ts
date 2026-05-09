@@ -39,3 +39,6 @@ export * from './adminService';
 
 // Analytics Service
 export * from './analyticsService';
+
+// Backup
+export * from './backup';

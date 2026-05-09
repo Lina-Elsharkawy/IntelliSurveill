@@ -275,4 +275,31 @@ export type OllamaJobInput = {
     request_json?: any;
 };
 
+// ========================
+// Cloud Backup Types
+// ========================
 
+export interface BackupConfig {
+    enabled: boolean;
+    interval_hours: number;
+    prefixes: string[];
+    aws_s3_bucket: string;
+    aws_s3_region: string;
+}
+
+export interface BackupStatus {
+    last_sync_timestamp: string | null;
+    last_sync_objects: number;
+    last_sync_bytes: number;
+    last_sync_duration: number;
+    last_sync_failed: number;
+    is_running: boolean;
+}
+
+export interface BackupTriggerResponse {
+    message: string;
+    objects_synced: number;
+    objects_failed: number;
+    bytes_transferred: number;
+    duration_seconds: number;
+}

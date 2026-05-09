@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import {
+    Users,
     Trash2,
     Shield,
     RefreshCw,
@@ -108,193 +109,191 @@ const AdminUsers = () => {
 
     return (
         <DashboardLayout>
-            <div className="admin-users-page min-h-screen p-8" style={{ background: "#050505", color: "#fff" }}>
-                <div className="max-w-7xl mx-auto space-y-6">
-                    {/* Header */}
-                    <div className="flex justify-between items-center mb-8">
-                        <div>
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 800, color: "rgba(46,213,115,0.6)", letterSpacing: 5, textTransform: "uppercase", marginBottom: 4 }}>System · Core</div>
-                            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 42, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1 }}>User Management</h1>
-                        </div>
-                        <div className="flex gap-4">
-                            {/* Animated Refresh Button */}
-                            <button className="admin-btn admin-btn--refresh" onClick={fetchData} disabled={isLoading} title="Refresh Data">
-                                <RefreshCw className={`admin-btn__icon ${isLoading ? 'animate-spin' : ''}`} />
-                            </button>
-
-                            {/* Animated Add User Button */}
-                            <button className="admin-btn admin-btn--add" onClick={() => setCreateDialogOpen(true)} title="Add User">
-                                <UserPlus className="admin-btn__icon" />
-                            </button>
-
-                        </div>
+            <div className="admin-users-page w-full space-y-6">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-8 mt-2">
+                    <div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 800, color: "rgba(46,213,115,0.6)", letterSpacing: 5, textTransform: "uppercase", marginBottom: 4 }}>System · Core</div>
+                        <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 42, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1 }}>User Management</h1>
                     </div>
+                    <div className="flex gap-4">
+                        {/* Animated Refresh Button */}
+                        <button className="admin-btn admin-btn--refresh" onClick={fetchData} disabled={isLoading} title="Refresh Data">
+                            <RefreshCw className={`admin-btn__icon ${isLoading ? 'animate-spin' : ''}`} />
+                        </button>
 
-                    {/* Stats Cards */}
-                    {/* Stats Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Card className="bg-gray-900/50 border-red-500/30">
-                            <CardContent className="pt-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-400">Total Admins</p>
-                                        <p className="text-3xl font-bold text-red-400">
-                                            {Object.values(userRoles).filter(roles =>
-                                                roles.some(role => role.name.toLowerCase() === 'admin')
-                                            ).length}
-                                        </p>
-                                    </div>
-                                    <Shield className="w-12 h-12 text-red-500/20" />
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card className="bg-gray-900/50 border-green-500/30">
-                            <CardContent className="pt-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-400">Total Regular Users</p>
-                                        <p className="text-3xl font-bold text-green-400">
-                                            {users.filter(u =>
-                                                !userRoles[u.user_id]?.some(role => role.name.toLowerCase() === 'admin')
-                                            ).length}
-                                        </p>
-                                    </div>
-                                    <UserPlus className="w-12 h-12 text-green-500/20" />
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card className="bg-gray-900/50 border-blue-500/30">
-                            <CardContent className="pt-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-400">Total Accounts</p>
-                                        <p className="text-3xl font-bold text-blue-400">{users.length}</p>
-                                    </div>
-                                    <UserPlus className="w-12 h-12 text-blue-500/20" />
-                                </div>
-                            </CardContent>
-                        </Card>
+                        {/* Animated Add User Button */}
+                        <button className="admin-btn admin-btn--add" onClick={() => setCreateDialogOpen(true)} title="Add User">
+                            <UserPlus className="admin-btn__icon" />
+                        </button>
                     </div>
+                </div>
 
-                    {/* Users Table */}
-                    <Card className="bg-gray-900/50 border-gray-800">
-                        <CardContent className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>User</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Last Login</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {users.map((user) => (
-                                        <TableRow key={user.user_id}>
-                                            <TableCell className="flex items-center gap-3">
-                                                <Avatar className="h-10 w-10 ring-2 ring-gray-700">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="shadow-card border-border bg-gradient-to-br from-card to-card/80 overflow-hidden relative">
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <Shield className="w-16 h-16" />
+                        </div>
+                        <CardContent className="pt-6">
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium text-muted-foreground mb-1">Total Admins</span>
+                                <span className="text-3xl font-bold text-red-500">
+                                    {Object.values(userRoles).filter(roles =>
+                                        roles.some(role => role.name.toLowerCase() === 'admin')
+                                    ).length}
+                                </span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="shadow-card border-border bg-gradient-to-br from-card to-card/80 overflow-hidden relative">
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <Users className="w-16 h-16" />
+                        </div>
+                        <CardContent className="pt-6">
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium text-muted-foreground mb-1">Regular Users</span>
+                                <span className="text-3xl font-bold text-green-500">
+                                    {users.filter(u =>
+                                        !userRoles[u.user_id]?.some(role => role.name.toLowerCase() === 'admin')
+                                    ).length}
+                                </span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="shadow-card border-border bg-gradient-to-br from-card to-card/80 overflow-hidden relative">
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <UserPlus className="w-16 h-16" />
+                        </div>
+                        <CardContent className="pt-6">
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium text-muted-foreground mb-1">Total Accounts</span>
+                                <span className="text-3xl font-bold text-blue-500">{users.length}</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Users Table */}
+                <Card className="shadow-card border-border bg-card">
+                    <CardContent className="p-0">
+                        <Table>
+                            <TableHeader className="bg-secondary/30">
+                                <TableRow className="border-border hover:bg-transparent">
+                                    <TableHead className="text-foreground font-semibold">User</TableHead>
+                                    <TableHead className="text-foreground font-semibold">Email</TableHead>
+                                    <TableHead className="text-foreground font-semibold">Last Login</TableHead>
+                                    <TableHead className="text-right text-foreground font-semibold pr-6">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {users.map((user) => (
+                                    <TableRow key={user.user_id} className="border-border hover:bg-secondary/20 transition-colors">
+                                        <TableCell className="py-4">
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-10 w-10 ring-2 ring-border shadow-sm">
                                                     <AvatarImage src={user.picture} />
-                                                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
+                                                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-white font-bold">
                                                         {user.nickname?.charAt(0).toUpperCase()}
                                                     </AvatarFallback>
                                                 </Avatar>
-                                                <div className="flex items-center gap-2">
-                                                    <div>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-semibold text-base">{user.name || user.nickname}</span>
-                                                            {userRoles[user.user_id]?.some(role => role.name.toLowerCase() === 'admin') && (
-                                                                <Badge className="bg-gradient-to-r from-red-600 to-orange-600 text-white border-0 px-2 py-0.5 flex items-center gap-1">
-                                                                    <Shield className="w-3 h-3" />
-                                                                    <span className="text-xs font-bold">ADMIN</span>
-                                                                </Badge>
-                                                            )}
-                                                        </div>
-                                                        <div className="text-xs text-gray-500">{user.logins_count} logins</div>
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-semibold text-foreground">{user.name || user.nickname}</span>
+                                                        {userRoles[user.user_id]?.some(role => role.name.toLowerCase() === 'admin') && (
+                                                            <Badge className="bg-red-500/10 text-red-500 border-red-500/20 px-2 py-0.5 flex items-center gap-1 hover:bg-red-500/20 transition-colors">
+                                                                <Shield className="w-3 h-3" />
+                                                                <span className="text-[10px] font-bold tracking-wider">ADMIN</span>
+                                                            </Badge>
+                                                        )}
                                                     </div>
+                                                    <span className="text-xs text-muted-foreground">{user.logins_count} total logins</span>
                                                 </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <Mail className="w-3 h-3 text-gray-500" />
-                                                    {user.email}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2 text-sm text-gray-400">
-                                                    <Calendar className="w-3 h-3" />
-                                                    {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => openUpdateDialog(user)}
-                                                        className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border-blue-500/50 hover:from-blue-600/30 hover:to-cyan-600/30 text-blue-400 hover:text-blue-300 font-semibold"
-                                                        title="Update User"
-                                                    >
-                                                        <Edit className="w-4 h-4 mr-1" />
-                                                        Update
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleManageRoles(user)}
-                                                        className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-purple-500/50 hover:from-purple-600/30 hover:to-pink-600/30 text-purple-400 hover:text-purple-300 font-semibold"
-                                                        title="Manage Roles"
-                                                    >
-                                                        <Shield className="w-4 h-4 mr-1" />
-                                                        Roles
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="bg-gradient-to-r from-red-600/20 to-orange-600/20 border-red-500/50 hover:from-red-600/30 hover:to-orange-600/30 text-red-400 hover:text-red-300 font-semibold"
-                                                        onClick={() => { setUserToDelete(user); setDeleteDialogOpen(true); }}
-                                                        title="Delete User"
-                                                    >
-                                                        <Trash2 className="w-4 h-4 mr-1" />
-                                                        Delete
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                    <ManageRolesDialog
-                        isOpen={roleDialogOpen}
-                        onOpenChange={setRoleDialogOpen}
-                        user={selectedUser}
-                        allRoles={allRoles}
-                        onSuccess={fetchData}
-                    />
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                <Mail className="w-3.5 h-3.5 text-primary/60" />
+                                                {user.email}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                <Calendar className="w-3.5 h-3.5 text-primary/60" />
+                                                {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right pr-6">
+                                            <div className="flex justify-end gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => openUpdateDialog(user)}
+                                                    className="border-blue-500/20 text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/40 transition-all"
+                                                    title="Update User"
+                                                >
+                                                    <Edit className="w-3.5 h-3.5 mr-1.5" />
+                                                    Edit
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleManageRoles(user)}
+                                                    className="border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/10 hover:border-indigo-500/40 transition-all"
+                                                    title="Manage Roles"
+                                                >
+                                                    <Shield className="w-3.5 h-3.5 mr-1.5" />
+                                                    Roles
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="border-red-500/20 text-red-500 hover:bg-red-500/10 hover:border-red-500/40 transition-all"
+                                                    onClick={() => { setUserToDelete(user); setDeleteDialogOpen(true); }}
+                                                    title="Delete User"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                                                    Delete
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+                <ManageRolesDialog
+                    isOpen={roleDialogOpen}
+                    onOpenChange={setRoleDialogOpen}
+                    user={selectedUser}
+                    allRoles={allRoles}
+                    onSuccess={fetchData}
+                />
 
-                    <CreateUserDialog
-                        isOpen={createDialogOpen}
-                        onOpenChange={setCreateDialogOpen}
-                        onSuccess={fetchData}
-                    />
+                <CreateUserDialog
+                    isOpen={createDialogOpen}
+                    onOpenChange={setCreateDialogOpen}
+                    onSuccess={fetchData}
+                    allRoles={allRoles}
+                />
 
-                    <UpdateUserDialog
-                        isOpen={updateDialogOpen}
-                        onOpenChange={setUpdateDialogOpen}
-                        user={selectedUser}
-                        onSuccess={fetchData}
-                    />
+                <UpdateUserDialog
+                    isOpen={updateDialogOpen}
+                    onOpenChange={setUpdateDialogOpen}
+                    user={selectedUser}
+                    onSuccess={fetchData}
+                />
 
-                    <DeleteUserDialog
-                        isOpen={deleteDialogOpen}
-                        onOpenChange={setDeleteDialogOpen}
-                        user={userToDelete}
-                        onSuccess={(deletedId) => {
-                            setUsers(prev => prev.filter(u => u.user_id !== deletedId));
-                        }}
-                    />
-                </div>
+                <DeleteUserDialog
+                    isOpen={deleteDialogOpen}
+                    onOpenChange={setDeleteDialogOpen}
+                    user={userToDelete}
+                    onSuccess={(deletedId) => {
+                        setUsers(prev => prev.filter(u => u.user_id !== deletedId));
+                    }}
+                />
             </div>
         </DashboardLayout>
     );
