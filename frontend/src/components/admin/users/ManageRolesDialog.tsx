@@ -11,6 +11,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { updateRoles, getUserRoles, Auth0User, Auth0Role } from "@/services/adminService";
+import { useAuth } from "@/context/AuthContext";
+
 
 interface ManageRolesDialogProps {
     isOpen: boolean;
@@ -22,6 +24,7 @@ interface ManageRolesDialogProps {
 
 export function ManageRolesDialog({ isOpen, onOpenChange, user, allRoles, onSuccess }: ManageRolesDialogProps) {
     const { toast } = useToast();
+    const { user: authUser, logout } = useAuth();
     const [currentUserRoles, setCurrentUserRoles] = useState<Auth0Role[]>([]);
     const [isSavingRoles, setIsSavingRoles] = useState(false);
     const [isLoadingRoles, setIsLoadingRoles] = useState(false);
@@ -79,6 +82,24 @@ export function ManageRolesDialog({ isOpen, onOpenChange, user, allRoles, onSucc
                     oldRoleNames,
                     newRoleNames
                 });
+
+                // Check if the current user just changed their own admin role status
+                if (authUser?.sub === user.user_id) {
+                    const wasAdmin = oldRoleNames.some(name => name.toLowerCase() === 'admin');
+                    const isNowAdmin = newRoleNames.some(name => name.toLowerCase() === 'admin');
+
+                    if (wasAdmin !== isNowAdmin) {
+                        toast({ 
+                            title: "Permissions Updated", 
+                            description: `You have ${isNowAdmin ? 'gained' : 'lost'} admin privileges. Logging out to refresh session...`,
+                            variant: "default"
+                        });
+                        setTimeout(() => {
+                            logout();
+                        }, 2000);
+                        return;
+                    }
+                }
             }
 
             toast({ title: "Success", description: "Roles updated." });
