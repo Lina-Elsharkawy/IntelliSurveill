@@ -11,6 +11,8 @@ import {
   isS3Ref,
   fmtScore,
   getImageStateBadge,
+  TabLoadingState,
+  TabEmptyState,
 } from "./SharedAdminUI";
 
 const PAGE_SIZE = 8;
@@ -51,7 +53,6 @@ export function UnknownFacesTab({
   onReviewSubmitted: () => void;
 }) {
   const [unknownSearch, setUnknownSearch] = useState("");
-  const [unknownFilter, setUnknownFilter] = useState<"all" | "hasImage" | "camera1" | "cameraOther">("all");
   const [unknownPage, setUnknownPage] = useState(1);
 
   const [review, setReview] = useState<UnknownReviewState>({
@@ -84,18 +85,9 @@ export function UnknownFacesTab({
         String(u?.camera_id ?? "").includes(q) ||
         String(u?.notes ?? "").toLowerCase().includes(q);
 
-      let matchesFilter = true;
-      if (unknownFilter === "hasImage") {
-        matchesFilter = isS3Ref(u?.image_video_ref);
-      } else if (unknownFilter === "camera1") {
-        matchesFilter = Number(u?.camera_id) === 1;
-      } else if (unknownFilter === "cameraOther") {
-        matchesFilter = Number(u?.camera_id) !== 1;
-      }
-
-      return matchesSearch && matchesFilter;
+      return matchesSearch;
     });
-  }, [unknowns, unknownSearch, unknownFilter]);
+  }, [unknowns, unknownSearch]);
 
   const paginate = <T,>(items: T[], page: number) => {
     const start = (page - 1) * PAGE_SIZE;
@@ -108,7 +100,7 @@ export function UnknownFacesTab({
     [filteredUnknowns, unknownPage]
   );
 
-  useEffect(() => setUnknownPage(1), [unknownSearch, unknownFilter]);
+  useEffect(() => setUnknownPage(1), [unknownSearch]);
 
   const closeUnknownReview = () => {
     setReview({
@@ -193,51 +185,31 @@ export function UnknownFacesTab({
     <div className="space-y-4 pt-4">
       <div className="flex flex-col md:flex-row gap-3">
         <Input
-          placeholder="Search unknowns by id, entry log, camera, model, notes..."
+          placeholder="Search unknowns by id, entry log, camera, model, notes…"
           value={unknownSearch}
           onChange={(e) => setUnknownSearch(e.target.value)}
+          className="bg-zinc-950/60 border-zinc-800 focus:border-emerald-500/50 placeholder:text-zinc-600 transition-colors"
         />
-        <div className="flex gap-2 flex-wrap">
-          <Button
-            variant={unknownFilter === "all" ? "default" : "outline"}
-            onClick={() => setUnknownFilter("all")}
-          >
-            All
-          </Button>
-          <Button
-            variant={unknownFilter === "hasImage" ? "default" : "outline"}
-            onClick={() => setUnknownFilter("hasImage")}
-          >
-            Has Image
-          </Button>
-          <Button
-            variant={unknownFilter === "camera1" ? "default" : "outline"}
-            onClick={() => setUnknownFilter("camera1")}
-          >
-            Camera 1
-          </Button>
-          <Button
-            variant={unknownFilter === "cameraOther" ? "default" : "outline"}
-            onClick={() => setUnknownFilter("cameraOther")}
-          >
-            Other Cameras
-          </Button>
-        </div>
       </div>
 
       {loading ? (
-        <div className="text-gray-400 text-sm">Loading...</div>
+        <TabLoadingState label="Loading unknown faces…" />
       ) : pagedUnknowns.length === 0 ? (
-        <div className="text-gray-400 text-sm">No unknown faces pending review.</div>
+        <TabEmptyState
+          icon="👤"
+          title={unknownSearch ? "No unknown faces match your search" : "No unknown faces pending review"}
+          hint={unknownSearch ? "Try a different search term" : "All faces have been reviewed — great work!"}
+        />
       ) : (
         <>
           {pagedUnknowns.map((u) => (
-            <Card key={u.id}>
-              <CardContent className="p-4 flex justify-between items-center gap-4">
-                <div className="flex items-center gap-4 min-w-0">
+            <Card key={u.id} className="hover:-translate-y-0.5 hover:shadow-md hover:shadow-amber-900/10 hover:border-amber-500/20 transition-all duration-300 bg-zinc-950/40 border-zinc-800">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start gap-4">
+                  {/* Thumbnail */}
                   <button
                     type="button"
-                    className="w-20 h-20 rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 shrink-0 cursor-pointer hover:opacity-90 transition"
+                    className="w-16 h-16 rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 shrink-0 cursor-pointer hover:border-amber-500/30 hover:shadow-md transition-all duration-200"
                     onClick={async () => {
                       if (
                         !unknownImageUrlsRef.current[`unknown-${u.id}`] &&
@@ -249,9 +221,7 @@ export function UnknownFacesTab({
                       }
 
                       const src = unknownImageUrlsRef.current[`unknown-${u.id}`];
-                      if (src) {
-                        openPreview(src, `Unknown Face #${u.id}`);
-                      }
+                      if (src) openPreview(src, `Unknown Face #${u.id}`);
                     }}
                   >
                     {unknownImageUrls[`unknown-${u.id}`] ? (
@@ -261,78 +231,74 @@ export function UnknownFacesTab({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xs text-zinc-500 text-center px-1">
-                        {isS3Ref(u.image_video_ref) ? `Unknown #${u.id}` : "No image"}
+                      <div className="w-full h-full flex items-center justify-center text-[10px] text-zinc-600 text-center px-1">
+                        {isS3Ref(u.image_video_ref) ? "📷" : "—"}
                       </div>
                     )}
                   </button>
 
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className="font-semibold">Unknown Face #{u.id}</div>
-                      <Badge className="bg-amber-600 hover:bg-amber-600 text-white">
+                  {/* Main info */}
+                  <div className="flex-1 min-w-0">
+                    {/* Row 1: title + badges */}
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="font-semibold text-zinc-100 text-sm">Unknown Face #{u.id}</span>
+                      <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/30 text-[10px] py-0 px-1.5" variant="outline">
                         Pending Review
                       </Badge>
-                      {getImageStateBadge(
-                        `unknown-${u.id}`,
-                        isS3Ref(u.image_video_ref),
-                        !!unknownImageUrls[`unknown-${u.id}`],
-                        imageErrors
-                      )}
+                      {getImageStateBadge(`unknown-${u.id}`, isS3Ref(u.image_video_ref), !!unknownImageUrls[`unknown-${u.id}`], imageErrors)}
                     </div>
 
-                    <div className="text-xs text-gray-500 mt-1">
-                      Entry Log ID: {u.entry_log_id} · Status: {u.status || "pending"} · Created:{" "}
-                      {u.created_at ? new Date(u.created_at).toLocaleString() : "—"}
+                    {/* Row 2: metadata */}
+                    <div className="text-xs text-zinc-500 mb-1">
+                      <span>Entry Log #{u.entry_log_id}</span>
+                      {u.status && <> · Status: <span className="text-zinc-400">{u.status}</span></>}
+                      {u.camera_id != null && <> · Cam {u.camera_id}</>}
                     </div>
 
-                    <div className="text-xs text-gray-400 mt-1">
-                      Model: {u.embedding_model || "—"} · Camera: {u.camera_id ?? "—"} · Type:{" "}
-                      {u.event_type || "—"}
+                    {/* Row 3: telemetry */}
+                    <div className="text-[11px] text-zinc-600">
+                      {u.embedding_model && <span>Model: {u.embedding_model}</span>}
+                      {u.event_type && <> · Type: {u.event_type}</>}
                     </div>
-                    <div className="text-xs text-gray-400">
-                      Quality: {fmtScore(u.quality_score)} · Best: {fmtScore(u.best_similarity)} · Second:{" "}
-                      {fmtScore(u.second_similarity)} · Margin: {fmtScore(u.margin)}
+                    <div className="text-[11px] text-zinc-600">
+                      Quality: {fmtScore(u.quality_score)} · Best: {fmtScore(u.best_similarity)} · Margin: {fmtScore(u.margin)}
                     </div>
-                    <div className="text-xs text-gray-400">
-                      {u.location || "No location"} · Notes: {u.notes || "—"}
-                    </div>
+                    {u.notes && (
+                      <div className="text-[11px] text-zinc-600 mt-0.5 italic">Notes: {u.notes}</div>
+                    )}
 
                     {imageErrors[`unknown-${u.id}`] && (
-                      <div className="text-xs text-red-400 mt-1">
-                        Image issue: {imageErrors[`unknown-${u.id}`]}
-                      </div>
+                      <div className="text-xs text-red-400/80 mt-1">⚠ {imageErrors[`unknown-${u.id}`]}</div>
                     )}
                   </div>
-                </div>
 
-                <div className="flex flex-col gap-2 items-end">
-                  <div className="flex gap-2">
-                    <Button onClick={() => openUnknownReview(u, "new")}>
-                      New Identity
-                    </Button>
-                    <Button variant="outline" onClick={() => openUnknownReview(u, "existing")}>
-                      Assign Existing
-                    </Button>
-                  </div>
-
-                  <div className="flex gap-2 flex-wrap justify-end">
-                    <SmallActionButton
-                      label="Details"
-                      onClick={() => openDrawer("unknown", u)}
-                    />
-                    <SmallActionButton
-                      label="Copy Unknown ID"
-                      onClick={() => copyText("unknown id", u.id)}
-                    />
-                    <SmallActionButton
-                      label="Copy Entry Log"
-                      onClick={() => copyText("entry log id", u.entry_log_id)}
-                    />
-                    <SmallActionButton
-                      label="Copy Image Ref"
-                      onClick={() => copyText("image ref", u.image_video_ref)}
-                    />
+                  {/* Right: date + actions */}
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <span className="text-[11px] text-zinc-500 font-mono">
+                      {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
+                    </span>
+                    <div className="flex gap-1.5">
+                      <Button
+                        size="sm"
+                        onClick={() => openUnknownReview(u, "new")}
+                        className="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/60 text-xs h-7 px-2.5 transition-all duration-200"
+                        variant="outline"
+                      >
+                        New Identity
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openUnknownReview(u, "existing")}
+                        className="border-zinc-700 hover:border-zinc-500 text-xs h-7 px-2.5 text-zinc-400 hover:text-zinc-200 transition-all duration-200"
+                      >
+                        Assign
+                      </Button>
+                    </div>
+                    <div className="flex gap-1.5 flex-wrap justify-end">
+                      <SmallActionButton label="Details" onClick={() => openDrawer("unknown", u)} />
+                      <SmallActionButton label="Copy ID" onClick={() => copyText("unknown id", u.id)} />
+                    </div>
                   </div>
                 </div>
               </CardContent>

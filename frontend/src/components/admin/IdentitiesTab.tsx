@@ -2,7 +2,13 @@ import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { PaginationBar, SmallActionButton, copyText } from "./SharedAdminUI";
+import {
+  PaginationBar,
+  SmallActionButton,
+  copyText,
+  TabLoadingState,
+  TabEmptyState,
+} from "./SharedAdminUI";
 
 const PAGE_SIZE = 8;
 
@@ -44,34 +50,66 @@ export function IdentitiesTab({
   return (
     <div className="space-y-4 pt-4">
       <Input
-        placeholder="Search identities by id, name, or info..."
+        placeholder="Search identities by id, name, or info…"
         value={identitySearch}
         onChange={(e) => setIdentitySearch(e.target.value)}
+        className="bg-zinc-950/60 border-zinc-800 focus:border-emerald-500/50 focus:ring-emerald-500/20 placeholder:text-zinc-600 transition-colors"
       />
 
       {loading ? (
-        <div className="text-gray-400 text-sm">Loading...</div>
+        <TabLoadingState label="Loading identities…" />
+      ) : filteredIdentities.length === 0 ? (
+        <TabEmptyState
+          icon="🪪"
+          title={identitySearch ? "No identities match your search" : "No identities registered yet"}
+          hint={identitySearch ? "Try a different name or ID" : undefined}
+        />
       ) : (
         <>
-          <Card>
+          <Card className="bg-zinc-950/40 border-zinc-800 shadow-xl overflow-hidden">
             <CardContent className="p-0">
-              <div className="divide-y">
+              <div className="divide-y divide-zinc-800/50">
                 {pagedIdentities.map((p) => (
-                  <div key={p.id} className="p-4 flex justify-between items-center gap-4">
-                    <div className="min-w-0">
-                      <div className="font-semibold">{p.name || "Unnamed"}</div>
-                      <div className="text-sm text-gray-500">
-                        ID: {p.id} · Embeddings: {p.embeddings_count ?? "—"} · Authoritative:{" "}
-                        {p.authoritative_count ?? "—"}
+                  <div
+                    key={p.id}
+                    className="px-4 py-3 flex justify-between items-center gap-4 hover:bg-zinc-900/50 transition-colors group"
+                  >
+                    {/* Left: identity info */}
+                    <div className="min-w-0 flex items-center gap-3">
+                      {/* Avatar circle */}
+                      <div className="w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-sm shrink-0">
+                        {(p.name || "?")[0].toUpperCase()}
                       </div>
-                      <div className="text-xs text-gray-400">
-                        {p.additional_info || "No additional info"}
+                      <div className="min-w-0">
+                        <div className="font-semibold text-zinc-100 leading-tight truncate">
+                          {p.name || "Unnamed"}
+                        </div>
+                        <div className="text-xs text-zinc-500 mt-0.5">
+                          ID: {p.id}
+                          {p.embeddings_count != null && (
+                            <> · <span className="text-zinc-400">{p.embeddings_count} embeddings</span></>
+                          )}
+                          {p.authoritative_count != null && (
+                            <> · {p.authoritative_count} authoritative</>
+                          )}
+                        </div>
+                        {p.additional_info && (
+                          <div className="text-xs text-zinc-600 mt-0.5 truncate">{p.additional_info}</div>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">
-                        {p.embeddings_count > 0 ? "Active" : "No embeddings"}
+                    {/* Right: badge + action */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge
+                        variant="outline"
+                        className={
+                          p.embeddings_count > 0
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-xs"
+                            : "bg-zinc-800/50 text-zinc-500 border-zinc-700 text-xs"
+                        }
+                      >
+                        {p.embeddings_count > 0 ? "Active" : "No Embeddings"}
                       </Badge>
                       <SmallActionButton
                         label="Copy ID"
@@ -80,10 +118,6 @@ export function IdentitiesTab({
                     </div>
                   </div>
                 ))}
-
-                {pagedIdentities.length === 0 && (
-                  <div className="p-4 text-gray-400 text-sm">No identities found.</div>
-                )}
               </div>
             </CardContent>
           </Card>
