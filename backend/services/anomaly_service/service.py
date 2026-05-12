@@ -48,6 +48,43 @@ db = DB()
 scorer = DistributionScorer()
 
 
+NEW_STATUS_FALLBACK = {
+    "alert_confirmed": "resolved",
+    "dismissed_normal": "discarded",
+    "needs_review": "resolved",
+    "reasoning_failed": "pending",
+}
+
+
+def update_candidate_status_compatible(conn, candidate_id: int, preferred_status: str) -> str:
+    """Use the improved status names when the DB allows them; otherwise fall back."""
+    fallback = NEW_STATUS_FALLBACK.get(preferred_status, "pending")
+    conn.execute("SAVEPOINT candidate_status_update")
+    try:
+        updated = db.update_anomaly_candidate_status(
+            conn,
+            anomaly_candidate_id=candidate_id,
+            status=preferred_status,
+        )
+        conn.execute("RELEASE SAVEPOINT candidate_status_update")
+        if not updated:
+            raise HTTPException(404, detail="Anomaly candidate not found")
+        return preferred_status
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.execute("ROLLBACK TO SAVEPOINT candidate_status_update")
+        log.warning("Could not use candidate status '%s' (%s); falling back to '%s'", preferred_status, e, fallback)
+        updated = db.update_anomaly_candidate_status(
+            conn,
+            anomaly_candidate_id=candidate_id,
+            status=fallback,
+        )
+        if not updated:
+            raise HTTPException(404, detail="Anomaly candidate not found")
+        return fallback
+
+
 class PersonContextTubeletPayload(BaseModel):
     device_key: str
     camera_id: int
@@ -399,6 +436,9 @@ def ingest_person_context_tubelet(p: PersonContextTubeletPayload) -> dict[str, A
                             "threshold_value": threshold_value,
                             "candidate_reasons": candidate_reasons,
                             "priority": priority,
+                            "camera_id": p.camera_id,
+                            "window_start_ts": p.window_start_ts,
+                            "window_end_ts": p.window_end_ts,
                             "motion_stats": p.motion_stats or {},
                         },
                         "active_rules": active_rules,
@@ -409,8 +449,8 @@ def ingest_person_context_tubelet(p: PersonContextTubeletPayload) -> dict[str, A
                         model_name=VLM_MODEL,
                         job_type="vlm_reasoning",
                         prompt=(
-                            "Describe visible people, posture, movement, and unusual behavior. "
-                            "Be factual. Do not speculate beyond visible evidence."
+                            "Describe visible people, posture, movement, interactions, and physical contact. "
+                            "Count all people visible. Be factual. Do not speculate beyond visible evidence."
                         ),
                         request_json=request_json,
                     )
@@ -447,7 +487,12 @@ def ingest_person_context_tubelet(p: PersonContextTubeletPayload) -> dict[str, A
 
 @app.post("/anomaly-candidates/{candidate_id}/review")
 def review_candidate(candidate_id: int, rv: ReviewPayload) -> dict[str, Any]:
-    status_map = {"confirmed": "resolved", "dismissed": "discarded", "uncertain": "pending", "normal_calibration": "discarded"}
+    status_map = {
+        "confirmed": "alert_confirmed",
+        "dismissed": "dismissed_normal",
+        "uncertain": "needs_review",
+        "normal_calibration": "dismissed_normal"
+    }
     new_status = status_map[rv.decision]
     with db.connect() as conn:
         conn.execute("BEGIN")
@@ -470,8 +515,7 @@ def review_candidate(candidate_id: int, rv: ReviewPayload) -> dict[str, Any]:
                 rule_text=rv.rule_text,
                 created_rule_id=created_rule_id,
             )
-            if not db.update_anomaly_candidate_status(conn, anomaly_candidate_id=candidate_id, status=new_status):
-                raise HTTPException(404, detail="Anomaly candidate not found")
+            new_status = update_candidate_status_compatible(conn, candidate_id, new_status)
             conn.execute("COMMIT")
         except HTTPException:
             conn.execute("ROLLBACK")
@@ -512,8 +556,11 @@ def list_anomaly_candidates(limit: int = 500, offset: int = 0) -> list[dict[str,
                 swe.camera_id, swe.track_id,
                 ac.priority, ac.final_score, ac.candidate_reasons,
                 ac.person_clip_ref, ac.context_clip_ref, ac.representative_frame_ref,
-                llm.response_json->>'decision' AS llm_decision,
-                llm.response_json->'parsed_decision' AS parsed_decision,
+                llm.response_json->'structured_decision'->>'alert_decision' AS alert_decision,
+                llm.response_json->'structured_decision'->>'severity' AS severity,
+                llm.response_json->'structured_decision'->>'event_type' AS event_type,
+                llm.response_json->'structured_decision'->>'confidence' AS confidence,
+                llm.response_json->'structured_decision'->>'reason' AS reason,
                 ac.threshold_value, ac.threshold_name,
                 ac.person_score, ac.context_score,
                 ac.person_score_norm, ac.context_score_norm,
@@ -521,10 +568,15 @@ def list_anomaly_candidates(limit: int = 500, offset: int = 0) -> list[dict[str,
                 COALESCE(swe.context_frame_refs, swe.evidence_payload->'context_frames', '[]'::jsonb) AS context_frame_refs
             FROM anomaly_candidates ac
             LEFT JOIN scene_window_embeddings swe ON swe.id = ac.scene_window_embedding_id
-            LEFT JOIN reasoning_jobs llm
-                ON llm.anomaly_candidate_id = ac.id
-               AND llm.status = 'succeeded'
-               AND llm.job_type = 'llm_reasoning'
+            LEFT JOIN LATERAL (
+                SELECT response_json
+                FROM reasoning_jobs
+                WHERE anomaly_candidate_id = ac.id
+                  AND status = 'succeeded'
+                  AND job_type = 'llm_reasoning'
+                ORDER BY finished_at DESC NULLS LAST, created_at DESC
+                LIMIT 1
+            ) llm ON TRUE
             ORDER BY ac.created_at DESC
             LIMIT %s OFFSET %s
             """,
@@ -543,16 +595,19 @@ def list_anomaly_candidates(limit: int = 500, offset: int = 0) -> list[dict[str,
             "personClipRef": r[8],
             "contextClipRef": r[9],
             "representativeFrameRef": r[10],
-            "llmDecision": r[11],
-            "parsedDecision": r[12],
-            "thresholdValue": r[13],
-            "thresholdName": r[14],
-            "personScore": r[15],
-            "contextScore": r[16],
-            "personScoreNorm": r[17],
-            "contextScoreNorm": r[18],
-            "personFrameRefs": r[19] or [],
-            "contextFrameRefs": r[20] or [],
+            "alertDecision": r[11],
+            "severity": r[12],
+            "eventType": r[13],
+            "confidence": float(r[14]) if r[14] else None,
+            "reason": r[15],
+            "thresholdValue": r[16],
+            "thresholdName": r[17],
+            "personScore": r[18],
+            "contextScore": r[19],
+            "personScoreNorm": r[20],
+            "contextScoreNorm": r[21],
+            "personFrameRefs": r[22] or [],
+            "contextFrameRefs": r[23] or [],
         }
         for r in rows
     ]
@@ -606,6 +661,29 @@ def get_anomaly_candidate(candidate_id: int) -> dict[str, Any]:
             (candidate_id,),
         ).fetchall()
 
+    # Extract structured decision from LLM job if available
+    structured_decision = None
+    visual_evidence = None
+    uncertainty = None
+    matched_trigger_rules = []
+    matched_suppress_rules = []
+    frames_used_info = {}
+    
+    for job in job_rows:
+        if job[0] == "llm_reasoning" and job[1] == "succeeded" and job[3]:
+            response_json = job[3]
+            structured_decision = response_json.get("structured_decision")
+            if structured_decision:
+                visual_evidence = structured_decision.get("visual_evidence")
+                uncertainty = structured_decision.get("uncertainty")
+                matched_trigger_rules = structured_decision.get("matched_trigger_rules", [])
+                matched_suppress_rules = structured_decision.get("matched_suppress_rules", [])
+            frames_used_info = {
+                "frames_used": response_json.get("frames_used", 0),
+                "person_frame_count": response_json.get("person_frame_count", 0),
+                "context_frame_count": response_json.get("context_frame_count", 0),
+            }
+
     return {
         "id": row[0],
         "status": row[1],
@@ -635,6 +713,13 @@ def get_anomaly_candidate(candidate_id: int) -> dict[str, Any]:
         "maxSpeedNorm": row[25],
         "maxTurnAngle": row[26],
         "trackInstabilityReason": row[27],
+        # Enhanced frontend visibility fields
+        "structuredDecision": structured_decision,
+        "visualEvidence": visual_evidence,
+        "uncertainty": uncertainty,
+        "matchedTriggerRules": matched_trigger_rules,
+        "matchedSuppressRules": matched_suppress_rules,
+        "framesUsedInfo": frames_used_info,
         "gateDecisions": [
             {
                 "gateName": g[0],
