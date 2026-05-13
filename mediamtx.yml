@@ -7,7 +7,7 @@ webrtcAdditionalHosts:
 
 paths:
   rapoo:
-    source: publisher
+    source: udp://:5004
 
   tapoo_anomaly:
     source: "rtsp://imhotep:Siemens24!@172.21.0.35:554/stream1"
