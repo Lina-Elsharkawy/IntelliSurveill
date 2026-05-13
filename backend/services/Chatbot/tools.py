@@ -879,39 +879,58 @@ def get_camera_activity_summary(target_date: str | None = None, days_back: int |
         return {"found": False, "error": str(e)}
 
 
-def get_daily_security_summary(target_date: str | None = None) -> dict:
-    """Compact daily summary across detections, unknown events, and anomalies."""
-    resolved = _resolve_date(target_date, default_today=True)
-    data = {"date": resolved}
+def get_dashboard_sync_metrics(target_date: str | None = None) -> dict:
+    """
+    Get core metrics for today, synchronized with the dashboard logic.
+    Calculates total, known, unknown, avg_quality, and avg_time_ms from entry_logs.
+    """
+    sql = """
+        SET TIME ZONE 'Africa/Cairo';
+        SELECT 
+            COUNT(*) as total,
+            COUNT(detected_id) as known,
+            COUNT(*) - COUNT(detected_id) as unknown,
+            AVG(quality_score) as avg_quality,
+            AVG(EXTRACT(EPOCH FROM processing_time) * 1000) as avg_time_ms
+        FROM entry_logs
+        WHERE created_at >= CURRENT_DATE;
+    """
     try:
         with _conn() as conn:
             cur = conn.cursor()
-            if _table_exists(cur, "entry_logs"):
-                cur.execute('SELECT COUNT(*) FROM entry_logs WHERE DATE("timestamp") = %s', (resolved,))
-                data["entry_log_detections"] = cur.fetchone()[0]
-            if _table_exists(cur, "unknown_face_events"):
-                cols = _columns(cur, "unknown_face_events")
-                ts_col = "created_at" if "created_at" in cols else ("timestamp" if "timestamp" in cols else None)
-                if ts_col:
-                    cur.execute(f"SELECT COUNT(*) FROM unknown_face_events WHERE DATE({ts_col}) = %s", (resolved,))
-                    data["unknown_face_events"] = cur.fetchone()[0]
-            if _table_exists(cur, "anomalies_logs"):
-                cur.execute('SELECT COUNT(*) FROM anomalies_logs WHERE DATE("timestamp") = %s', (resolved,))
-                data["anomaly_logs"] = cur.fetchone()[0]
-            if _table_exists(cur, "cameras") and _table_exists(cur, "entry_logs"):
-                cur.execute('''
-                    SELECT COALESCE(c.name, 'Camera ' || el.camera_id::text) AS camera_name, COUNT(*) AS detections
-                    FROM entry_logs el
-                    LEFT JOIN cameras c ON el.camera_id = c.id
-                    WHERE DATE(el."timestamp") = %s
-                    GROUP BY c.name, el.camera_id
-                    ORDER BY detections DESC
-                    LIMIT 5
-                ''', (resolved,))
-                data["top_cameras"] = _rows_to_dicts(cur, cur.fetchall())
-            return {"found": True, "tool": "daily_security_summary", "date": resolved, "data": data}
+            cur.execute(sql)
+            row = cur.fetchone()
+            
+            if not row:
+                return {"found": False, "message": "No data found for today."}
+            
+            cols = ["total", "known", "unknown", "avg_quality", "avg_time_ms"]
+            stats = dict(zip(cols, row))
+            
+            return {
+                "found": True,
+                "tool": "dashboard_sync_metrics",
+                "data": {
+                    "total": int(stats["total"] or 0),
+                    "known": int(stats["known"] or 0),
+                    "unknown": int(stats["unknown"] or 0),
+                    "avg_quality": float(stats["avg_quality"] or 0),
+                    "avg_time_ms": float(stats["avg_time_ms"] or 0)
+                }
+            }
     except Exception as e:
+        logger.exception("get_dashboard_sync_metrics failed")
         return {"found": False, "error": str(e)}
+
+
+def get_daily_security_summary(target_date: str | None = None) -> dict:
+    """Daily security summary (Alias for dashboard_sync_metrics)."""
+    res = get_dashboard_sync_metrics(target_date)
+    if res.get("found"):
+        res["tool"] = "daily_security_summary"
+    return res
+
+
 
 
 def _unknown_event_embedding_exists(cur, event_id: int) -> bool:
