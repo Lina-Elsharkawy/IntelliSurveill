@@ -8,6 +8,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import Cameras from "./pages/Cameras";
 import Anomaly from "./pages/Anomaly";
+import VadLab from "./pages/VadLab";
 import AnomalyRules from "./pages/AnomalyRules";
 import Admin from "./pages/Admin";
 import Analytics from "./pages/Analytics";
@@ -44,6 +45,7 @@ const AppRoutes = () => {
       <Route path="/dashboard" element={<PrivateRoute element={<Index />} />} />
       <Route path="/cameras" element={<PrivateRoute element={<Cameras />} />} />
       <Route path="/anomaly" element={<PrivateRoute element={<Anomaly />} />} />
+      <Route path="/vad-lab" element={<PrivateRoute element={<VadLab />} />} />
       <Route path="/anomaly-rules" element={<PrivateRoute element={<AnomalyRules />} />} />
       <Route path="/analytics" element={<PrivateRoute element={<Analytics />} />} />
       <Route path="/settings" element={<PrivateRoute element={<Settings />} />} />

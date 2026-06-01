@@ -47,7 +47,7 @@ FUSION_CONFIG_JSON_PATH = Path(os.getenv("FUSION_CONFIG_JSON_PATH", str(DISTRIBU
 # ---------------------------------------------------------------------------
 # Gate thresholds
 # ---------------------------------------------------------------------------
-DISTRIBUTION_THRESHOLD_NAME = os.getenv("DISTRIBUTION_THRESHOLD_NAME", "p97")
+DISTRIBUTION_THRESHOLD_NAME = os.getenv("DISTRIBUTION_THRESHOLD_NAME", "p99")
 HIGH_SPEED_THRESHOLD = float(os.getenv("HIGH_SPEED_THRESHOLD", "0.24"))
 ABRUPT_ANGLE_THRESHOLD = float(os.getenv("ABRUPT_ANGLE_THRESHOLD", "120"))
 MIN_TURN_SPEED = float(os.getenv("MIN_TURN_SPEED", "0.08"))

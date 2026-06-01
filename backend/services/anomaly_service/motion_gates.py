@@ -38,6 +38,21 @@ def _first_int(stats: dict[str, Any], keys: list[str], default: int | None = Non
     return int(value) if value is not None else default
 
 
+def _as_dict(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    return {}
+
+
+def _safe_float(value: Any, default: float | None = None) -> float | None:
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def evaluate_motion_gates(
     motion_stats: dict[str, Any] | None,
     *,
@@ -72,6 +87,69 @@ def evaluate_motion_gates(
     if edge_track_instability_gate is not None:
         unstable = unstable or bool(edge_track_instability_gate)
 
+    # ------------------------------------------------------------------
+    # Person interaction gate
+    # ------------------------------------------------------------------
+    # The Jetson edge script already sends interaction/nearby-person metadata
+    # inside motion_stats. The old backend gate logic ignored these fields,
+    # so fight/contact-like two-person events could have all motion gates false.
+    #
+    # This gate is intentionally separate from high_speed/abrupt/instability:
+    # it detects suspicious close-person interaction, not raw movement speed.
+    # ------------------------------------------------------------------
+    nearby = _as_dict(stats.get("nearby_person"))
+    interaction = _as_dict(stats.get("interaction"))
+
+    interaction_event = bool(
+        stats.get("interaction_event")
+        or interaction.get("interaction_event")
+        or nearby.get("interaction_event")
+    )
+
+    has_close_person = bool(nearby.get("has_close_person"))
+
+    nearby_person_count = _safe_float(nearby.get("nearby_person_count"), 0.0) or 0.0
+    selected_track_count = _safe_float(interaction.get("selected_track_count"), 0.0) or 0.0
+
+    min_other_person_distance = _safe_float(nearby.get("min_other_person_distance"))
+    max_other_person_iou = _safe_float(nearby.get("max_other_person_iou"), 0.0) or 0.0
+
+    # Conservative interaction thresholds.
+    # These match the kind of event you showed:
+    # min distance around 0.08 and IoU around 0.15 should fire.
+    close_distance_threshold = 0.12
+    interaction_iou_threshold = 0.05
+
+    person_interaction = bool(
+        interaction_event
+        or has_close_person
+        or selected_track_count >= 2
+        or (
+            min_other_person_distance is not None
+            and min_other_person_distance <= close_distance_threshold
+        )
+        or max_other_person_iou >= interaction_iou_threshold
+    )
+
+    if interaction_event:
+        person_interaction_reason = "interaction_event=true"
+    elif has_close_person:
+        person_interaction_reason = "nearby_person.has_close_person=true"
+    elif selected_track_count >= 2:
+        person_interaction_reason = f"selected_track_count={selected_track_count:.0f}"
+    elif min_other_person_distance is not None and min_other_person_distance <= close_distance_threshold:
+        person_interaction_reason = (
+            f"min_other_person_distance={min_other_person_distance:.4f} "
+            f"<= {close_distance_threshold:.4f}"
+        )
+    elif max_other_person_iou >= interaction_iou_threshold:
+        person_interaction_reason = (
+            f"max_other_person_iou={max_other_person_iou:.4f} "
+            f">= {interaction_iou_threshold:.4f}"
+        )
+    else:
+        person_interaction_reason = "Person-interaction gate did not fire"
+
     return {
         "high_speed": GateDecision(
             name="high_speed",
@@ -93,15 +171,43 @@ def evaluate_motion_gates(
                 f"max_turn_angle={max_turn_angle:.1f} with turn_speed={turn_speed:.4f}"
                 if abrupt and max_turn_angle is not None else "Abrupt-direction gate did not fire"
             ),
-            details={"max_turn_angle": max_turn_angle, "turn_speed": turn_speed, "min_turn_speed": min_turn_speed},
+            details={
+                "max_turn_angle": max_turn_angle,
+                "turn_speed": turn_speed,
+                "min_turn_speed": min_turn_speed,
+            },
         ),
         "track_instability": GateDecision(
             name="track_instability",
             fired=unstable,
             score_value=float(track_gap_count or 0),
             threshold_value=float(max_track_gap),
-            reason=(instability_reason or f"track_gap_count={track_gap_count} exceeded {max_track_gap}" if unstable else "Track-instability gate did not fire"),
-            details={"track_gap_count": track_gap_count, "track_instability_reason": instability_reason},
+            reason=(
+                instability_reason
+                or f"track_gap_count={track_gap_count} exceeded {max_track_gap}"
+                if unstable else "Track-instability gate did not fire"
+            ),
+            details={
+                "track_gap_count": track_gap_count,
+                "track_instability_reason": instability_reason,
+            },
+        ),
+        "person_interaction": GateDecision(
+            name="person_interaction",
+            fired=person_interaction,
+            score_value=min_other_person_distance,
+            threshold_value=close_distance_threshold,
+            reason=person_interaction_reason,
+            details={
+                "interaction_event": interaction_event,
+                "has_close_person": has_close_person,
+                "nearby_person_count": nearby_person_count,
+                "selected_track_count": selected_track_count,
+                "min_other_person_distance": min_other_person_distance,
+                "close_distance_threshold": close_distance_threshold,
+                "max_other_person_iou": max_other_person_iou,
+                "interaction_iou_threshold": interaction_iou_threshold,
+            },
         ),
     }
 
@@ -137,6 +243,8 @@ def assign_priority(
     if p97 is not None and final_score > p97:
         return "medium"
     if candidate_reasons == ["high_speed"]:
+        return "medium"
+    if "person_interaction" in candidate_reasons:
         return "medium"
     if any(r in candidate_reasons for r in ("abrupt_direction_change", "track_instability")):
         return "low"

@@ -2,7 +2,7 @@ import os
 import json
 import base64
 import requests
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, Tuple
 from kafka import KafkaConsumer
 
 BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9093")
@@ -21,7 +21,7 @@ ANOMALY_INGEST_URL = os.getenv(
 GROUP_ID = os.getenv("KAFKA_GROUP_ID", "backend-consumer")
 TOPICS = [
     t.strip()
-    for t in os.getenv("KAFKA_TOPICS", "face_events,anomaly_events").split(",")
+    for t in os.getenv("KAFKA_TOPICS", "face_events,anomaly_events,vad.frames.uploaded").split(",")
     if t.strip()
 ]
 
@@ -31,6 +31,8 @@ EVIDENCE_GATEWAY_UPLOAD = os.getenv(
 )
 S3_BUCKET = os.getenv("S3_BUCKET", "evidence")
 DEFAULT_DEVICE_KEY = os.getenv("DEFAULT_DEVICE_KEY", "edge-device-unknown")
+# Optional future backend endpoint. Leave empty until backend route is implemented.
+VAD_FRAME_INGEST_URL = os.getenv("VAD_FRAME_INGEST_URL", "").strip()
 
 
 # ---------------------------------------------------------------------------
@@ -134,6 +136,119 @@ def handle_face_event(event: dict) -> bool:
         return True
     except Exception as e:
         print(f"[MATCH][ERROR] event_id={event_id} error={e}")
+        return False
+
+
+# ---------------------------------------------------------------------------
+# VAD raw-frame reference handler
+# ---------------------------------------------------------------------------
+
+VAD_FRAME_REQUIRED_FIELDS = (
+    "schema_version",
+    "event_type",
+    "frame_uid",
+    "camera_id",
+    "frame_index",
+    "captured_at",
+    "bucket",
+    "object_key",
+    "content_type",
+    "width",
+    "height",
+)
+
+
+def _validate_vad_frame_event(event: Dict[str, Any]) -> Tuple[bool, str]:
+    """
+    Validate the new VAD frame-ref contract.
+
+    Kafka must carry metadata only. The image itself must already exist in MinIO.
+    """
+    missing = [field for field in VAD_FRAME_REQUIRED_FIELDS if event.get(field) in (None, "")]
+    if missing:
+        return False, f"missing required fields: {missing}"
+
+    if event.get("schema_version") != "vad.frame_uploaded.v1":
+        return False, f"unsupported schema_version={event.get('schema_version')!r}"
+
+    if event.get("event_type") != "frame_uploaded":
+        return False, f"unsupported event_type={event.get('event_type')!r}"
+
+    try:
+        int(event.get("camera_id"))
+        int(event.get("frame_index"))
+        int(event.get("width"))
+        int(event.get("height"))
+    except Exception as e:
+        return False, f"invalid numeric field: {e}"
+
+    if str(event.get("content_type")).lower() not in ("image/jpeg", "image/jpg", "image/png"):
+        return False, f"unsupported content_type={event.get('content_type')!r}"
+
+    return True, "ok"
+
+
+def _build_vad_frame_ingest_payload(event: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize the frame-ref event for the future backend ingest endpoint."""
+    bucket = str(event["bucket"])
+    object_key = str(event["object_key"])
+    object_uri = event.get("object_uri") or event.get("evidence_ref") or f"s3://{bucket}/{object_key}"
+
+    return {
+        "schema_version": "vad.frame_uploaded.v1",
+        "event_type": "frame_uploaded",
+        "frame_uid": str(event["frame_uid"]),
+        "camera_id": int(event["camera_id"]),
+        "camera_key": event.get("camera_key"),
+        "edge_device_key": event.get("edge_device_key") or DEFAULT_DEVICE_KEY,
+        "frame_index": int(event["frame_index"]),
+        "captured_at": str(event["captured_at"]),
+        "monotonic_ts": event.get("monotonic_ts"),
+        "target_fps": event.get("target_fps"),
+        "width": int(event["width"]),
+        "height": int(event["height"]),
+        "bucket": bucket,
+        "object_key": object_key,
+        "object_uri": object_uri,
+        "content_type": str(event["content_type"]),
+        "size_bytes": event.get("size_bytes"),
+        "sha256": event.get("sha256"),
+        "metadata": event.get("metadata") if isinstance(event.get("metadata"), dict) else {},
+    }
+
+
+def handle_vad_frame_uploaded(event: dict) -> bool:
+    ok, reason = _validate_vad_frame_event(event)
+    frame_uid = event.get("frame_uid", "?")
+    if not ok:
+        print(f"[VAD_FRAME][DROP] frame_uid={frame_uid} reason={reason} keys={list(event.keys())}")
+        return False
+
+    payload = _build_vad_frame_ingest_payload(event)
+    object_uri = payload["object_uri"]
+    print(
+        f"[VAD_FRAME] frame_uid={payload['frame_uid']} camera={payload['camera_id']} "
+        f"frame_index={payload['frame_index']} object={object_uri} "
+        f"size={payload.get('size_bytes')} backend_ingest={'enabled' if VAD_FRAME_INGEST_URL else 'disabled'}"
+    )
+
+    # Backend route is intentionally optional for this phase. Until it exists,
+    # the consumer validates/logs frame refs and commits the Kafka offset.
+    if not VAD_FRAME_INGEST_URL:
+        return True
+
+    try:
+        r = requests.post(VAD_FRAME_INGEST_URL, json=payload, timeout=30)
+        if r.status_code != 200:
+            print(f"[VAD_FRAME][HTTP] frame_uid={payload['frame_uid']} {r.status_code} {r.text}")
+            return False
+        print(f"[VAD_FRAME][INGEST] frame_uid={payload['frame_uid']} status={r.status_code}")
+        return True
+    except requests.exceptions.ConnectionError as e:
+        print(f"[VAD_FRAME][ERROR] cannot reach {VAD_FRAME_INGEST_URL} frame_uid={payload['frame_uid']} err={e}")
+        return False
+    except Exception as e:
+        print(f"[VAD_FRAME][ERROR] frame_uid={payload['frame_uid']} error={e}")
         return False
 
 
@@ -411,6 +526,7 @@ def main() -> None:
 
     print(f"[consumer] bootstrap={BOOTSTRAP} topics={TOPICS} group={GROUP_ID}")
     print(f"[consumer] anomaly_ingest={ANOMALY_INGEST_URL}")
+    print(f"[consumer] vad_frame_ingest={VAD_FRAME_INGEST_URL or 'disabled'}")
     print(f"[consumer] evidence_gateway={EVIDENCE_GATEWAY_UPLOAD}")
 
     try:
@@ -421,6 +537,8 @@ def main() -> None:
                 ok = handle_face_event(msg.value)
             elif msg.topic == "anomaly_events":
                 ok = handle_anomaly_event(msg.value)
+            elif msg.topic == "vad.frames.uploaded":
+                ok = handle_vad_frame_uploaded(msg.value)
             else:
                 print(f"[WARN] unexpected topic={msg.topic}")
 

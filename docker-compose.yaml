@@ -189,6 +189,233 @@ services:
   # ---------------------------
   #  Anomaly Detection Services
   #----------------------------
+  vad-service:
+    build:
+      context: ./backend/services/vad_service
+      dockerfile: Dockerfile
+    working_dir: /app
+
+    # GPU access for YOLO / future gates
+    gpus: all
+
+    env_file:
+      - ./backend/.env
+
+    environment:
+      # ------------------------------------------------------------------
+      # Database
+      # ------------------------------------------------------------------
+      DB_DSN: postgresql://lina:123@postgres-db:5432/lina
+      DATABASE_URL: postgresql://lina:123@postgres-db:5432/lina
+
+      # ------------------------------------------------------------------
+      # NVIDIA / GPU
+      # ------------------------------------------------------------------
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+
+      # ------------------------------------------------------------------
+      # RTSP stability
+      # ------------------------------------------------------------------
+      OPENCV_FFMPEG_CAPTURE_OPTIONS: rtsp_transport;tcp|stimeout;5000000
+
+      # ------------------------------------------------------------------
+      # Backend-direct RTSP VAD path
+      # ------------------------------------------------------------------
+      VAD_BACKEND_DIRECT_ENABLED: "1"
+      VAD_AUTOSTART: "0"
+
+      VAD_RTSP_URL_ENV_VAR: VAD_RTSP_URL_LAB_CAM_02
+
+      VAD_STREAM_KEY: lab_cam_02
+      VAD_CAMERA_KEY: lab_cam_02
+      VAD_CAMERA_ID: "2"
+
+      VAD_TARGET_SAMPLE_FPS: "5.0"
+      VAD_ROLLING_BUFFER_SEC: "30"
+      VAD_DEBUG_SAVE_DIR: /app/debug_vad
+      VAD_DEBUG_SAVE_EVERY_N_FRAMES: "0"
+      VAD_DB_INSERT_EVERY_N_FRAMES: "1"
+
+      # ------------------------------------------------------------------
+      # Route FPS
+      # ------------------------------------------------------------------
+      VAD_POSE_ROUTE_FPS: "5.0"
+      VAD_DEEP_ROUTE_FPS: "2.5"
+      VAD_HOMOGRAPHY_MACRO_ROUTE_FPS: "2.5"
+
+      # ------------------------------------------------------------------
+      # Artifact directories inside container
+      # ------------------------------------------------------------------
+      VAD_DEEP_ARTIFACT_DIR: /models/vad/deep
+      VAD_POSE_ARTIFACT_DIR: /models/vad/pose
+      VAD_HOMOGRAPHY_MACRO_ARTIFACT_DIR: /models/vad/homography_macro
+
+      # ------------------------------------------------------------------
+      # YOLO tracking
+      # ------------------------------------------------------------------
+      VAD_TRACKING_ENABLED: "1"
+      VAD_DETECTOR_MODEL: /models/vad/yolo/yolov8s-pose.pt
+      VAD_DETECTOR_DEVICE: cuda
+      VAD_DETECTOR_CONF: "0.25"
+      VAD_DETECTOR_IMGSZ: "640"
+      VAD_TRACKER_CONFIG: bytetrack.yaml
+      VAD_TRACK_BUFFER_MAX_AGE_SAMPLES: "75"
+
+      # ------------------------------------------------------------------
+      # Pose gate
+      # ------------------------------------------------------------------
+      VAD_POSE_GATE_ENABLED: "1"
+      VAD_POSE_TUBELET_FRAMES: "24"
+      VAD_POSE_STRIDE: "6"
+      VAD_POSE_KPT_CONF: "0.30"
+      VAD_POSE_THRESHOLD_KEY: components_5_p99_5
+      VAD_POSE_THRESHOLD_VALUE: "70.18459395136654"
+      VAD_POSE_SMOOTHING_SIGMA: "2.0"
+      VAD_POSE_PERSISTENCE_WINDOW: "5"
+      VAD_POSE_PERSISTENCE_REQUIRED_HITS: "3"
+      VAD_POSE_MIN_EVENT_GAP_SEC: "5.0"
+
+      # ------------------------------------------------------------------
+      # Deep gate
+      # ------------------------------------------------------------------
+      VAD_DEEP_GATE_ENABLED: "1"
+      VAD_DEEP_K: "5"
+      VAD_DEEP_THRESHOLD_KEY: p99_5
+      VAD_DEEP_THRESHOLD_VALUE: "0.16680973768234253"
+      VAD_DEEP_TUBELET_FRAMES: "16"
+      VAD_DEEP_STRIDE: "5"
+      VAD_DEEP_BBOX_PAD_RATIO: "0.30"
+      VAD_DEEP_CROP_SIZE: "224"
+      VAD_DEEP_SMOOTHING_SIGMA: "2.0"
+      VAD_DEEP_PERSISTENCE_WINDOW: "5"
+      VAD_DEEP_PERSISTENCE_REQUIRED_HITS: "3"
+      VAD_DEEP_MIN_EVENT_GAP_SEC: "5.0"
+      VAD_DEEP_DEVICE: cuda
+      VAD_DEEP_FP16: "1"
+      VAD_DEEP_VIDEOMAE_MODEL: MCG-NJU/videomae-base
+
+      # ------------------------------------------------------------------
+      # Homography / Macro gate
+      # ------------------------------------------------------------------
+      VAD_HOMOGRAPHY_MATRIX_PATH: /models/vad/homography_macro/homography_matrix.json
+      VAD_HOMOGRAPHY_MACRO_GATE_ENABLED: "1"
+      VAD_HOMOGRAPHY_MACRO_TUBELET_FRAMES: "16"
+      VAD_HOMOGRAPHY_MACRO_STRIDE: "8"
+      VAD_HOMOGRAPHY_MACRO_THRESHOLD_KEY: p99_5
+      VAD_HOMOGRAPHY_MACRO_THRESHOLD_VALUE: "12.774831137922204"
+      VAD_HOMOGRAPHY_MACRO_SMOOTHING_SIGMA: "2.0"
+      VAD_HOMOGRAPHY_MACRO_PERSISTENCE_WINDOW: "5"
+      VAD_HOMOGRAPHY_MACRO_PERSISTENCE_REQUIRED_HITS: "3"
+      VAD_HOMOGRAPHY_MACRO_MIN_EVENT_GAP_SEC: "5.0"
+
+      VAD_HOMOGRAPHY_ANKLE_CONF_THRESHOLD: "0.35"
+      VAD_HOMOGRAPHY_FALLBACK_MODE: freeze_last_valid
+      VAD_HOMOGRAPHY_MAX_FREEZE_SAMPLES: "12"
+      VAD_HOMOGRAPHY_STATIONARY_SPEED_THRESHOLD: "0.05"
+      VAD_HOMOGRAPHY_TRAJECTORY_SMOOTHING: median_savgol
+      VAD_HOMOGRAPHY_TRAJECTORY_SMOOTHING_WINDOW: "5"
+      VAD_HOMOGRAPHY_TRAJECTORY_SMOOTHING_POLYORDER: "2"
+      VAD_HOMOGRAPHY_REJECT_NONPHYSICAL_STEPS: "1"
+      VAD_HOMOGRAPHY_MAX_PLAUSIBLE_SPEED: "3.0"
+      VAD_HOMOGRAPHY_MAX_PLAUSIBLE_ACCEL: "6.0"
+      VAD_HOMOGRAPHY_MIN_VALID_GROUNDPOINT_RATIO: "0.0"
+
+      # ------------------------------------------------------------------
+      # MinIO evidence storage
+      # ------------------------------------------------------------------
+      VAD_EVIDENCE_ENABLED: "1"
+      VAD_MINIO_ENDPOINT: minio:9000
+      VAD_MINIO_ACCESS_KEY: minioadmin
+      VAD_MINIO_SECRET_KEY: minioadmin123
+      VAD_MINIO_SECURE: "0"
+      VAD_MINIO_BUCKET: vad-evidence
+      VAD_EVIDENCE_PREFIX: vad
+      VAD_SAVE_EVIDENCE_ON_GATE_EVENT: "1"
+      VAD_SAVE_EVIDENCE_ON_PERSISTENT_HIT: "0"  
+
+      # ------------------------------------------------------------------
+      # Deep-only VLM/LLM reasoning queue
+      # ------------------------------------------------------------------
+      VAD_DEEP_REASONING_ENABLED: "1"
+      VAD_DEEP_REASONING_REQUIRE_EVIDENCE: "1"
+      VAD_DEEP_REASONING_MIN_RATIO: "1.0"
+      VAD_DEEP_REASONING_PROMPT_VERSION: deep_vlm_reasoning_v1
+      VAD_DEEP_REASONING_PRIORITY: normal
+      VAD_DEEP_REASONING_MAX_ATTEMPTS: "3"
+    volumes:
+      # Mount source code so future Python edits need restart only, not rebuild
+      - ./backend/services/vad_service:/app
+
+      # YOLO model folder
+      - ./backend/models/yolo:/models/vad/yolo:ro
+
+      # Gate artifact folders
+      - D:/Embeddings_Distribution/normality_models/deep_gate/deep_branch_artifacts_v3_gaussian:/models/vad/deep:ro
+      - D:/Embeddings_Distribution/normality_models/pose_gate/pose_micro_gmm_gate_v2_yolov8s_5fps_24f_s6:/models/vad/pose:ro
+      - D:/Embeddings_Distribution/normality_models/homography_gate/homography_gate_stage3_pose/homography_macro_gmm_gate:/models/vad/homography_macro:ro
+
+      # Debug output
+      - ./backend/services/vad_service/debug_vad:/app/debug_vad
+
+    ports:
+      - "8015:8000"
+
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+    networks:
+      - data-platform-net
+  vad-reasoning-worker:
+    build:
+      context: ./backend/services/vad_service
+      dockerfile: Dockerfile.worker
+    working_dir: /app
+    command: python -m vad.reasoning_worker
+    restart: unless-stopped
+
+    env_file:
+      - ./backend/.env
+
+    environment:
+      DB_DSN: postgresql://lina:123@postgres-db:5432/lina
+      DATABASE_URL: postgresql://lina:123@postgres-db:5432/lina
+
+      VAD_REASONING_WORKER_ENABLED: "1"
+      VAD_REASONING_POLL_INTERVAL_SEC: "3"
+      VAD_REASONING_BATCH_SIZE: "1"
+
+      VAD_DEEP_REASONING_ENABLED: "1"
+      VAD_DEEP_REASONING_REQUIRE_EVIDENCE: "1"
+      VAD_DEEP_REASONING_MIN_RATIO: "1.0"
+      VAD_DEEP_REASONING_PROMPT_VERSION: deep_vlm_reasoning_v1
+
+      VAD_MINIO_ENDPOINT: minio:9000
+      VAD_MINIO_ACCESS_KEY: minioadmin
+      VAD_MINIO_SECRET_KEY: minioadmin123
+      VAD_MINIO_SECURE: "0"
+      VAD_MINIO_BUCKET: vad-evidence
+
+      OLLAMA_BASE_URL: http://ollama:11434
+      VLM_MODEL: openbmb/minicpm-v4.5:8b
+      LLM_MODEL: qwen3:8b
+
+    volumes:
+      - ./backend/services/vad_service:/app
+
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      ollama:
+        condition: service_started
+
+    networks:
+      - data-platform-net      
   anomaly-service:
     build:
       context: ./backend/services/anomaly_service
@@ -199,6 +426,7 @@ services:
       - ./datasets:/datasets
       - ./backend/services/anomaly_service/models:/app/models
       - ./backend/services/anomaly_service/models/distribution_artifacts:/models/distribution_artifacts:ro
+  
     environment:
       DB_DSN: postgresql://lina:123@postgres-db:5432/lina
       DATABASE_URL: postgresql://lina:123@postgres-db:5432/lina
@@ -231,6 +459,7 @@ services:
       MIN_TURN_SPEED: "0.08"
       MAX_TRACK_GAP: "6"
       CANDIDATE_COOLDOWN_SEC: "5"
+
     env_file:
       - ./backend/.env
     ports:
@@ -338,7 +567,7 @@ services:
     container_name: graduation-project-event-consumer-1
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9093
-      KAFKA_TOPICS: face_events,anomaly_events
+      KAFKA_TOPICS: face_events,anomaly_events,vad.frames.uploaded
       KAFKA_GROUP_ID: backend-consumer
       BACKEND_MATCH_URL: http://vector-match:8000/match
       ANOMALY_INGEST_URL: http://anomaly-service:8000/ingest/person-context-tubelet
