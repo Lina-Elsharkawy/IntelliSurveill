@@ -29,6 +29,8 @@ DEFAULT_TOPICS = [
     {"name": "anomalies", "partitions": 3, "replication_factor": 1},
     {"name": "frequency_alerts", "partitions": 3, "replication_factor": 1},
     {"name": "anomaly-config", "partitions": 1, "replication_factor": 1},
+    # New VAD pipeline: Jetson uploads frames to MinIO, then Kafka carries only frame refs.
+    {"name": "vad.frames.uploaded", "partitions": 3, "replication_factor": 1},
 ]
 
 

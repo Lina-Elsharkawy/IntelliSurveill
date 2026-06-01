@@ -892,11 +892,36 @@ def format_matched_rules(rules: list[dict[str, Any]], kind: str) -> str:
     return "\n".join(lines)
 
 
+def _interaction_summary_from_motion(motion: dict[str, Any]) -> dict[str, Any]:
+    """Extract compact tracker interaction metadata for VLM/LLM prompts.
+
+    The edge pipeline may place nearby-person evidence inside motion_stats.nearby_person.
+    Keep this summary small and explicit so the models do not miss it inside raw JSON.
+    """
+    if not isinstance(motion, dict):
+        motion = {}
+
+    nearby_person = motion.get("nearby_person") or {}
+    if not isinstance(nearby_person, dict):
+        nearby_person = {}
+
+    return {
+        "has_close_person": nearby_person.get("has_close_person"),
+        "nearby_person_count": nearby_person.get("nearby_person_count"),
+        "min_other_person_distance": nearby_person.get("min_other_person_distance"),
+        "max_other_person_iou": nearby_person.get("max_other_person_iou"),
+        "close_person_track_ids": nearby_person.get("close_person_track_ids"),
+        "priority_score": motion.get("priority_score"),
+    }
+
+
 def build_vlm_prompt(candidate_metadata: dict[str, Any]) -> str:
     score = candidate_metadata.get('final_score')
     threshold = candidate_metadata.get('threshold_value')
     reasons = candidate_metadata.get('candidate_reasons') or []
     motion = candidate_metadata.get('motion_stats') or {}
+    if not isinstance(motion, dict):
+        motion = {}
 
     score_str = f"{score:.4f}" if isinstance(score, (int, float)) else str(score)
     threshold_str = f"{threshold:.4f}" if isinstance(threshold, (int, float)) else str(threshold)
@@ -905,9 +930,23 @@ def build_vlm_prompt(candidate_metadata: dict[str, Any]) -> str:
         ratio = score / threshold
         ratio_str = f" ({ratio:.2f}× threshold)"
 
-    # Pull out the most relevant motion fields for the prompt
-    motion_summary_keys = ["max_speed_norm", "avg_speed_norm", "max_turn_angle", "gap_count", "lost_frames", "track_instability"]
+    # Pull out the most relevant motion and interaction fields for the prompt.
+    # Keep both old and *_deg names because edge/backend versions may differ.
+    motion_summary_keys = [
+        "max_speed_norm",
+        "avg_speed_norm",
+        "max_turn_angle",
+        "max_turn_angle_deg",
+        "avg_turn_angle_deg",
+        "turn_speed",
+        "max_turn_speed",
+        "gap_count",
+        "lost_frames",
+        "track_instability",
+        "priority_score",
+    ]
     motion_summary = {k: motion[k] for k in motion_summary_keys if k in motion}
+    nearby_summary = _interaction_summary_from_motion(motion)
 
     return f"""You are reviewing surveillance evidence flagged by a statistical anomaly detector.
 
@@ -916,6 +955,7 @@ ANOMALY SCORE CONTEXT:
   Threshold          : {threshold_str}
   Trigger reasons    : {reasons}
   Motion summary     : {json.dumps(motion_summary, ensure_ascii=False)}
+  Nearby person data : {json.dumps(nearby_summary, ensure_ascii=False)}
 
 The images below show:
   - IMAGE 1: A horizontal strip of person crop frames in temporal order (left → right over time).
@@ -935,6 +975,7 @@ INTERACTION ANALYSIS (CRITICAL for multi-person scenes):
   - Confrontation indicators: Aggressive postures, defensive stances, rapid movements toward another person?
   - Victim/aggressor: Can you tell who initiated contact (if any)?
   - Person involvement: Is the tracked person (in the crop strip) actively involved in the interaction?
+  - Tracker reconciliation: Compare the visual evidence with the Nearby person data above.
 
 SCENE CONTEXT:
   - Environment: crowd, empty corridor, restricted area, etc.?
@@ -943,10 +984,14 @@ SCENE CONTEXT:
 
 IMPORTANT:
 - Count ALL visible people carefully (person crops may show only one person, but context frames may show others)
-- Do NOT speculate about intent, identity, or events not visible
-- Do NOT dismiss physical contact as "dancing/playfulness" unless body language clearly supports it
-- If uncertain about aggression vs. normal interaction, state the uncertainty explicitly
-- Explicitly state if the visible motion appears COMPLETELY NORMAL for the scene
+- Use the structured Nearby person data as a tracker hint, not as final proof.
+- If has_close_person=true or nearby_person_count>0, inspect the context frames carefully for a second person.
+- If the person crop shows only one person but context frames show another close person, say that clearly.
+- If tracker metadata suggests close/overlapping people but the images do not clearly prove contact or aggression, state the contradiction explicitly.
+- Do NOT speculate about intent, identity, or events not visible.
+- Do NOT dismiss physical contact as "dancing/playfulness" unless body language clearly supports it.
+- If uncertain about aggression vs. normal interaction, state the uncertainty explicitly.
+- Explicitly state if the visible motion appears COMPLETELY NORMAL for the scene.
 
 Provide a factual, detailed description."""
 
@@ -972,6 +1017,11 @@ def build_llm_prompt(
     allowed_trigger_ids = sorted(_allowed_rule_ids(matched_trigger_rules))
     allowed_suppress_ids = sorted(_allowed_rule_ids(matched_suppress_rules))
 
+    motion = metadata.get('motion_stats') or {}
+    if not isinstance(motion, dict):
+        motion = {}
+    interaction_summary = _interaction_summary_from_motion(motion)
+
     return f"""You are the final anomaly reasoning judge for a surveillance system.
 
 VLM FACTUAL NARRATIVE:
@@ -983,6 +1033,7 @@ DISTRIBUTION AND GATE METADATA:
   Candidate reasons: {metadata.get('candidate_reasons')}
   Priority         : {metadata.get('priority')}
   Motion stats     : {json.dumps(metadata.get('motion_stats') or {}, ensure_ascii=False)}
+  Interaction data : {json.dumps(interaction_summary, ensure_ascii=False)}
 
 MATCHED TRIGGER RULES (behaviors that should produce alerts):
 {trigger_rules_text}
@@ -1005,6 +1056,8 @@ DECISION INSTRUCTIONS:
 6. If high distribution score + concerning behavior in narrative but no rule → ALERT: YES (needs_review)
 7. Physical confrontation indicators (pushing, hitting, grabbing) → ALERT: YES unless clearly playful
 8. Multi-person interactions require careful analysis - uncertainty is acceptable
+9. If Interaction data says has_close_person=true or nearby_person_count>0, do not describe the scene as "single person" unless the VLM narrative clearly explains that the second person was not visible.
+10. Treat close-person tracker metadata as supporting context: it can raise suspicion and guide attention, but fight_detection still requires visible physical contact/aggression or a clearly concerning interaction.
 
 SEVERITY GUIDELINES:
 - LOW: Minor deviations, unclear interactions, possible false positives

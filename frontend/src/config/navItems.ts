@@ -22,6 +22,7 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", Icon: LayoutDashboard },
   { title: "Live Cameras", url: "/cameras", Icon: Camera },
   { title: "Anomalies", url: "/anomaly", Icon: AlertTriangle },
+  { title: "VAD Lab", url: "/vad-lab", Icon: Shield },
   { title: "Anomaly Rules", url: "/anomaly-rules", Icon: FileText },
   { title: "Departments", url: "/departments", Icon: Building },
   { title: "Labs", url: "/labs", Icon: GraduationCap },

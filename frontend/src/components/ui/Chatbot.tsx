@@ -14,7 +14,6 @@ interface Message {
 
 export default function Chatbot() {
   const location = useLocation();
-  if (location.pathname === "/login") return null;
 
   const [isOpen, setIsOpen] = useState(() => {
     return localStorage.getItem("chatbot_open") === "true";
@@ -129,6 +128,8 @@ export default function Chatbot() {
       handleSend();
     }
   };
+
+  if (location.pathname === "/login") return null;
 
   return (
     <>

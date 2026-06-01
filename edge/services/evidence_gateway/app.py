@@ -3,6 +3,8 @@ import os
 import time
 import hashlib
 import mimetypes
+import re
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
@@ -61,6 +63,29 @@ def _ensure_bucket(client: Minio, bucket: str) -> None:
         client.make_bucket(bucket)
 
 
+
+def _safe_path_part(value: Optional[str], fallback: str = "unknown") -> str:
+    """Return a filesystem/S3-key safe path segment."""
+    text = (value or fallback).strip()
+    text = re.sub(r"[^A-Za-z0-9_.-]+", "_", text)
+    return text.strip("._") or fallback
+
+
+def _parse_capture_dt(captured_at: Optional[str]) -> datetime:
+    """Parse ISO timestamp, falling back to current UTC for object-key partitioning."""
+    if captured_at:
+        try:
+            raw = captured_at.strip()
+            if raw.endswith("Z"):
+                raw = raw[:-1] + "+00:00"
+            dt = datetime.fromisoformat(raw)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.astimezone(timezone.utc)
+        except Exception:
+            pass
+    return datetime.now(timezone.utc)
+
 def _build_object_key(
     kind: str,
     camera_id: int,
@@ -68,6 +93,8 @@ def _build_object_key(
     ext: str,
     frame_index: Optional[int] = None,
     track_id: Optional[int] = None,
+    camera_key: Optional[str] = None,
+    captured_at: Optional[str] = None,
 ) -> str:
     """
     Compute the object key for a given upload type.
@@ -75,6 +102,7 @@ def _build_object_key(
     Supported kinds:
 
       * face   – single face JPEG per event
+      * raw_frame – raw sampled VAD frame uploaded by the edge/Jetson
       * anomaly – person‐crop frames from the deprecated student pipeline
       * person_clip – MP4 clip of the tracked person (requires track_id)
       * context_clip – MP4 clip of the scene around the person (requires track_id)
@@ -95,6 +123,20 @@ def _build_object_key(
     if kind == "face":
         use_ext = ext or "jpg"
         return f"faces/cam_{camera_id}/{event_id}.{use_ext}"
+
+    # New VAD raw-frame upload: Jetson sends sampled frames only; backend does all AI.
+    if kind == "raw_frame":
+        use_ext = ext or "jpg"
+        cam_part = _safe_path_part(camera_key, f"cam_{camera_id}")
+        dt = _parse_capture_dt(captured_at)
+        if frame_index is not None:
+            filename = f"frame_{frame_index:012d}.{use_ext}"
+        else:
+            filename = f"{_safe_path_part(event_id)}.{use_ext}"
+        return (
+            f"frames/{cam_part}/{dt.year:04d}/{dt.month:02d}/{dt.day:02d}/"
+            f"{dt.hour:02d}/{filename}"
+        )
 
     # Legacy anomaly upload: frames from the old pipeline
     if kind == "anomaly":
@@ -198,6 +240,9 @@ async def upload_evidence(
     frame_index: Optional[int]  = Form(None),
     ext:         Optional[str]  = Form(None),
     track_id:    Optional[int]  = Form(None),
+    camera_key:  Optional[str]  = Form(None),
+    captured_at: Optional[str]  = Form(None),
+    edge_device_key: Optional[str] = Form(None),
 ) -> JSONResponse:
     """
     Upload a piece of evidence to MinIO.
@@ -205,6 +250,7 @@ async def upload_evidence(
     ``kind`` determines how the object key is constructed.  Supported values are:
 
       * ``face`` – single face image per event
+      * ``raw_frame`` – raw 5 fps VAD frame uploaded by the Jetson/edge node
       * ``anomaly`` – deprecated anomaly frame uploads
       * ``person_clip`` – MP4 clip of a person tubelet (requires ``track_id``)
       * ``context_clip`` – MP4 clip of the scene around the person (requires ``track_id``)
@@ -217,6 +263,7 @@ async def upload_evidence(
     kind = (kind or "").strip().lower()
     allowed_kinds = {
         "face",
+        "raw_frame",
         "anomaly",
         "person_clip",
         "context_clip",
@@ -262,6 +309,8 @@ async def upload_evidence(
             ext=use_ext or "",
             frame_index=frame_index,
             track_id=track_id,
+            camera_key=camera_key,
+            captured_at=captured_at,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -291,19 +340,25 @@ async def upload_evidence(
             detail=f"Upload failed: {type(e).__name__}: {e}",
         ) from e
 
-    evidence_ref = f"s3://{S3_BUCKET}/{object_key}"
+    object_uri = f"s3://{S3_BUCKET}/{object_key}"
     elapsed_ms   = int((time.time() - started) * 1000)
 
     return JSONResponse({
         "bucket":             S3_BUCKET,
         "key":                object_key,
-        "evidence_ref":       evidence_ref,
+        "object_key":         object_key,
+        "object_uri":         object_uri,
+        "evidence_ref":       object_uri,
         "size_bytes":         size_bytes,
         "sha256":             sha256,
         "kind":               kind,
         "camera_id":          int(camera_id),
+        "camera_key":         camera_key,
+        "edge_device_key":    edge_device_key,
         "event_id":           event_id,
+        "frame_uid":          event_id if kind == "raw_frame" else None,
         "frame_index":        frame_index,
+        "captured_at":        captured_at,
         "processing_time_ms": elapsed_ms,
     })
 
