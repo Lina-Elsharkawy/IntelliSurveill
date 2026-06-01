@@ -6,7 +6,7 @@
 import {
   LayoutDashboard, Camera, AlertTriangle, BarChart3,
   ListCheck, UserCog, Building, GraduationCap,
-  Settings, Shield, FileText
+  Settings, Shield, FileText, Network
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -23,6 +23,7 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Live Cameras", url: "/cameras", Icon: Camera },
   { title: "Anomalies", url: "/anomaly", Icon: AlertTriangle },
   { title: "VAD Lab", url: "/vad-lab", Icon: Shield },
+  { title: "VAD Reasoning", url: "/reasoning", Icon: Network },
   { title: "Anomaly Rules", url: "/anomaly-rules", Icon: FileText },
   { title: "Departments", url: "/departments", Icon: Building },
   { title: "Labs", url: "/labs", Icon: GraduationCap },

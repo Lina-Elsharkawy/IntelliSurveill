@@ -540,9 +540,14 @@ CREATE TABLE public.vad_reasoning_results (
     structured_output_json jsonb NOT NULL DEFAULT '{}'::jsonb,
     matched_rules_json jsonb NOT NULL DEFAULT '{}'::jsonb,
     uncertainty_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+    vlm_visual_review_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+    llm_policy_review_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+    python_final_result_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+    policy_version text NULL,
+    rules_version text NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     CONSTRAINT vad_reasoning_results_alert_chk CHECK (alert_decision IS NULL OR alert_decision IN ('YES','NO','UNCERTAIN')),
-    CONSTRAINT vad_reasoning_results_severity_chk CHECK (severity IS NULL OR severity IN ('LOW','MEDIUM','HIGH','CRITICAL')),
+    CONSTRAINT vad_reasoning_results_severity_chk CHECK (severity IS NULL OR severity IN ('NONE','LOW','MEDIUM','HIGH','CRITICAL')),
     CONSTRAINT vad_reasoning_results_confidence_chk CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1))
 );
 

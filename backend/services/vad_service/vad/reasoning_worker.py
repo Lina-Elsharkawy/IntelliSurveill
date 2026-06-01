@@ -1,24 +1,32 @@
 from __future__ import annotations
 
-import base64
 import json
 import logging
-import re
 import signal
 import time
-import urllib.error
-import urllib.request
 from dataclasses import dataclass
 from typing import Any
 
 from .config import VadConfig, load_vad_config
 from .db import VadDB
 from .minio_client import VadMinioClient
+from .reasoning.reasoning_client import OllamaClient
+from .reasoning.reasoning_policy import (
+    POLICY_VERSION,
+    apply_python_final_guardrails,
+    build_structured_result,
+)
+from .reasoning.reasoning_prompts import build_deep_vlm_visual_prompt, build_llm_policy_prompt
+from .reasoning.reasoning_rules import RULES_VERSION, load_active_reasoning_rules, serialize_rules_for_llm
+from .reasoning.reasoning_schema import (
+    DeepReasoningContext,
+    fallback_llm_uncertain,
+    model_to_dict,
+    parse_llm_policy_review,
+    parse_vlm_visual_review,
+)
 
 log = logging.getLogger("vad.reasoning_worker")
-
-_ALLOWED_ALERTS = {"YES", "NO", "UNCERTAIN"}
-_ALLOWED_SEVERITIES = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
 
 
 @dataclass(frozen=True)
@@ -29,49 +37,6 @@ class ReasoningCallResult:
     image_object_keys: list[str]
 
 
-class OllamaClient:
-    def __init__(self, *, base_url: str, timeout_sec: float) -> None:
-        self.base_url = base_url.rstrip("/")
-        self.timeout_sec = float(timeout_sec)
-
-    def generate(self, *, model: str, prompt: str, images_b64: list[str] | None = None) -> str:
-        payload: dict[str, Any] = {
-            "model": model,
-            "prompt": prompt,
-            "stream": False,
-            "options": {
-                "temperature": 0.0,
-                "num_ctx": 8192,
-            },
-        }
-        if images_b64:
-            payload["images"] = images_b64
-
-        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        req = urllib.request.Request(
-            f"{self.base_url}/api/generate",
-            data=data,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout_sec) as resp:
-                body = resp.read().decode("utf-8", errors="replace")
-        except urllib.error.HTTPError as e:
-            err = e.read().decode("utf-8", errors="replace") if e.fp else str(e)
-            raise RuntimeError(f"Ollama HTTP {e.code}: {err}") from e
-        except Exception as e:
-            raise RuntimeError(f"Ollama request failed: {e}") from e
-
-        try:
-            parsed = json.loads(body)
-        except Exception as e:
-            raise RuntimeError(f"Ollama returned non-JSON response: {body[:500]}") from e
-        if "error" in parsed:
-            raise RuntimeError(str(parsed["error"]))
-        return str(parsed.get("response", "")).strip()
-
-
 def _json_default(value: Any) -> Any:
     try:
         json.dumps(value)
@@ -80,117 +45,54 @@ def _json_default(value: Any) -> Any:
         return str(value)
 
 
-def _extract_json_object(text: str) -> dict[str, Any]:
-    """Extract the first JSON object from a possibly chatty model response."""
-    text = (text or "").strip()
-    if not text:
-        return {}
-    # Remove fenced code wrappers if present.
-    text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
-    text = re.sub(r"\s*```$", "", text)
-    try:
-        val = json.loads(text)
-        return val if isinstance(val, dict) else {}
-    except Exception:
-        pass
-    start = text.find("{")
-    end = text.rfind("}")
-    if start >= 0 and end > start:
-        try:
-            val = json.loads(text[start : end + 1])
-            return val if isinstance(val, dict) else {}
-        except Exception:
-            return {}
-    return {}
-
-
-def _clamp_confidence(value: Any) -> float | None:
-    try:
-        f = float(value)
-    except Exception:
-        return None
-    if f != f:
-        return None
-    return max(0.0, min(1.0, f))
-
-
-def _normalize_structured_output(raw: dict[str, Any], *, fallback_text: str) -> dict[str, Any]:
-    alert = str(raw.get("alert_decision", raw.get("final_decision", "UNCERTAIN"))).strip().upper()
-    if alert in {"TRUE_ANOMALY", "LIKELY_ANOMALY", "ALERT", "ANOMALY", "YES"}:
-        alert = "YES"
-    elif alert in {"FALSE_POSITIVE", "LIKELY_FALSE_POSITIVE", "NORMAL", "NO"}:
-        alert = "NO"
-    elif alert not in _ALLOWED_ALERTS:
-        alert = "UNCERTAIN"
-
-    severity = str(raw.get("severity", "LOW")).strip().upper()
-    if severity not in _ALLOWED_SEVERITIES:
-        severity = "LOW" if alert == "NO" else "MEDIUM" if alert == "UNCERTAIN" else "HIGH"
-
-    out = {
-        "alert_decision": alert,
-        "severity": severity,
-        "event_type": str(raw.get("event_type", "deep_semantic_spatiotemporal_anomaly")),
-        "confidence": _clamp_confidence(raw.get("confidence")),
-        "visual_evidence": str(raw.get("visual_evidence", raw.get("visual_observation", ""))).strip(),
-        "reasoning_summary": str(raw.get("reasoning_summary", raw.get("summary", ""))).strip(),
-        "decision_reason": str(raw.get("decision_reason", raw.get("reason", ""))).strip(),
-        "recommended_action": str(raw.get("recommended_action", "review_only")).strip() or "review_only",
-        "possible_false_positive_causes": raw.get("possible_false_positive_causes", []),
-    }
-    if out["confidence"] is None:
-        out["confidence"] = 0.5
-    if not out["reasoning_summary"]:
-        out["reasoning_summary"] = fallback_text[:1000]
-    if not out["decision_reason"]:
-        out["decision_reason"] = "The reasoning model did not provide a separate decision reason."
-    return out
-
-
-def _short_json(obj: Any, max_chars: int = 6000) -> str:
-    txt = json.dumps(obj, ensure_ascii=False, indent=2, default=_json_default)
-    return txt if len(txt) <= max_chars else txt[:max_chars] + "\n...<truncated>"
-
-
 def _select_evidence_object_keys(bundle: dict[str, Any], cfg: VadConfig) -> list[str]:
     visual = bundle.get("visual_evidence") or {}
-    objects = visual.get("objects") or []
-    allowed_roles = {r.strip() for r in cfg.reasoning_image_roles.split(",") if r.strip()}
-
     selected: list[str] = []
 
-    def add_by_role(role: str, limit: int | None = None) -> None:
-        nonlocal selected
-        matches = [str(o.get("object_key")) for o in objects if o.get("role") == role and o.get("object_key")]
-        if limit is not None:
-            matches = matches[:limit]
-        for key in matches:
-            if key not in selected:
-                selected.append(key)
+    def add_key(key: Any) -> None:
+        if not isinstance(key, str):
+            return
+        key = key.strip().lstrip("/")
+        if not key:
+            return
+        if not key.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
+            return
+        if key not in selected:
+            selected.append(key)
 
-    if "annotated_frame" in allowed_roles:
-        add_by_role("annotated_frame", 1)
-    if "tubelet_montage" in allowed_roles:
-        add_by_role("tubelet_montage", 1)
-    if "tubelet_frame" in allowed_roles and len(selected) < cfg.reasoning_max_images:
-        frame_keys = [str(o.get("object_key")) for o in objects if o.get("role") == "tubelet_frame" and o.get("object_key")]
-        if frame_keys:
-            # Spread frames across the tubelet rather than taking only the beginning.
-            remaining = max(0, int(cfg.reasoning_max_images) - len(selected))
-            if remaining >= len(frame_keys):
-                picks = frame_keys
-            elif remaining == 1:
-                picks = [frame_keys[len(frame_keys) // 2]]
-            else:
-                idxs = sorted({round(i * (len(frame_keys) - 1) / max(1, remaining - 1)) for i in range(remaining)})
-                picks = [frame_keys[int(i)] for i in idxs]
-            for key in picks:
-                if key not in selected:
-                    selected.append(key)
-    return selected[: int(cfg.reasoning_max_images)]
+    # Manual-test bundle format: visual_evidence.object_keys = ["...jpg", "...jpg"]
+    for key in visual.get("object_keys") or []:
+        add_key(key)
+
+    # Automatic bundle formats: visual_evidence.objects or visual_evidence.evidence_objects.
+    objects: list[Any] = []
+    objects.extend(visual.get("objects") or [])
+    objects.extend(visual.get("evidence_objects") or [])
+
+    allowed_roles = {r.strip() for r in str(cfg.reasoning_image_roles).split(",") if r.strip()}
+
+    for obj in objects:
+        if not isinstance(obj, dict):
+            continue
+        role = str(obj.get("role") or obj.get("media_role") or obj.get("evidence_role") or "").strip()
+        object_key = str(obj.get("object_key") or "").strip().lstrip("/")
+        media_type = str(obj.get("media_type") or "").lower()
+        content_type = str(obj.get("content_type") or "").lower()
+        is_image = (
+            media_type == "image"
+            or content_type.startswith("image/")
+            or object_key.lower().endswith((".jpg", ".jpeg", ".png", ".webp"))
+        )
+        role_ok = not allowed_roles or role in allowed_roles
+        if object_key and is_image and role_ok:
+            add_key(object_key)
+
+    return selected[: max(1, int(cfg.reasoning_max_images or 6))]
 
 
 def _load_images_b64(minio: VadMinioClient, object_keys: list[str]) -> list[str]:
+    import base64
+
     images: list[str] = []
     for key in object_keys:
         data = minio.download_bytes(key)
@@ -198,75 +100,41 @@ def _load_images_b64(minio: VadMinioClient, object_keys: list[str]) -> list[str]
     return images
 
 
-def build_vlm_prompt(bundle: dict[str, Any], image_object_keys: list[str]) -> str:
-    event = bundle.get("event", {})
-    deep_gate = bundle.get("deep_gate", {})
-    scene_context = bundle.get("scene_context", {})
-    schema = bundle.get("requested_output_schema", {})
-    return f"""
-You are reviewing a Deep-gate video anomaly candidate from an indoor lab camera.
-
-Important rules:
-- This job is Deep-gate only. Do not discuss Pose or Homography as active triggers.
-- Use only the provided images and metadata. Do not invent missing facts.
-- The Deep gate already fired because VideoMAE+kNN distance exceeded its calibrated normal threshold and persistence rule.
-- Your role is a second-stage visual reviewer: decide whether the visual evidence appears to require an alert or is likely a false positive.
-- Normal lab activities can include walking, standing, sitting, working near equipment, and slow chair movement.
-- If evidence is unclear, choose UNCERTAIN rather than guessing.
-
-Event metadata:
-{_short_json(event, 2500)}
-
-Deep gate metadata:
-{_short_json(deep_gate, 3500)}
-
-Scene context:
-{_short_json(scene_context, 2500)}
-
-Images supplied in order:
-{_short_json(image_object_keys, 1200)}
-
-Return ONLY one JSON object matching this schema:
-{_short_json(schema, 2000)}
-
-Use these exact allowed values:
-- alert_decision: YES, NO, or UNCERTAIN
-- severity: LOW, MEDIUM, HIGH, or CRITICAL
-- confidence: number from 0 to 1
-""".strip()
+def _safe_float(value: Any) -> float | None:
+    try:
+        out = float(value)
+        if out != out:
+            return None
+        return out
+    except Exception:
+        return None
 
 
-def build_llm_normalizer_prompt(bundle: dict[str, Any], raw_vlm_output: str) -> str:
-    return f"""
-Normalize the VLM response into strict JSON for a VAD Deep-gate reasoning result.
-
-Rules:
-- Output ONLY valid JSON. No markdown.
-- alert_decision must be YES, NO, or UNCERTAIN.
-- severity must be LOW, MEDIUM, HIGH, or CRITICAL.
-- confidence must be a number from 0 to 1.
-- Do not add facts not present in the VLM output or event metadata.
-- If unclear, use alert_decision=UNCERTAIN and recommended_action=review_only.
-
-Event metadata:
-{_short_json(bundle.get('event', {}), 2500)}
-
-Raw VLM output:
-{raw_vlm_output[:6000]}
-
-Required JSON keys:
-{{
-  "alert_decision": "YES | NO | UNCERTAIN",
-  "severity": "LOW | MEDIUM | HIGH | CRITICAL",
-  "event_type": "deep_semantic_spatiotemporal_anomaly",
-  "confidence": 0.0,
-  "visual_evidence": "what is visible in the frames",
-  "reasoning_summary": "brief final interpretation",
-  "decision_reason": "why this decision was chosen",
-  "recommended_action": "ignore | review_only | save_for_dataset | alert_operator | urgent_alert",
-  "possible_false_positive_causes": []
-}}
-""".strip()
+def _build_context(bundle: dict[str, Any], image_object_keys: list[str]) -> DeepReasoningContext:
+    event = bundle.get("event") or {}
+    deep_gate = bundle.get("deep_gate") or {}
+    threshold = _safe_float(event.get("threshold_value"))
+    score = _safe_float(event.get("peak_score"))
+    ratio = _safe_float(event.get("ratio"))
+    if ratio is None and score is not None and threshold and threshold > 0:
+        ratio = score / threshold
+    return DeepReasoningContext(
+        event_id=int(event.get("gate_event_id")) if event.get("gate_event_id") is not None else None,
+        case_id=int(event.get("case_id")) if event.get("case_id") is not None else None,
+        gate_name="deep",
+        deep_score=score,
+        threshold_value=threshold,
+        score_ratio=ratio,
+        camera_id=int(event.get("camera_id")) if event.get("camera_id") is not None else None,
+        stream_key=event.get("stream_key"),
+        camera_key=event.get("camera_key"),
+        tracker_track_id=int(event.get("tracker_track_id")) if event.get("tracker_track_id") is not None else None,
+        tubelet_id=int(event.get("tubelet_id")) if event.get("tubelet_id") is not None else None,
+        evidence_object_keys=image_object_keys,
+        event_metadata=event,
+        deep_gate_metadata=deep_gate,
+        scene_context=bundle.get("scene_context") or {},
+    )
 
 
 class DeepReasoningWorker:
@@ -286,7 +154,7 @@ class DeepReasoningWorker:
                 job = self.db.claim_next_deep_reasoning_job(
                     conn,
                     vlm_model=self.cfg.ollama_vlm_model,
-                    llm_model=self.cfg.ollama_llm_model if self.cfg.reasoning_use_llm_normalizer else None,
+                    llm_model=self.cfg.ollama_llm_model,
                 )
         if not job:
             return False
@@ -298,30 +166,58 @@ class DeepReasoningWorker:
         try:
             result = self._process_claimed_job(job)
             s = result.structured
+            final = s.get("python_final_result") or {}
+            vlm_json = s.get("vlm_visual_review") or {}
+            llm_json = s.get("llm_policy_review") or {}
+            rules_json = s.get("rules_result") or {}
+
             with self.db.connect() as conn:
                 with conn.transaction():
                     self.db.insert_reasoning_result(
                         conn,
                         reasoning_job_id=job_id,
                         case_id=case_id,
-                        alert_decision=s.get("alert_decision"),
-                        severity=s.get("severity"),
-                        event_type=s.get("event_type"),
-                        confidence=s.get("confidence"),
-                        visual_evidence=s.get("visual_evidence"),
-                        reasoning_summary=s.get("reasoning_summary"),
-                        decision_reason=s.get("decision_reason"),
+                        alert_decision=final.get("final_alert_decision"),
+                        severity=final.get("final_severity"),
+                        event_type=vlm_json.get("event_type"),
+                        confidence=final.get("final_confidence"),
+                        visual_evidence=json.dumps(
+                            {
+                                "visible_scene": vlm_json.get("visible_scene"),
+                                "person_observation": vlm_json.get("person_observation"),
+                                "motion_observation": vlm_json.get("motion_observation"),
+                                "anomaly_evidence": vlm_json.get("anomaly_evidence"),
+                                "normality_evidence": vlm_json.get("normality_evidence"),
+                                "false_positive_risks": vlm_json.get("false_positive_risks"),
+                            },
+                            ensure_ascii=False,
+                            default=_json_default,
+                        ),
+                        reasoning_summary=final.get("final_decision_reason"),
+                        decision_reason=final.get("final_decision_reason"),
                         raw_vlm_output=result.raw_vlm_output,
                         raw_llm_output=result.raw_llm_output,
-                        structured_output_json=s | {"image_object_keys": result.image_object_keys},
-                        matched_rules_json={"routing_policy": "deep_persistent_only_v1"},
+                        structured_output_json=s,
+                        matched_rules_json=rules_json,
                         uncertainty_json={
-                            "needs_human_review": s.get("alert_decision") in {"YES", "UNCERTAIN"},
-                            "model_confidence": s.get("confidence"),
+                            "needs_human_review": final.get("final_alert_decision") in {"YES", "UNCERTAIN"},
+                            "model_confidence": final.get("final_confidence"),
+                            "guardrail_actions": final.get("guardrail_actions") or [],
                         },
+                        vlm_visual_review_json=vlm_json,
+                        llm_policy_review_json=llm_json,
+                        python_final_result_json=final,
+                        policy_version=s.get("policy_version") or POLICY_VERSION,
+                        rules_version=s.get("rules_version") or RULES_VERSION,
                     )
                     self.db.mark_reasoning_job_succeeded(conn, job_id=job_id)
-            log.info("Reasoning job %s succeeded: decision=%s severity=%s confidence=%s", job_id, s.get("alert_decision"), s.get("severity"), s.get("confidence"))
+            log.info(
+                "Reasoning job %s succeeded: final_decision=%s severity=%s confidence=%s",
+                job_id,
+                final.get("final_alert_decision"),
+                final.get("final_severity"),
+                final.get("final_confidence"),
+            )
             return True
         except Exception as e:
             retry = attempts < max_attempts
@@ -356,29 +252,68 @@ class DeepReasoningWorker:
         if not object_keys:
             raise RuntimeError("No usable visual evidence object keys found in reasoning bundle")
         images_b64 = _load_images_b64(self.minio, object_keys)
+        ctx = _build_context(bundle, object_keys)
 
-        vlm_prompt = build_vlm_prompt(bundle, object_keys)
+        # Stage 1: VLM grounded visual review.
+        vlm_prompt = build_deep_vlm_visual_prompt(ctx)
         raw_vlm = self.ollama.generate(model=self.cfg.ollama_vlm_model, prompt=vlm_prompt, images_b64=images_b64)
+        vlm_review, vlm_parse_info = parse_vlm_visual_review(raw_vlm)
 
+        # Stage 2: LLM policy/rules review. The LLM is part of the architecture; if it fails,
+        # the worker records an explicit UNCERTAIN fallback rather than silently skipping it.
+        rules = load_active_reasoning_rules()
+        llm_rules = serialize_rules_for_llm(rules)
         raw_llm: str | None = None
-        parsed = _extract_json_object(raw_vlm)
-        if self.cfg.reasoning_use_llm_normalizer and self.cfg.ollama_llm_model:
-            normalizer_prompt = build_llm_normalizer_prompt(bundle, raw_vlm)
-            raw_llm = self.ollama.generate(model=self.cfg.ollama_llm_model, prompt=normalizer_prompt)
-            parsed_llm = _extract_json_object(raw_llm)
-            if parsed_llm:
-                parsed = parsed_llm
-        structured = _normalize_structured_output(parsed, fallback_text=raw_llm or raw_vlm)
-        return ReasoningCallResult(raw_vlm_output=raw_vlm, raw_llm_output=raw_llm, structured=structured, image_object_keys=object_keys)
+        llm_parse_info: dict[str, Any]
+        try:
+            llm_prompt = build_llm_policy_prompt(ctx=ctx, vlm_review=vlm_review, active_rules=llm_rules)
+            raw_llm = self.ollama.generate(model=self.cfg.ollama_llm_model, prompt=llm_prompt)
+            llm_review, llm_parse_info = parse_llm_policy_review(raw_llm, ctx=ctx, vlm=vlm_review)
+        except Exception as e:
+            log.exception("LLM policy review failed for event_id=%s; using explicit UNCERTAIN fallback: %s", ctx.event_id, e)
+            raw_llm = None
+            llm_review = fallback_llm_uncertain(f"LLM policy review failed or timed out: {e}", ctx=ctx, vlm=vlm_review)
+            llm_parse_info = {"parse_error": "llm_call_failed", "error": str(e)}
+
+        # Stage 3: Python deterministic final guardrails.
+        final_result, rules_result = apply_python_final_guardrails(
+            ctx=ctx,
+            vlm=vlm_review,
+            llm=llm_review,
+            rules=rules,
+            vlm_parse_info=vlm_parse_info,
+            llm_parse_info=llm_parse_info,
+        )
+
+        structured = build_structured_result(
+            ctx=ctx,
+            vlm=vlm_review,
+            llm=llm_review,
+            final=final_result,
+            rules_result=rules_result,
+            image_object_keys=object_keys,
+            raw_vlm_output=raw_vlm,
+            raw_llm_output=raw_llm,
+            vlm_parse_info=vlm_parse_info,
+            llm_parse_info=llm_parse_info,
+        )
+        return ReasoningCallResult(
+            raw_vlm_output=raw_vlm,
+            raw_llm_output=raw_llm,
+            structured=structured,
+            image_object_keys=object_keys,
+        )
 
     def run_forever(self) -> None:
         log.info(
-            "Starting Deep-only VAD reasoning worker provider=%s vlm=%s llm=%s poll=%.2fs batch=%s",
+            "Starting Deep-only VAD reasoning worker provider=%s vlm=%s llm=%s poll=%.2fs batch=%s policy=%s rules=%s",
             self.cfg.reasoning_provider,
             self.cfg.ollama_vlm_model,
-            self.cfg.ollama_llm_model if self.cfg.reasoning_use_llm_normalizer else "disabled",
+            self.cfg.ollama_llm_model,
             self.cfg.reasoning_poll_interval_sec,
             self.cfg.reasoning_batch_size,
+            POLICY_VERSION,
+            RULES_VERSION,
         )
         if not self.cfg.reasoning_worker_enabled:
             log.warning("VAD_REASONING_WORKER_ENABLED=0; worker will idle")

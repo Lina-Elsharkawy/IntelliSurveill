@@ -392,6 +392,7 @@ services:
       VAD_DEEP_REASONING_REQUIRE_EVIDENCE: "1"
       VAD_DEEP_REASONING_MIN_RATIO: "1.0"
       VAD_DEEP_REASONING_PROMPT_VERSION: deep_vlm_reasoning_v1
+      VAD_DEEP_REASONING_MAX_ATTEMPTS: "3"
 
       VAD_MINIO_ENDPOINT: minio:9000
       VAD_MINIO_ACCESS_KEY: minioadmin
@@ -403,6 +404,8 @@ services:
       VLM_MODEL: openbmb/minicpm-v4.5:8b
       LLM_MODEL: qwen3:8b
 
+      VAD_REASONING_USE_LLM_NORMALIZER: "1"
+      VAD_OLLAMA_TIMEOUT_SEC: "300"
     volumes:
       - ./backend/services/vad_service:/app
 

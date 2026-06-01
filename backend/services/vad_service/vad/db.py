@@ -990,6 +990,128 @@ class VadDB:
         rows = conn.execute(query, params).fetchall()
         return [dict(r) for r in rows]
 
+    def get_joined_reasoning_jobs(
+        self,
+        conn: psycopg.Connection,
+        *,
+        status: str | None = None,
+        decision: str | None = None,
+        case_id: int | None = None,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        query = """
+            SELECT 
+                j.id AS job_id, j.case_id AS j_case_id, j.status AS job_status, j.reasoner_type, 
+                j.vlm_model, j.llm_model, j.priority,
+                j.prompt_version, j.attempts, j.max_attempts, j.queued_at, j.started_at, j.finished_at,
+                j.error_json, j.input_bundle_json, j.metadata_json AS job_metadata_json,
+                
+                c.id AS case_table_id, c.case_key, c.primary_gate_name, c.case_type,
+                c.status AS case_status, c.severity AS case_severity, c.start_ts, c.peak_ts,
+                c.score_summary_json, c.evidence_bundle_json, c.created_at AS case_created_at,
+                
+                r.id AS result_id, r.reasoning_job_id, r.alert_decision, r.severity AS result_severity, 
+                r.event_type, r.confidence, r.policy_version, r.rules_version,
+                r.structured_output_json, r.matched_rules_json, r.uncertainty_json,
+                r.raw_vlm_output, r.raw_llm_output,
+                r.vlm_visual_review_json, r.llm_policy_review_json,
+                r.python_final_result_json, r.created_at AS result_created_at
+            FROM vad_reasoning_jobs j
+            LEFT JOIN vad_anomaly_cases c ON j.case_id = c.id
+            LEFT JOIN LATERAL (
+                SELECT * FROM vad_reasoning_results rr
+                WHERE rr.reasoning_job_id = j.id
+                ORDER BY rr.id DESC LIMIT 1
+            ) r ON true
+            WHERE j.metadata_json ->> 'seed_name' = 'reasoning_page_demo'
+        """
+        params: dict[str, Any] = {"limit": limit}
+        
+        if status:
+            query += " AND j.status = %(status)s"
+            params["status"] = status
+            
+        if case_id:
+            query += " AND j.case_id = %(case_id)s"
+            params["case_id"] = case_id
+            
+        if decision:
+            query += " AND r.alert_decision = %(decision)s"
+            params["decision"] = decision
+            
+        query += " ORDER BY j.queued_at DESC, j.id DESC LIMIT %(limit)s"
+        
+        rows = conn.execute(query, params).fetchall()
+        
+        # Format the output to separate job, case, and result fields
+        result_list = []
+        for r in rows:
+            row_dict = dict(r)
+            item = {
+                "job": {
+                    "id": row_dict["job_id"],
+                    "case_id": row_dict["j_case_id"],
+                    "status": row_dict["job_status"],
+                    "reasoner_type": row_dict.get("reasoner_type"),
+                    "vlm_model": row_dict.get("vlm_model"),
+                    "llm_model": row_dict.get("llm_model"),
+                    "priority": row_dict.get("priority"),
+                    "prompt_version": row_dict.get("prompt_version"),
+                    "attempts": row_dict.get("attempts"),
+                    "max_attempts": row_dict.get("max_attempts"),
+                    "queued_at": row_dict.get("queued_at"),
+                    "started_at": row_dict.get("started_at"),
+                    "finished_at": row_dict.get("finished_at"),
+                    "error_json": row_dict.get("error_json"),
+                    "input_bundle_json": row_dict.get("input_bundle_json"),
+                    "metadata_json": row_dict.get("job_metadata_json")
+                },
+                "case": None,
+                "result": None
+            }
+            
+            if row_dict.get("case_table_id") is not None:
+                item["case"] = {
+                    "id": row_dict["case_table_id"],
+                    "case_key": row_dict.get("case_key"),
+                    "primary_gate_name": row_dict.get("primary_gate_name"),
+                    "case_type": row_dict.get("case_type"),
+                    "status": row_dict.get("case_status"),
+                    "severity": row_dict.get("case_severity"),
+                    "start_ts": row_dict.get("start_ts"),
+                    "peak_ts": row_dict.get("peak_ts"),
+                    "score_summary_json": row_dict.get("score_summary_json"),
+                    "evidence_bundle_json": row_dict.get("evidence_bundle_json"),
+                    "created_at": row_dict.get("case_created_at")
+                }
+                
+            if row_dict.get("result_id") is not None:
+                item["result"] = {
+                    "id": row_dict["result_id"],
+                    "reasoning_job_id": row_dict.get("reasoning_job_id"),
+                    "case_id": row_dict.get("j_case_id"),
+                    "alert_decision": row_dict.get("alert_decision"),
+                    "severity": row_dict.get("result_severity"),
+                    "event_type": row_dict.get("event_type"),
+                    "confidence": row_dict.get("confidence"),
+                    "policy_version": row_dict.get("policy_version"),
+                    "rules_version": row_dict.get("rules_version"),
+                    "structured_output_json": row_dict.get("structured_output_json"),
+                    "matched_rules_json": row_dict.get("matched_rules_json"),
+                    "uncertainty_json": row_dict.get("uncertainty_json"),
+                    "raw_vlm_output": row_dict.get("raw_vlm_output"),
+                    "raw_llm_output": row_dict.get("raw_llm_output"),
+                    "vlm_visual_review_json": row_dict.get("vlm_visual_review_json"),
+                    "llm_policy_review_json": row_dict.get("llm_policy_review_json"),
+                    "python_final_result_json": row_dict.get("python_final_result_json"),
+                    "created_at": row_dict.get("result_created_at")
+                }
+                
+            result_list.append(item)
+            
+        return result_list
+
+
 
     def claim_next_deep_reasoning_job(
         self,
@@ -1096,6 +1218,11 @@ class VadDB:
         structured_output_json: dict[str, Any] | None = None,
         matched_rules_json: dict[str, Any] | None = None,
         uncertainty_json: dict[str, Any] | None = None,
+        vlm_visual_review_json: dict[str, Any] | None = None,
+        llm_policy_review_json: dict[str, Any] | None = None,
+        python_final_result_json: dict[str, Any] | None = None,
+        policy_version: str | None = None,
+        rules_version: str | None = None,
     ) -> int:
         row = conn.execute(
             """
@@ -1103,13 +1230,15 @@ class VadDB:
                 reasoning_job_id, case_id, alert_decision, severity, event_type,
                 confidence, visual_evidence, reasoning_summary, decision_reason,
                 raw_vlm_output, raw_llm_output, structured_output_json,
-                matched_rules_json, uncertainty_json
+                matched_rules_json, uncertainty_json, vlm_visual_review_json,
+                llm_policy_review_json, python_final_result_json, policy_version, rules_version
             )
             VALUES (
                 %(reasoning_job_id)s, %(case_id)s, %(alert_decision)s, %(severity)s, %(event_type)s,
                 %(confidence)s, %(visual_evidence)s, %(reasoning_summary)s, %(decision_reason)s,
                 %(raw_vlm_output)s, %(raw_llm_output)s, %(structured_output_json)s::jsonb,
-                %(matched_rules_json)s::jsonb, %(uncertainty_json)s::jsonb
+                %(matched_rules_json)s::jsonb, %(uncertainty_json)s::jsonb, %(vlm_visual_review_json)s::jsonb,
+                %(llm_policy_review_json)s::jsonb, %(python_final_result_json)s::jsonb, %(policy_version)s, %(rules_version)s
             )
             RETURNING id
             """,
@@ -1128,6 +1257,11 @@ class VadDB:
                 "structured_output_json": _json(structured_output_json or {}),
                 "matched_rules_json": _json(matched_rules_json or {}),
                 "uncertainty_json": _json(uncertainty_json or {}),
+                "vlm_visual_review_json": _json(vlm_visual_review_json or {}),
+                "llm_policy_review_json": _json(llm_policy_review_json or {}),
+                "python_final_result_json": _json(python_final_result_json or {}),
+                "policy_version": policy_version,
+                "rules_version": rules_version,
             },
         ).fetchone()
         return int(row["id"])

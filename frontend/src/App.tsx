@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Cameras from "./pages/Cameras";
 import Anomaly from "./pages/Anomaly";
 import VadLab from "./pages/VadLab";
+import VadReasoning from "./pages/VadReasoning";
 import AnomalyRules from "./pages/AnomalyRules";
 import Admin from "./pages/Admin";
 import Analytics from "./pages/Analytics";
@@ -46,6 +47,7 @@ const AppRoutes = () => {
       <Route path="/cameras" element={<PrivateRoute element={<Cameras />} />} />
       <Route path="/anomaly" element={<PrivateRoute element={<Anomaly />} />} />
       <Route path="/vad-lab" element={<PrivateRoute element={<VadLab />} />} />
+      <Route path="/reasoning" element={<PrivateRoute element={<VadReasoning />} />} />
       <Route path="/anomaly-rules" element={<PrivateRoute element={<AnomalyRules />} />} />
       <Route path="/analytics" element={<PrivateRoute element={<Analytics />} />} />
       <Route path="/settings" element={<PrivateRoute element={<Settings />} />} />
