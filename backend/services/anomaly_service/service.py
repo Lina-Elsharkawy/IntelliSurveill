@@ -231,6 +231,40 @@ def deprecated_scene_embedding() -> dict[str, Any]:
     )
 
 
+def send_push_notification(title: str, message: str):
+    import json
+    import urllib.request
+    import urllib.error
+    import os
+    
+    app_id = os.getenv("ONESIGNAL_APP_ID", "19745197-b86d-43f4-a364-6129836a3da9")
+    api_key = os.getenv("ONESIGNAL_REST_API_KEY")
+    if not api_key:
+        print("ONESIGNAL_REST_API_KEY is not configured in environment, skipping push notification.")
+        return
+
+    url = "https://onesignal.com/api/v1/notifications"
+    headers = {
+        "Content-Type": "application/json; charset=utf-8",
+        "Authorization": f"Basic {api_key}"
+    }
+    payload = {
+        "app_id": app_id,
+        "headings": {"en": title},
+        "contents": {"en": message},
+        "included_segments": ["Subscribed Users"]
+    }
+    
+    try:
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=5) as response:
+            res_body = response.read().decode("utf-8")
+            print("OneSignal notification sent successfully:", res_body)
+    except Exception as e:
+        print(f"Failed to send OneSignal notification: {e}")
+
+
 @app.post("/ingest/person-context-tubelet")
 def ingest_person_context_tubelet(p: PersonContextTubeletPayload) -> dict[str, Any]:
     try:
@@ -396,6 +430,11 @@ def ingest_person_context_tubelet(p: PersonContextTubeletPayload) -> dict[str, A
                         person_clip_ref=p.person_clip_ref,
                         context_clip_ref=p.context_clip_ref,
                         representative_frame_ref=p.representative_frame_ref,
+                    )
+                    reasons_str = ", ".join(candidate_reasons)
+                    send_push_notification(
+                        "Anomaly Detected",
+                        f"An anomaly was detected at Camera {p.camera_id}. Reasons: {reasons_str}."
                     )
 
                     for decision in _gate_decision_rows(

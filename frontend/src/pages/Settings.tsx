@@ -59,6 +59,68 @@ const Settings = () => {
   const [backupInterval, setBackupInterval] = useState(6);
   const [selectedPrefixes, setSelectedPrefixes] = useState<string[]>(["faces/"]);
 
+  // OneSignal Push Notification State
+  const [pushEnabled, setPushEnabled] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkOneSignal = () => {
+      const win = window as any;
+      if (win.OneSignal) {
+        setPushEnabled(win.OneSignal.User?.PushSubscription?.optedIn || false);
+      } else {
+        win.OneSignalDeferred = win.OneSignalDeferred || [];
+        win.OneSignalDeferred.push((OneSignal: any) => {
+          setPushEnabled(OneSignal.User?.PushSubscription?.optedIn || false);
+        });
+      }
+    };
+    checkOneSignal();
+  }, []);
+
+  const handlePushToggle = async (checked: boolean) => {
+    setPushEnabled(checked);
+    const win = window as any;
+    if (win.OneSignal) {
+      try {
+        if (checked) {
+          await win.OneSignal.User?.PushSubscription?.optIn();
+          toast.success("Push Notifications Enabled", {
+            description: "You will now receive real-time security alerts.",
+          });
+        } else {
+          await win.OneSignal.User?.PushSubscription?.optOut();
+          toast.info("Push Notifications Disabled", {
+            description: "You have disabled push notifications.",
+          });
+        }
+      } catch (err) {
+        console.error("OneSignal subscription toggle failed:", err);
+        toast.error("Subscription Action Failed", {
+          description: "Please check your browser notification permissions.",
+        });
+      }
+    } else {
+      win.OneSignalDeferred = win.OneSignalDeferred || [];
+      win.OneSignalDeferred.push(async (OneSignal: any) => {
+        try {
+          if (checked) {
+            await OneSignal.User?.PushSubscription?.optIn();
+            toast.success("Push Notifications Enabled", {
+              description: "You will now receive real-time security alerts.",
+            });
+          } else {
+            await OneSignal.User?.PushSubscription?.optOut();
+            toast.info("Push Notifications Disabled", {
+              description: "You have disabled push notifications.",
+            });
+          }
+        } catch (err) {
+          console.error("OneSignal deferred toggle failed:", err);
+        }
+      });
+    }
+  };
+
   // Load backup config & status
   const loadBackupData = useCallback(async () => {
     setIsLoadingBackup(true);
@@ -303,9 +365,9 @@ const Settings = () => {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <Label>SMS Notifications</Label>
+                    <Label>Telegram Notifications</Label>
                     <p className="text-sm text-muted-foreground">
-                      Receive critical alerts via text message
+                      Receive critical alerts via Telegram
                     </p>
                   </div>
                   <Switch />
@@ -318,7 +380,7 @@ const Settings = () => {
                       Browser push notifications for real-time alerts
                     </p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch checked={pushEnabled} onCheckedChange={handlePushToggle} />
                 </div>
 
                 <Separator className="bg-border" />
