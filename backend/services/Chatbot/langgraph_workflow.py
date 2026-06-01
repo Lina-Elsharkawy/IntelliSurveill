@@ -39,6 +39,7 @@ from tools import (
     get_latest_anomalies,
     get_camera_activity_summary,
     get_daily_security_summary,
+    get_dashboard_sync_metrics,
     get_unknown_detection_count,
     get_known_face_detection_count,
     get_face_detection_count,
@@ -86,6 +87,7 @@ TOOL_MAP = {
     "anomalies_near_unknown_event": get_anomalies_near_unknown_event,
     "camera_activity_summary": get_camera_activity_summary,
     "daily_security_summary": get_daily_security_summary,
+    "dashboard_sync_metrics": get_dashboard_sync_metrics,
     "table_record_counts": get_table_record_counts,
     "anomaly_candidates": get_anomaly_candidates,
     "anomaly_candidate_review": get_anomaly_candidate_review,
@@ -702,18 +704,17 @@ def format_tool_result(state: SQLState) -> SQLState:
             )
         return {**state, "final_answer": answer, "results": rows}
 
-    if tool == "daily_security_summary":
+    if tool in {"daily_security_summary", "dashboard_sync_metrics"}:
         d = data if isinstance(data, dict) else {}
         answer = (
-            f"Security summary for {d.get('date', result.get('date'))}:\n\n"
-            f"- Entry-log detections: {d.get('entry_log_detections', 'N/A')}\n"
-            f"- Unknown face events: {d.get('unknown_face_events', 'N/A')}\n"
-            f"- Anomaly logs: {d.get('anomaly_logs', 'N/A')}"
+            f"### 🛡️ Dashboard Summary (Today)\n"
+            f"**Logic synchronized with Africa/Cairo timezone**\n\n"
+            f"- **Total Detections**: {d.get('total', 0)}\n"
+            f"- **Known People**: {d.get('known', 0)}\n"
+            f"- **Unknown/Unidentified**: {d.get('unknown', 0)}\n"
+            f"- **Average Quality**: {d.get('avg_quality', 0.0):.2f}\n"
+            f"- **Average Processing Time**: {d.get('avg_time_ms', 0.0):.1f} ms"
         )
-        if d.get("top_cameras"):
-            answer += "\n- Top cameras:\n" + "\n".join(
-                f"  • {r.get('camera_name')}: {r.get('detections')} detections" for r in d["top_cameras"]
-            )
         return {**state, "final_answer": answer, "results": [d]}
 
     if tool == "investigate_unknown_face_event":
