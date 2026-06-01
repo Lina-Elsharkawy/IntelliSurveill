@@ -14,8 +14,8 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: /
-    description: Current server
+  - url: http://localhost:3000
+    description: Local backend server
 
 components:
   securitySchemes:
@@ -1766,6 +1766,597 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  # ========================
+  # Auth
+  # ========================
+  /auth/login:
+    post:
+      operationId: authLogin
+      summary: Login
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: OK
+
+  # ========================
+  # LLM
+  # ========================
+  /api/llm/health:
+    get:
+      operationId: getLlmHealth
+      summary: LLM Health
+      tags:
+        - LLM
+      responses:
+        '200':
+          description: OK
+  /api/llm/explain:
+    post:
+      operationId: llmExplain
+      summary: LLM Explain
+      tags:
+        - LLM
+      responses:
+        '200':
+          description: OK
+
+  # ========================
+  # Ollama Jobs
+  # ========================
+  /api/ollama-jobs/:
+    get:
+      operationId: getOllamaJobs
+      summary: Get all jobs
+      tags:
+        - Ollama Jobs
+      responses:
+        '200':
+          description: OK
+    post:
+      operationId: createOllamaJob
+      summary: Create job
+      tags:
+        - Ollama Jobs
+      responses:
+        '200':
+          description: OK
+  /api/ollama-jobs/candidate/{candidateId}:
+    get:
+      operationId: getJobsByCandidate
+      summary: Get jobs by candidate
+      tags:
+        - Ollama Jobs
+      parameters:
+        - name: candidateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/ollama-jobs/{id}:
+    put:
+      operationId: updateOllamaJob
+      summary: Update job
+      tags:
+        - Ollama Jobs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  # ========================
+  # Notifications
+  # ========================
+  /api/notifications/recent:
+    get:
+      operationId: getRecentNotifications
+      summary: Get recent notifications
+      tags:
+        - Notifications
+      responses:
+        '200':
+          description: OK
+  /api/notifications/unread-count:
+    get:
+      operationId: getUnreadCount
+      summary: Get unread count
+      tags:
+        - Notifications
+      responses:
+        '200':
+          description: OK
+  /api/notifications/{id}/read:
+    put:
+      operationId: markNotificationRead
+      summary: Mark as read
+      tags:
+        - Notifications
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/notifications/mark-all-read:
+    put:
+      operationId: markAllNotificationsRead
+      summary: Mark all read
+      tags:
+        - Notifications
+      responses:
+        '200':
+          description: OK
+  /api/notifications/:
+    post:
+      operationId: createNotification
+      summary: Create notification
+      tags:
+        - Notifications
+      responses:
+        '200':
+          description: OK
+  /api/notifications/{id}:
+    delete:
+      operationId: deleteNotification
+      summary: Delete notification
+      tags:
+        - Notifications
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  # ========================
+  # Evidence
+  # ========================
+  /api/evidence/object:
+    get:
+      operationId: getEvidenceObject
+      summary: Get evidence object
+      tags:
+        - Evidence
+      responses:
+        '200':
+          description: OK
+
+  # ========================
+  # Chatbot
+  # ========================
+  /api/chatbot/health:
+    get:
+      operationId: getChatbotHealth
+      summary: Chatbot health
+      tags:
+        - Chatbot
+      responses:
+        '200':
+          description: OK
+  /api/chatbot/query:
+    post:
+      operationId: queryChatbot
+      summary: Chatbot query
+      tags:
+        - Chatbot
+      responses:
+        '200':
+          description: OK
+
+  # ========================
+  # Admin
+  # ========================
+  /api/admin/roles:
+    get:
+      operationId: getAdminRoles
+      summary: Get roles
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: OK
+  /api/admin/users:
+    get:
+      operationId: getAdminUsers
+      summary: Get users
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: OK
+    post:
+      operationId: createAdminUser
+      summary: Create user
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: OK
+  /api/admin/users/{id}:
+    patch:
+      operationId: updateAdminUser
+      summary: Update user
+      tags:
+        - Admin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    delete:
+      operationId: deleteAdminUser
+      summary: Delete user
+      tags:
+        - Admin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/admin/users/{id}/roles:
+    get:
+      operationId: getAdminUserRoles
+      summary: Get user roles
+      tags:
+        - Admin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    put:
+      operationId: updateAdminUserRoles
+      summary: Update roles
+      tags:
+        - Admin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    post:
+      operationId: assignAdminUserRoles
+      summary: Assign roles
+      tags:
+        - Admin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    delete:
+      operationId: removeAdminUserRoles
+      summary: Remove roles
+      tags:
+        - Admin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/admin/identities:
+    get:
+      operationId: getAdminIdentities
+      summary: List identities
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: OK
+  /api/admin/pending-unknowns:
+    get:
+      operationId: getAdminPendingUnknowns
+      summary: List pending unknowns
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: OK
+  /api/admin/recent-entry-logs:
+    get:
+      operationId: getAdminRecentEntryLogs
+      summary: List recent entry logs
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: OK
+  /api/admin/entry-logs/{id}/image:
+    get:
+      operationId: getAdminEntryLogImage
+      summary: Get entry log image
+      tags:
+        - Admin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/admin/assign-unknown:
+    post:
+      operationId: assignUnknown
+      summary: Assign unknown
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: OK
+  /api/admin/create-identity-from-unknown:
+    post:
+      operationId: createIdentityFromUnknown
+      summary: Create identity from unknown
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: OK
+  /api/admin/entry-logs/{id}/thumbnail:
+    get:
+      operationId: getAdminEntryLogThumbnail
+      summary: Get entry log thumbnail
+      tags:
+        - Admin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/admin/counts:
+    get:
+      operationId: getAdminCounts
+      summary: Get counts
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: OK
+
+  # ========================
+  # Audit Logs
+  # ========================
+  /api/audit-logs/:
+    get:
+      operationId: getAuditLogs
+      summary: Get audit logs
+      tags:
+        - Audit Logs
+      responses:
+        '200':
+          description: OK
+
+  # ========================
+  # Anomaly Candidates
+  # ========================
+  /api/anomaly-candidates/:
+    get:
+      operationId: getAnomalyCandidates
+      summary: Get anomaly candidates
+      tags:
+        - Anomaly Candidates
+      responses:
+        '200':
+          description: OK
+  /api/anomaly-candidates/{candidate_id}:
+    get:
+      operationId: getAnomalyCandidate
+      summary: Get candidate
+      tags:
+        - Anomaly Candidates
+      parameters:
+        - name: candidate_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/anomaly-candidates/{candidate_id}/review:
+    post:
+      operationId: reviewAnomalyCandidate
+      summary: Review candidate
+      tags:
+        - Anomaly Candidates
+      parameters:
+        - name: candidate_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  # ========================
+  # Anomaly Feedback
+  # ========================
+  /api/anomaly-feedback/:
+    get:
+      operationId: getAnomalyFeedback
+      summary: Get anomaly feedback
+      tags:
+        - Anomaly Feedback
+      responses:
+        '200':
+          description: OK
+
+  # ========================
+  # Anomaly Rules
+  # ========================
+  /api/anomaly-rules/rules:
+    get:
+      operationId: getAnomalyRules
+      summary: Get rules
+      tags:
+        - Anomaly Rules
+      responses:
+        '200':
+          description: OK
+    post:
+      operationId: createAnomalyRule
+      summary: Create rule
+      tags:
+        - Anomaly Rules
+      responses:
+        '200':
+          description: OK
+  /api/anomaly-rules/rules/preview:
+    post:
+      operationId: previewAnomalyRule
+      summary: Preview rule
+      tags:
+        - Anomaly Rules
+      responses:
+        '200':
+          description: OK
+  /api/anomaly-rules/rules/resolve-and-add:
+    post:
+      operationId: resolveAndAddAnomalyRule
+      summary: Resolve and add
+      tags:
+        - Anomaly Rules
+      responses:
+        '200':
+          description: OK
+  /api/anomaly-rules/rules/resolve-and-reactivate:
+    post:
+      operationId: resolveAndReactivateAnomalyRule
+      summary: Resolve and reactivate
+      tags:
+        - Anomaly Rules
+      responses:
+        '200':
+          description: OK
+  /api/anomaly-rules/rules/{rule_id}:
+    delete:
+      operationId: deleteAnomalyRule
+      summary: Delete rule
+      tags:
+        - Anomaly Rules
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/anomaly-rules/rules/reactivate-preview/{rule_id}:
+    post:
+      operationId: reactivatePreviewAnomalyRule
+      summary: Reactivate preview
+      tags:
+        - Anomaly Rules
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  # ========================
+  # Backup
+  # ========================
+  /api/backup/:
+    get:
+      operationId: getBackups
+      summary: Get backups
+      tags:
+        - Backup
+      responses:
+        '200':
+          description: OK
+
+  # ========================
+  # Python Microservices
+  # ========================
+  /vector_match/match:
+    post:
+      operationId: matchVector
+      summary: Match vector
+      tags:
+        - Vector Match
+      responses:
+        '200':
+          description: OK
+  /anomaly_service/ingest/scene_embedding:
+    post:
+      operationId: ingestSceneEmbedding
+      summary: Ingest scene embedding
+      tags:
+        - Anomaly Service
+      responses:
+        '200':
+          description: OK
+  /anomaly_service/ingest/person-context-tubelet:
+    post:
+      operationId: ingestPersonContextTubelet
+      summary: Ingest person context
+      tags:
+        - Anomaly Service
+      responses:
+        '200':
+          description: OK
+  /api/diag-test:
+    post:
+      operationId: diagTest
+      summary: Diagnostic Test
+      tags:
+        - Diagnostics
+      responses:
+        '200':
+          description: OK
+
 tags:
   - name: Health
     description: Server health check endpoints
@@ -1789,3 +2380,33 @@ tags:
     description: Manage visitor records
   - name: RAG
     description: Natural language query interface using RAG technology
+  - name: Auth
+    description: Authentication endpoints
+  - name: LLM
+    description: LLM related endpoints
+  - name: Ollama Jobs
+    description: Manage Ollama Jobs
+  - name: Notifications
+    description: Manage user notifications
+  - name: Evidence
+    description: Evidence handling
+  - name: Chatbot
+    description: Chatbot interactions
+  - name: Admin
+    description: Administrative actions
+  - name: Audit Logs
+    description: Retrieve audit logs
+  - name: Anomaly Candidates
+    description: Manage anomaly candidates
+  - name: Anomaly Feedback
+    description: Manage anomaly feedback
+  - name: Anomaly Rules
+    description: Manage anomaly rules
+  - name: Backup
+    description: Backup operations
+  - name: Vector Match
+    description: Vector match microservice
+  - name: Anomaly Service
+    description: Anomaly detection microservice
+  - name: Diagnostics
+    description: Diagnostic endpoints

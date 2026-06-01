@@ -27,6 +27,40 @@ from .logic import decide_identity, should_identify, should_autolearn
 app = FastAPI(title="Face Vector Match Service (Flink -> FastAPI -> pgvector)")
 
 
+def send_push_notification(title: str, message: str):
+    import json
+    import urllib.request
+    import urllib.error
+    import os
+    
+    app_id = os.getenv("ONESIGNAL_APP_ID", "19745197-b86d-43f4-a364-6129836a3da9")
+    api_key = os.getenv("ONESIGNAL_REST_API_KEY")
+    if not api_key:
+        print("ONESIGNAL_REST_API_KEY is not configured in environment, skipping push notification.")
+        return
+
+    url = "https://onesignal.com/api/v1/notifications"
+    headers = {
+        "Content-Type": "application/json; charset=utf-8",
+        "Authorization": f"Basic {api_key}"
+    }
+    payload = {
+        "app_id": app_id,
+        "headings": {"en": title},
+        "contents": {"en": message},
+        "included_segments": ["Subscribed Users"]
+    }
+    
+    try:
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=5) as response:
+            res_body = response.read().decode("utf-8")
+            print("OneSignal notification sent successfully:", res_body)
+    except Exception as e:
+        print(f"Failed to send OneSignal notification: {e}")
+
+
 @app.post("/match", response_model=MatchResponse)
 def match(event: EdgeEvent):
     # Normalize
@@ -136,6 +170,10 @@ def match(event: EdgeEvent):
                     best_similarity=best_sim,
                     second_similarity=second_sim,
                     margin=margin,
+                )
+                send_push_notification(
+                    "Unknown Person Detected",
+                    f"An unidentified person was detected at {event.location or f'Camera {event.camera_id}'}."
                 )
 
             return MatchResponse(

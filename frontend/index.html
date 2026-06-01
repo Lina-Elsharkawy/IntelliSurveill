@@ -1,27 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico?v=1" />
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="/favicon.ico?v=1" />
 
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Surveillance System</title>
-    <meta name="description" content="AI-powered surveillance and security monitoring system for university campus safety" />
-    <meta name="author" content="UniGuard Security Systems" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Surveillance System</title>
+  <meta name="description"
+    content="AI-powered surveillance and security monitoring system for university campus safety" />
+  <meta name="author" content="UniGuard Security Systems" />
 
-    <meta property="og:title" content="UniGuard AI - University Surveillance System" />
-    <meta property="og:description" content="AI-powered surveillance and security monitoring system for university campus safety" />
-    <meta property="og:type" content="website" />
-    
+  <meta property="og:title" content="UniGuard AI - University Surveillance System" />
+  <meta property="og:description"
+    content="AI-powered surveillance and security monitoring system for university campus safety" />
+  <meta property="og:type" content="website" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-   
-    
-  </head>
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  <meta name="twitter:card" content="summary_large_image" />
+  <!-- ✅ OneSignal here -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function (OneSignal) {
+      await OneSignal.init({
+        appId: "19745197-b86d-43f4-a364-6129836a3da9",
+        safari_web_id: "web.onesignal.auto.5093406a-927f-4c57-a877-608b6718a7cc",
+        notifyButton: { enable: false },
+        allowLocalhostAsSecureOrigin: true,
+      });
+    });
+  </script>
+
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>
