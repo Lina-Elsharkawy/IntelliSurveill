@@ -49,6 +49,8 @@ class PoseGate:
         self.threshold_id: int | None = None
         self.threshold_key = cfg.pose_threshold_key
         self.threshold_value = float(cfg.pose_threshold_value)
+        self.gmm_path: str = ""
+        self.pose_gmm_components: int = int(getattr(cfg, "pose_gmm_components", 8))
         self.states: dict[int, OnlineGateState] = {}
 
     def load(self) -> None:
@@ -62,13 +64,22 @@ class PoseGate:
                 artifact_dir / "models" / "robust_scaler.joblib",
                 artifact_dir / "models" / "scaler.joblib",
             ], glob_patterns=["models/*scaler*.joblib", "models/*scaler*.pkl", "*scaler*.joblib", "*scaler*.pkl"])
+            pose_components = int(getattr(self.cfg, "pose_gmm_components", 8))
             gmm_path = self._find_existing([
-                artifact_dir / "models" / "pose_gmm_components_5.joblib",
+                artifact_dir / "models" / f"pose_gmm_components_{pose_components}.joblib",
                 artifact_dir / "models" / "pose_gmm.joblib",
                 artifact_dir / "models" / "gmm.joblib",
-            ], glob_patterns=["models/*components_5*.joblib", "models/*gmm*.joblib", "models/*gmm*.pkl", "*gmm*.joblib", "*gmm*.pkl"])
+            ], glob_patterns=[
+                f"models/*components_{pose_components}*.joblib",
+                "models/*gmm*.joblib",
+                "models/*gmm*.pkl",
+                "*gmm*.joblib",
+                "*gmm*.pkl",
+            ])
             self.scaler = joblib.load(scaler_path)
             self.gmm = joblib.load(gmm_path)
+            self.gmm_path = str(gmm_path)
+            self.pose_gmm_components = pose_components
             if self.cfg.pose_reinfer_enabled:
                 from ultralytics import YOLO
                 self.pose_model = YOLO(self.cfg.pose_model)
@@ -78,7 +89,7 @@ class PoseGate:
                 self.threshold_value = self._load_threshold_from_artifact(artifact_dir, self.cfg.pose_threshold_key)
             self.loaded = True
             self.load_error = None
-            log.info("Loaded pose gate scaler=%s gmm=%s threshold=%s", scaler_path, gmm_path, self.threshold_value)
+            log.info("Loaded pose gate scaler=%s gmm=%s components=%s threshold=%s", scaler_path, gmm_path, self.pose_gmm_components, self.threshold_value)
         except Exception as e:
             self.loaded = False
             self.load_error = str(e)
@@ -103,7 +114,6 @@ class PoseGate:
             if not path.exists():
                 continue
             data = json.loads(path.read_text(encoding="utf-8"))
-            # Common layouts: direct, thresholds, components_5, model rows.
             if isinstance(data, dict):
                 for d in [data, data.get("thresholds") if isinstance(data.get("thresholds"), dict) else None]:
                     if isinstance(d, dict):
@@ -130,6 +140,7 @@ class PoseGate:
     def score_tubelet(self, tracker_track_id: int, tubelet: Sequence[SampledPerson]) -> PoseGateOutput:
         self.load()
         assert self.scaler is not None and self.gmm is not None
+
         feature, feature_meta = make_pose_feature_from_tubelet(
             tubelet,
             kpt_conf=self.cfg.pose_kpt_conf,
@@ -145,8 +156,57 @@ class PoseGate:
         x = feature.reshape(1, -1).astype(np.float32)
         x_scaled = self.scaler.transform(x)
         raw_score = float(-self.gmm.score_samples(x_scaled)[0])
-        update = self._state_for(tracker_track_id).update(raw_score)
         feature_values = {name: float(feature[i]) for i, name in enumerate(POSE_FEATURE_NAMES)}
+
+        # Tubelet-level quality guard.
+        # Important: do this BEFORE updating OnlineGateState so low-quality pose
+        # tubelets do not pollute smoothing/persistence history.
+        pose_valid_frame_ratio = float(feature_values.get("pose_valid_frame_ratio", 0.0))
+        pose_mean_keypoint_conf = float(feature_values.get("pose_mean_keypoint_conf", 0.0))
+        pose_valid_keypoint_ratio_mean = float(feature_values.get("pose_valid_keypoint_ratio_mean", 0.0))
+        pose_source_meta = feature_meta.get("pose_source_meta", []) if isinstance(feature_meta, dict) else []
+        ambiguous_rejected_count = 0
+        low_iou_rejected_count = 0
+        if isinstance(pose_source_meta, list):
+            for m in pose_source_meta:
+                if not isinstance(m, dict):
+                    continue
+                if bool(m.get("pose_rejected_due_to_ambiguity")):
+                    ambiguous_rejected_count += 1
+                if "pose_rejected_due_to_low_iou" in m:
+                    low_iou_rejected_count += 1
+
+        quality_suppressed = bool(
+            pose_valid_frame_ratio < 0.85
+            or pose_mean_keypoint_conf < 0.70
+            or pose_valid_keypoint_ratio_mean < 0.80
+            or ambiguous_rejected_count >= 3
+            or low_iou_rejected_count >= 3
+        )
+        quality_reason = None
+        if quality_suppressed:
+            quality_reason = {
+                "pose_quality_suppressed": True,
+                "pose_valid_frame_ratio": pose_valid_frame_ratio,
+                "pose_mean_keypoint_conf": pose_mean_keypoint_conf,
+                "pose_valid_keypoint_ratio_mean": pose_valid_keypoint_ratio_mean,
+                "ambiguous_rejected_count": int(ambiguous_rejected_count),
+                "low_iou_rejected_count": int(low_iou_rejected_count),
+            }
+            update = GateUpdate(
+                raw_score=raw_score,
+                smoothed_score=raw_score,
+                threshold=self.threshold_value,
+                hit_raw=raw_score > self.threshold_value,
+                hit_smooth=False,
+                persistent=False,
+                persistence_hits=0,
+                persistence_window=self.cfg.pose_persistence_window,
+                persistence_required_hits=self.cfg.pose_persistence_required_hits,
+            )
+        else:
+            update = self._state_for(tracker_track_id).update(raw_score)
+
         metadata = {
             "gate": "pose",
             "model": "pose_micro_gmm_gate",
@@ -159,6 +219,10 @@ class PoseGate:
             "pose_min_crop_size": int(self.cfg.pose_min_crop_size),
             "pose_time_mode": str(self.cfg.pose_time_mode),
             "threshold_key": self.threshold_key,
+            "pose_gmm_components": int(self.pose_gmm_components),
+            "gmm_path": self.gmm_path,
+            "quality_suppressed": bool(quality_suppressed),
+            "quality_reason": quality_reason,
             "feature_meta": feature_meta,
             "tubelet_start_sample_index": int(tubelet[0].sample_index) if tubelet else None,
             "tubelet_end_sample_index": int(tubelet[-1].sample_index) if tubelet else None,

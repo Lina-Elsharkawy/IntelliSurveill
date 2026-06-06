@@ -13,7 +13,6 @@ export default function VadReasoning() {
   const { toast } = useToast();
   
   const [items, setItems] = useState<VadReasoningListItem[]>([]);
-  const [rawItems, setRawItems] = useState<any[]>([]); // Added for debug
   const [summary, setSummary] = useState<VadReasoningSummary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -24,7 +23,6 @@ export default function VadReasoning() {
     decision: 'all',
     caseId: '',
     onlyDeep: true,
-    onlyFailed: false
   });
 
   const fetchData = useCallback(async (silent = false) => {
@@ -39,8 +37,6 @@ export default function VadReasoning() {
       });
       
       let fetchedItems = res.items || [];
-      console.log("Reasoning API response:", res);
-      setRawItems(fetchedItems); // Store raw before filters
       
       if (filters.onlyDeep) {
         fetchedItems = fetchedItems.filter(i => {
@@ -49,8 +45,6 @@ export default function VadReasoning() {
           return true;
         });
       }
-      
-      console.log("Reasoning items after filters:", fetchedItems);
       
       setItems(fetchedItems);
       setSummary(res.summary);
@@ -75,6 +69,18 @@ export default function VadReasoning() {
     fetchData();
   }, [filters.status, filters.decision, filters.onlyDeep]); // intentionally not including caseId to allow typing without fetching per keystroke
 
+  // Auto-refresh every 30 seconds if there are active jobs
+  useEffect(() => {
+    const hasActiveJobs = items.some(i => i.job.status === 'queued' || i.job.status === 'running');
+    if (!hasActiveJobs) return;
+
+    const timer = setInterval(() => {
+      fetchData(true);
+    }, 30000);
+
+    return () => clearInterval(timer);
+  }, [items, fetchData]);
+
   const handleRefresh = () => {
     fetchData();
   };
@@ -83,10 +89,10 @@ export default function VadReasoning() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col h-full w-full max-w-[1800px] mx-auto animate-in fade-in duration-500">
+      <div className="h-[calc(100vh-2rem)] overflow-hidden flex flex-col w-full max-w-[1800px] mx-auto animate-in fade-in duration-500">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border pb-6 mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border pb-3 mb-3 shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-gradient-to-br from-indigo-500/20 to-indigo-500/5 rounded-xl border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.15)]">
               <Network className="h-7 w-7 text-indigo-400" />
@@ -100,50 +106,30 @@ export default function VadReasoning() {
           </div>
           
           <div className="flex items-center gap-2">
-            <Badge label="Deep-only reasoning" />
-            <Badge label="VLM → LLM → Python" />
-            <Badge label="Ollama local" icon={<ShieldAlert size={12} className="mr-1 inline" />} />
+            <Badge label="Indoor Lab" />
+            <Badge label="Deep Gate" />
+            <Badge label="Live Monitoring" icon={<span className="relative flex h-2 w-2 mr-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span>} />
           </div>
         </div>
 
-        {summary && <ReasoningSummaryCards summary={summary} />}
+        <div className="shrink-0">
+          {summary && <ReasoningSummaryCards summary={summary} />}
+        </div>
         
-        <ReasoningFilters 
-          filters={filters} 
-          setFilters={setFilters} 
-          onRefresh={handleRefresh} 
-          isLoading={isLoading} 
-        />
+        <div className="shrink-0 mb-3">
+          <ReasoningFilters 
+            filters={filters} 
+            setFilters={setFilters} 
+            onRefresh={handleRefresh} 
+            isLoading={isLoading} 
+          />
+        </div>
 
-        <details className="mb-6 group">
-          <summary className="text-xs text-slate-500 hover:text-slate-300 cursor-pointer select-none pl-2 flex items-center gap-2 w-max">
-            Developer Debug
-          </summary>
-          <div className="bg-blue-950/30 border border-blue-500/50 rounded-xl p-4 mt-2 font-mono text-[10px] text-blue-200">
-            <h3 className="text-xs font-bold text-blue-400 mb-2 uppercase">Developer Debug Panel</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p><strong>API URL:</strong> /vad/rtsp/reasoning/jobs</p>
-                <p><strong>Loading State:</strong> {isLoading ? 'true' : 'false'}</p>
-                <p><strong>Error State:</strong> {apiError || 'null'}</p>
-                <p><strong>Raw Item Count (before filters):</strong> {rawItems.length}</p>
-                <p><strong>Filtered Item Count:</strong> {items.length}</p>
-              </div>
-              <div className="bg-black/50 p-2 rounded max-h-[150px] overflow-y-auto">
-                <p className="font-bold mb-1">First Raw Item Preview:</p>
-                <pre className="text-[9px] opacity-70">
-                  {rawItems.length > 0 ? JSON.stringify(rawItems[0], null, 2) : 'No items'}
-                </pre>
-              </div>
-            </div>
-          </div>
-        </details>
-
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 flex-1 h-full min-h-0">
+        <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-12 gap-6 overflow-hidden">
           
           {/* Left Pane: Job List */}
-          <div className="xl:col-span-4 flex flex-col h-full">
-            <div className="bg-zinc-950/50 rounded-xl border border-zinc-800 p-4 h-full flex flex-col shadow-xl">
+          <div className="xl:col-span-4 h-full min-h-0 flex flex-col">
+            <div className="bg-zinc-950/50 rounded-xl border border-zinc-800 p-4 h-full flex flex-col shadow-xl overflow-hidden">
               <div className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-3">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">Reasoning Jobs</h2>
                 <span className="text-xs text-slate-500 font-mono">{items.length} items</span>
@@ -166,8 +152,8 @@ export default function VadReasoning() {
           </div>
 
           {/* Right Pane: Detail Panel */}
-          <div className="xl:col-span-8 flex flex-col h-full">
-            <div className="bg-zinc-950/80 rounded-xl border border-zinc-800 p-4 lg:p-6 h-full shadow-2xl backdrop-blur-sm">
+          <div className="xl:col-span-8 h-full min-h-0 flex flex-col">
+            <div className="bg-zinc-950/80 rounded-xl border border-zinc-800 p-4 lg:p-6 h-full shadow-2xl backdrop-blur-sm flex flex-col overflow-hidden">
               <ReasoningDetailPanel item={selectedItem} />
             </div>
           </div>

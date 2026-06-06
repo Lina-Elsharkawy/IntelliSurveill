@@ -24,41 +24,17 @@ export function PythonFinalGuardrailsCard({ item }: { item: VadReasoningListItem
   const iconColor = isAlert ? "text-red-500" : "text-emerald-500";
 
   return (
-    <div className={`bg-zinc-950 rounded-xl border border-zinc-800 p-5 mb-4`}>
-      <div className="flex items-center justify-between mb-4 border-b border-zinc-800/50 pb-4">
-        <div className="flex items-center gap-3">
-          <HeaderIcon className={iconColor} size={18} />
+    <div className="p-2">
+      <div className="flex items-center justify-between mb-3 border-b border-zinc-800/50 pb-2">
+        <div className="flex items-center gap-2">
+          <HeaderIcon className={iconColor} size={16} />
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200">Python Guardrails</h3>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-        <div>
-          <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Final Decision</span>
-          <span className={`text-sm font-bold ${isAlert ? 'text-red-400' : pfr.final_alert_decision === 'NO' ? 'text-emerald-400' : 'text-amber-400'}`}>
-            {pfr.final_alert_decision}
-          </span>
-        </div>
-        <div>
-          <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Final Severity</span>
-          <span className="text-sm font-semibold text-slate-300">{pfr.final_severity}</span>
-        </div>
-        <div>
-          <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Final Action</span>
-          <span className="text-sm font-semibold text-slate-300">{pfr.final_recommended_action}</span>
-        </div>
-        <div>
-          <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Final Confidence</span>
-          <span className="text-sm font-semibold text-slate-300">{pfr.final_confidence?.toFixed(2)}</span>
-        </div>
-      </div>
 
-      <div className="mb-5">
-        <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5 block">Final Decision Reason</span>
-        <p className="text-sm text-slate-300 bg-zinc-900/80 p-3.5 rounded-lg border border-zinc-800/80 leading-relaxed">
-          {pfr.final_decision_reason}
-        </p>
-      </div>
+
+
 
       <div className="flex flex-col gap-2">
         <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Guardrail Actions Log</span>

@@ -19,15 +19,15 @@ export function VlmVisualReviewCard({ item }: { item: VadReasoningListItem }) {
   }
 
   return (
-    <div className="bg-zinc-950 rounded-xl border border-zinc-800 p-5 mb-4">
-      <div className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-3">
+    <div className="p-2">
+      <div className="flex items-center justify-between mb-3 border-b border-zinc-800 pb-2">
         <div className="flex items-center gap-2">
-          <Eye className="text-indigo-400" size={18} />
+          <Eye className="text-indigo-400" size={16} />
           <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-200">VLM Visual Review</h3>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
         <div>
           <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Visual Decision</span>
           <span className={`text-sm font-bold ${vlm.visual_alert_decision === 'YES' ? 'text-red-400' : vlm.visual_alert_decision === 'NO' ? 'text-emerald-400' : 'text-amber-400'}`}>
@@ -36,7 +36,7 @@ export function VlmVisualReviewCard({ item }: { item: VadReasoningListItem }) {
         </div>
         <div>
           <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Event Type</span>
-          <span className="text-sm font-semibold text-slate-300">{vlm.event_type}</span>
+          <span className="text-sm font-semibold text-slate-300 capitalize">{vlm.event_type?.replace(/_/g, ' ')}</span>
         </div>
         <div>
           <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Sufficiency</span>
@@ -48,24 +48,24 @@ export function VlmVisualReviewCard({ item }: { item: VadReasoningListItem }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-        <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-3">
+        <div className="flex flex-col gap-1.5">
           <SectionTitle>Visible Scene</SectionTitle>
-          <p className="text-xs text-slate-300 bg-zinc-900 p-3 rounded-lg border border-zinc-800 leading-relaxed h-full">{vlm.visible_scene}</p>
+          <p className="text-xs text-slate-300 bg-zinc-900/50 p-2.5 rounded border border-zinc-800/50 leading-relaxed line-clamp-3" title={vlm.visible_scene}>{vlm.visible_scene}</p>
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
           <SectionTitle>Person & Action</SectionTitle>
-          <p className="text-xs text-slate-300 bg-zinc-900 p-3 rounded-lg border border-zinc-800 leading-relaxed h-full">{vlm.person_observation}</p>
+          <p className="text-xs text-slate-300 bg-zinc-900/50 p-2.5 rounded border border-zinc-800/50 leading-relaxed line-clamp-3" title={vlm.person_observation}>{vlm.person_observation}</p>
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
           <SectionTitle>Motion Observation</SectionTitle>
-          <p className="text-xs text-slate-300 bg-zinc-900 p-3 rounded-lg border border-zinc-800 leading-relaxed h-full">{vlm.motion_observation}</p>
+          <p className="text-xs text-slate-300 bg-zinc-900/50 p-2.5 rounded border border-zinc-800/50 leading-relaxed line-clamp-3" title={vlm.motion_observation}>{vlm.motion_observation}</p>
         </div>
       </div>
 
-      <div className="mb-5 flex flex-col gap-2">
+      <div className="mb-3 flex flex-col gap-1.5">
         <SectionTitle>Decision Reason</SectionTitle>
-        <p className="text-sm text-slate-300 bg-zinc-900 p-3 rounded-lg border border-zinc-800 leading-relaxed">{vlm.visual_decision_reason}</p>
+        <p className="text-xs text-slate-300 bg-zinc-900/50 p-2.5 rounded border border-zinc-800/50 leading-relaxed line-clamp-2" title={vlm.visual_decision_reason}>{vlm.visual_decision_reason}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

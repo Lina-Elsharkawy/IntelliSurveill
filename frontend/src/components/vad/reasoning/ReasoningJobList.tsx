@@ -1,8 +1,8 @@
 import { VadReasoningListItem } from "@/services/vad_api";
 import { StatusBadge, DecisionBadge } from "./ReasoningBadges";
-import { getFinalDecision, getShortError } from "./reasoningUtils";
+import { getFinalDecision, getShortError, getVlmReview, getFinalSeverity } from "./reasoningUtils";
 import { formatDistanceToNow } from "date-fns";
-import { AlertCircle, ChevronRight } from "lucide-react";
+import { AlertCircle, ChevronRight, Video } from "lucide-react";
 
 export function ReasoningJobList({ 
   items, 
@@ -24,12 +24,16 @@ export function ReasoningJobList({
   }
 
   return (
-    <div className="flex flex-col gap-2 overflow-y-auto pr-2" style={{ maxHeight: "calc(100vh - 280px)" }}>
+    <div className="flex-1 flex flex-col gap-2 overflow-y-auto pr-2 min-h-0">
       {items.map((item) => {
         const isSelected = item.job.id === selectedId;
         const finalDecision = getFinalDecision(item);
+        const severity = getFinalSeverity(item);
         const error = getShortError(item);
         const timeAgo = item.job.queued_at ? formatDistanceToNow(new Date(item.job.queued_at), { addSuffix: true }) : '';
+        const vlm = getVlmReview(item);
+        const eventType = vlm?.event_type || item.job.input_bundle_json?.event?.event_type || "Unknown Event";
+        const streamKey = item.job.input_bundle_json?.event?.stream_key || "Unknown Camera";
 
         return (
           <div 
@@ -72,11 +76,14 @@ export function ReasoningJobList({
               <span className="text-[10px] text-slate-500">{timeAgo}</span>
             </div>
 
-            <div className="text-[10px] text-slate-500 mb-2 truncate" title={item.job.prompt_version}>
-              {item.job.prompt_version?.split('_').slice(0, 3).join('_')}...
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mb-1.5 truncate">
+              <Video size={10} />
+              <span className="font-semibold">{streamKey}</span>
+              <span className="text-zinc-600 px-1">•</span>
+              <span className="truncate capitalize">{eventType.replace(/_/g, ' ')}</span>
             </div>
 
-            <div className="text-[11px] text-slate-400 leading-snug italic line-clamp-2">
+            <div className="text-[10px] text-slate-500 leading-snug italic truncate">
               {item.job.status === 'failed' ? (error || "Reasoning failed") : 
                (item.result?.python_final_result_json?.final_decision_reason || item.result?.llm_policy_review_json?.decision_reason || "Reasoning completed")}
             </div>

@@ -472,6 +472,11 @@ class VadRtspSampler:
             "smoothed_score": float(gate_out.smoothed_score),
             "threshold_value": float(gate_out.threshold_value),
         }
+        # Keep evaluation timestamps semantically clean:
+        # - start_ts is the beginning of the scored tubelet/window.
+        # - peak_ts is the latest/alarm timestamp for this emitted event.
+        tubelet_start_ts = tubelet_samples[0].captured_at
+        tubelet_peak_ts = tubelet_samples[-1].captured_at
         gate_event_id = self.db.insert_gate_event(
             conn,
             session_id=self.session_id,
@@ -485,7 +490,8 @@ class VadRtspSampler:
             event_key=event_key,
             severity=severity,
             event_type=event_type,
-            start_ts=tubelet_samples[-1].captured_at,
+            start_ts=tubelet_start_ts,
+            peak_ts=tubelet_peak_ts,
             peak_score=float(gate_out.smoothed_score),
             threshold_value=float(gate_out.threshold_value),
             persistence_hits=int(gate_out.persistence_hits),
@@ -506,7 +512,8 @@ class VadRtspSampler:
             primary_track_id=sample.db_track_id,
             severity=severity,
             case_type=event_type,
-            start_ts=tubelet_samples[-1].captured_at,
+            start_ts=tubelet_start_ts,
+            peak_ts=tubelet_peak_ts,
             peak_score=float(gate_out.smoothed_score),
             primary_gate_name=gate_name,
             gate_summary_json={gate_name: gate_summary},
@@ -539,6 +546,19 @@ class VadRtspSampler:
                 )
                 evidence_objects = len(evidence_result.media_object_ids)
                 evidence_items = len(evidence_result.evidence_item_ids)
+                self.db.update_anomaly_case_evidence_bundle(
+                    conn,
+                    case_id=case_id,
+                    evidence_bundle_json={
+                        "status": "uploaded",
+                        "object_keys": list(evidence_result.object_keys),
+                        "media_object_ids": [int(x) for x in evidence_result.media_object_ids],
+                        "evidence_item_ids": [int(x) for x in evidence_result.evidence_item_ids],
+                        "gate_event_id": int(gate_event_id),
+                        "tubelet_id": int(tubelet_id),
+                        "score_id": int(score_id),
+                    },
+                )
             except Exception as e:
                 self.last_error = f"Evidence upload failed for {gate_name} event {gate_event_id}: {e}"
                 log.exception(self.last_error)

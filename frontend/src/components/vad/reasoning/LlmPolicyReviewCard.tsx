@@ -20,48 +20,30 @@ export function LlmPolicyReviewCard({ item }: { item: VadReasoningListItem }) {
   }
 
   return (
-    <div className="bg-zinc-950 rounded-xl border border-zinc-800 p-5 mb-4">
-      <div className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-3">
+    <div className="p-2">
+      <div className="flex items-center justify-between mb-3 border-b border-zinc-800 pb-2">
         <div className="flex items-center gap-2">
-          <Brain className="text-fuchsia-400" size={18} />
+          <Brain className="text-fuchsia-400" size={16} />
           <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-200">LLM Policy Review</h3>
         </div>
       </div>
 
-      <div className="bg-fuchsia-500/5 border border-fuchsia-500/10 rounded-lg p-3 mb-4 flex items-start gap-2">
-        <FileText size={14} className="text-fuchsia-500/50 mt-0.5" />
-        <p className="text-xs text-fuchsia-200/60 italic">
-          The LLM policy layer reasons over the structured VLM visual review, score context, and active rules. It does not inspect images directly.
-        </p>
+      <div className="bg-fuchsia-500/5 border border-fuchsia-500/10 rounded-lg p-3 mb-4 flex flex-col gap-2">
+        <div className="flex items-start gap-2">
+          <FileText size={14} className="text-fuchsia-500/50 mt-0.5" />
+          <p className="text-xs text-fuchsia-200/60 italic">
+            The LLM policy layer reasons over the structured VLM visual review, score context, and active rules.
+          </p>
+        </div>
+        {llm.decision_reason && (
+          <div className="mt-2 text-sm text-slate-300">
+            <span className="font-semibold text-slate-500 mr-2 text-xs uppercase">Policy Interpretation:</span>
+            {llm.decision_reason}
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-        <div>
-          <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Policy Decision</span>
-          <span className={`text-sm font-bold ${llm.policy_alert_decision === 'YES' ? 'text-red-400' : llm.policy_alert_decision === 'NO' ? 'text-emerald-400' : 'text-amber-400'}`}>
-            {llm.policy_alert_decision}
-          </span>
-        </div>
-        <div>
-          <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Severity</span>
-          <span className="text-sm font-semibold text-slate-300">{llm.policy_severity}</span>
-        </div>
-        <div>
-          <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Recommended Action</span>
-          <span className="text-sm font-semibold text-slate-300">{llm.recommended_action}</span>
-        </div>
-        <div>
-          <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Policy Confidence</span>
-          <span className="text-sm font-semibold text-slate-300">{llm.policy_confidence?.toFixed(2)}</span>
-        </div>
-      </div>
-
-      <div className="mb-5 flex flex-col gap-2">
-        <SectionTitle>Decision Reason</SectionTitle>
-        <p className="text-sm text-slate-300 bg-zinc-900 p-3 rounded-lg border border-zinc-800">{llm.decision_reason}</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3">
         <div className="flex flex-col gap-2">
           <SectionTitle>Matched Trigger Rules</SectionTitle>
           <RuleList rules={llm.matched_trigger_rules} isTrigger={true} />

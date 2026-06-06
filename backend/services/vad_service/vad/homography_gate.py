@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -89,6 +90,7 @@ class HomographyMacroGate:
         self.scaler_path = ""
         self.pca_path = ""
         self.gmm_path = ""
+        self.homography_macro_gmm_components: int = int(getattr(cfg, "homography_macro_gmm_components", 8))
         self.homography_path = ""
 
     def load(self) -> None:
@@ -101,12 +103,22 @@ class HomographyMacroGate:
             artifacts = rec.get("artifacts", {}) if isinstance(rec, dict) else {}
             scaler_path = _resolve_recommended_path(gate_dir, artifacts.get("scaler")) or _find_first_joblib(gate_dir, ["scaler"]) or _find_first_joblib(gate_dir, ["robust"])
             pca_path = _resolve_recommended_path(gate_dir, artifacts.get("pca"))
-            gmm_path = _resolve_recommended_path(gate_dir, artifacts.get("gmm"))
+            macro_components = int(getattr(self.cfg, "homography_macro_gmm_components", 8))
+
+            # Deployment must choose the GMM component count explicitly.
+            # Do not let 09_recommended_macro_gate.json or primary_components
+            # silently select a different model than the configured threshold.
+            gmm_path = _find_first_joblib(gate_dir, [f"components_{macro_components}"])
+
+            if gmm_path is None:
+                gmm_path = _resolve_recommended_path(gate_dir, artifacts.get("gmm"))
+
             if gmm_path is None:
                 primary_k = rec.get("primary_components") or (rec.get("training", {}) if isinstance(rec.get("training"), dict) else {}).get("primary_components") if isinstance(rec, dict) else None
                 if primary_k:
                     gmm_path = _find_first_joblib(gate_dir, [f"components_{int(primary_k)}"])
-                gmm_path = gmm_path or _find_first_joblib(gate_dir, ["components_5"]) or _find_first_joblib(gate_dir, ["gmm"])
+
+            gmm_path = gmm_path or _find_first_joblib(gate_dir, ["gmm"])
             if scaler_path is None or not scaler_path.exists():
                 raise FileNotFoundError(f"Could not find macro RobustScaler joblib under {gate_dir}")
             if gmm_path is None or not gmm_path.exists():
@@ -118,8 +130,11 @@ class HomographyMacroGate:
                 self.threshold_value = float(rec["threshold"])
             elif rec.get("primary_threshold") is not None:
                 self.threshold_value = float(rec["primary_threshold"])
-            # Env wins over artifact when explicitly set to non-default by compose/user.
-            if self.cfg.homography_macro_threshold_value is not None:
+            # Artifact threshold wins by default. Only an explicitly provided
+            # VAD_HOMOGRAPHY_MACRO_THRESHOLD_VALUE env var may override it.
+            # This prevents the old config default from silently overriding
+            # the newly deployed p99_7 09_recommended_macro_gate.json.
+            if "VAD_HOMOGRAPHY_MACRO_THRESHOLD_VALUE" in os.environ:
                 self.threshold_value = float(self.cfg.homography_macro_threshold_value)
             H_path = self.cfg.homography_matrix_path if self.cfg.homography_matrix_path else gate_dir
             self.H, self.homography_path = load_homography_matrix(H_path)
@@ -129,9 +144,10 @@ class HomographyMacroGate:
             else:
                 self.pose_model = None
             self.scaler_path = str(scaler_path); self.pca_path = str(pca_path or ""); self.gmm_path = str(gmm_path)
+            self.homography_macro_gmm_components = macro_components
             self.loaded = True
             self.load_error = None
-            log.info("Loaded homography macro gate scaler=%s gmm=%s H=%s threshold=%.6f", self.scaler_path, self.gmm_path, self.homography_path, self.threshold_value)
+            log.info("Loaded homography macro gate scaler=%s gmm=%s components=%s H=%s threshold=%.6f", self.scaler_path, self.gmm_path, self.homography_macro_gmm_components, self.homography_path, self.threshold_value)
         except Exception as e:
             self.loaded = False
             self.load_error = str(e)
@@ -215,6 +231,7 @@ class HomographyMacroGate:
             "scaler_path": self.scaler_path,
             "pca_path": self.pca_path,
             "gmm_path": self.gmm_path,
+            "homography_macro_gmm_components": int(self.homography_macro_gmm_components),
             "homography_path": self.homography_path,
             "feature_names": FEATURE_NAMES,
             "persistent_rising_edge": rising_edge,

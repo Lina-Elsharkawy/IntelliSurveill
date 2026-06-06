@@ -89,14 +89,64 @@ def _pad_box_xyxy(box: Sequence[float], w: int, h: int, pad_ratio: float = 0.25,
     return [int(round(px1)), int(round(py1)), int(round(px2)), int(round(py2))]
 
 
-def _choose_best_pose_result(result: Any) -> tuple[np.ndarray | None, np.ndarray | None]:
+def _invalid_pose_arrays() -> tuple[np.ndarray, np.ndarray]:
+    """Return an invalid COCO17 pose."""
+    return np.full((17, 2), np.nan, dtype=np.float64), np.zeros((17,), dtype=np.float64)
+
+
+def _candidate_pose_box(xy: np.ndarray, conf: np.ndarray | None = None, *, conf_thr: float = 0.05) -> tuple[np.ndarray | None, float]:
+    """Approximate a detected pose box from finite/confident keypoints."""
+    arr = np.asarray(xy, dtype=np.float64)
+    if arr.ndim != 2 or arr.shape[0] < 17 or arr.shape[1] < 2:
+        return None, 0.0
+    finite = np.isfinite(arr[:, 0]) & np.isfinite(arr[:, 1])
+    if conf is not None:
+        c = np.asarray(conf, dtype=np.float64)
+        if c.ndim == 1 and c.shape[0] >= 17:
+            finite = finite & np.isfinite(c[:17]) & (c[:17] >= float(conf_thr))
+    pts = arr[:17][finite[:17]]
+    if pts.shape[0] < 3:
+        return None, float(pts.shape[0]) / 17.0
+    x1, y1 = np.nanmin(pts[:, 0]), np.nanmin(pts[:, 1])
+    x2, y2 = np.nanmax(pts[:, 0]), np.nanmax(pts[:, 1])
+    if not np.all(np.isfinite([x1, y1, x2, y2])) or x2 <= x1 or y2 <= y1:
+        return None, float(pts.shape[0]) / 17.0
+    return np.asarray([x1, y1, x2, y2], dtype=np.float64), float(pts.shape[0]) / 17.0
+
+
+def _box_center(box: Sequence[float]) -> np.ndarray:
+    x1, y1, x2, y2 = [float(v) for v in box]
+    return np.asarray([(x1 + x2) * 0.5, (y1 + y2) * 0.5], dtype=np.float64)
+
+
+def _box_iou(a: Sequence[float], b: Sequence[float]) -> float:
+    ax1, ay1, ax2, ay2 = [float(v) for v in a]
+    bx1, by1, bx2, by2 = [float(v) for v in b]
+    ix1, iy1 = max(ax1, bx1), max(ay1, by1)
+    ix2, iy2 = min(ax2, bx2), min(ay2, by2)
+    iw, ih = max(0.0, ix2 - ix1), max(0.0, iy2 - iy1)
+    inter = iw * ih
+    area_a = max(1e-6, (ax2 - ax1) * (ay2 - ay1))
+    area_b = max(1e-6, (bx2 - bx1) * (by2 - by1))
+    return float(inter / max(1e-6, area_a + area_b - inter))
+
+
+def _choose_best_pose_result(
+    result: Any,
+    expected_box_xyxy: Sequence[float] | None = None,
+) -> tuple[np.ndarray | None, np.ndarray | None, dict[str, Any]]:
+    """Choose the pose candidate that belongs to the tracked crop."""
+    meta: dict[str, Any] = {
+        "pose_candidate_count": 0,
+        "pose_selection_policy": "expected_box_iou_center_conf" if expected_box_xyxy is not None else "mean_conf",
+    }
     if result is None or getattr(result, "keypoints", None) is None:
-        return None, None
+        return None, None, meta
     kpts = result.keypoints
     xy = getattr(kpts, "xy", None)
     conf = getattr(kpts, "conf", None)
     if xy is None:
-        return None, None
+        return None, None, meta
     try:
         xy_np = xy.detach().cpu().numpy()
     except Exception:
@@ -109,10 +159,75 @@ def _choose_best_pose_result(result: Any) -> tuple[np.ndarray | None, np.ndarray
     else:
         conf_np = np.ones((xy_np.shape[0], xy_np.shape[1]), dtype=np.float32)
     if xy_np.ndim != 3 or xy_np.shape[0] == 0 or xy_np.shape[1] < 17:
-        return None, None
-    scores = np.nanmean(conf_np, axis=1)
-    best_idx = int(np.nanargmax(scores))
-    return xy_np[best_idx, :17, :2].astype(np.float64), conf_np[best_idx, :17].astype(np.float64)
+        return None, None, meta
+
+    n = int(xy_np.shape[0])
+    meta["pose_candidate_count"] = n
+    mean_conf = np.nanmean(conf_np[:, :17], axis=1)
+
+    if expected_box_xyxy is None:
+        best_idx = int(np.nanargmax(mean_conf))
+        meta.update({"selected_pose_index": best_idx, "selected_pose_mean_conf": float(mean_conf[best_idx])})
+        return xy_np[best_idx, :17, :2].astype(np.float64), conf_np[best_idx, :17].astype(np.float64), meta
+
+    exp = np.asarray(expected_box_xyxy, dtype=np.float64)
+    exp_center = _box_center(exp)
+    exp_w = max(1.0, float(exp[2] - exp[0]))
+    exp_h = max(1.0, float(exp[3] - exp[1]))
+    exp_diag = max(1.0, math.sqrt(exp_w * exp_w + exp_h * exp_h))
+
+    best_idx: int | None = None
+    best_score = -1e18
+    best_diag: dict[str, Any] = {}
+    for i in range(n):
+        cand_xy = xy_np[i, :17, :2]
+        cand_conf = conf_np[i, :17] if conf_np is not None and i < len(conf_np) else None
+        pbox, valid_ratio = _candidate_pose_box(cand_xy, cand_conf)
+        cmean = float(mean_conf[i]) if np.isfinite(mean_conf[i]) else 0.0
+        if pbox is None:
+            score = -10.0 + cmean
+            dist_norm = float("inf")
+            iou = 0.0
+        else:
+            dist_norm = float(np.linalg.norm(_box_center(pbox) - exp_center) / exp_diag)
+            iou = _box_iou(pbox, exp)
+            score = (3.0 * iou) - (2.0 * dist_norm) + (0.5 * cmean) + (0.25 * valid_ratio)
+        if score > best_score:
+            best_score = float(score)
+            best_idx = int(i)
+            best_diag = {
+                "selected_pose_score": float(score),
+                "selected_pose_center_distance_norm": float(dist_norm),
+                "selected_pose_iou_with_tracker_box": float(iou),
+                "selected_pose_mean_conf": float(cmean),
+                "selected_pose_keypoint_valid_ratio_loose": float(valid_ratio),
+            }
+
+    if best_idx is None:
+        return None, None, meta
+
+    best_iou = float(best_diag.get("selected_pose_iou_with_tracker_box", 0.0))
+    best_conf = float(best_diag.get("selected_pose_mean_conf", 0.0))
+    best_valid_ratio = float(best_diag.get("selected_pose_keypoint_valid_ratio_loose", 0.0))
+
+    if best_iou < 0.20:
+        meta.update({"pose_rejected_due_to_low_iou": best_iou, **best_diag})
+        return None, None, meta
+
+    # Guard against candidate flicker inside a tracked crop.
+    # In live RTSP, a stable tracker box can still contain multiple YOLO-pose candidates.
+    # If the selected candidate has weak overlap/confidence/validity, accepting it can
+    # make keypoints jump between candidates across frames and explode speed/acceleration.
+    if n > 1 and (best_iou < 0.45 or best_conf < 0.55 or best_valid_ratio < 0.85):
+        meta.update({
+            "pose_rejected_due_to_ambiguity": True,
+            "ambiguous_candidate_count": int(n),
+            **best_diag,
+        })
+        return None, None, meta
+
+    meta.update({"selected_pose_index": int(best_idx), **best_diag})
+    return xy_np[best_idx, :17, :2].astype(np.float64), conf_np[best_idx, :17].astype(np.float64), meta
 
 
 def _as_pose_arrays_from_sample(sample: SampledPerson) -> tuple[np.ndarray, np.ndarray]:
@@ -139,12 +254,6 @@ def _as_pose_arrays(
     pose_min_crop_size: int = 192,
     device: str = "cuda",
 ) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
-    """Return COCO17 keypoints in original full-frame coordinates.
-
-    The old offline/live pose extractor then normalizes these coordinates relative
-    to the tracked bbox before calculating speed/shape features. That normalization
-    is done in make_pose_feature_from_tubelet(), not here.
-    """
     if pose_model is None:
         xy, conf = _as_pose_arrays_from_sample(sample)
         return xy, conf, {"pose_source": "tracker_keypoints"}
@@ -152,22 +261,48 @@ def _as_pose_arrays(
     h, w = sample.frame_bgr.shape[:2]
     x1, y1, x2, y2 = _pad_box_xyxy(sample.bbox_xyxy, w, h, pose_crop_pad_ratio, pose_min_crop_size)
     crop = sample.frame_bgr[y1:y2, x1:x2]
+    pose_crop_box = [x1, y1, x2, y2]
+
     if crop is None or crop.size == 0:
-        xy, conf = _as_pose_arrays_from_sample(sample)
-        return xy, conf, {"pose_source": "tracker_keypoints_empty_crop", "pose_crop_box": [x1, y1, x2, y2]}
+        xy, conf = _invalid_pose_arrays()
+        return xy, conf, {"pose_source": "crop_empty_invalid", "pose_crop_box": pose_crop_box}
+
+    bx1, by1, bx2, by2 = _clip_bbox_xyxy(sample.bbox_xyxy, w, h)
+    expected_crop_box = [
+        max(0.0, float(bx1) - float(x1)),
+        max(0.0, float(by1) - float(y1)),
+        max(1.0, float(bx2) - float(x1)),
+        max(1.0, float(by2) - float(y1)),
+    ]
+
     try:
         results = pose_model.predict(source=[crop], imgsz=int(pose_imgsz), conf=float(pose_conf), device=device, verbose=False)
-        xy_crop, conf = _choose_best_pose_result(results[0] if results else None)
+        xy_crop, conf, select_meta = _choose_best_pose_result(results[0] if results else None, expected_box_xyxy=expected_crop_box)
         if xy_crop is None or conf is None:
-            xy, conf0 = _as_pose_arrays_from_sample(sample)
-            return xy, conf0, {"pose_source": "tracker_keypoints_pose_empty", "pose_crop_box": [x1, y1, x2, y2]}
+            xy, conf0 = _invalid_pose_arrays()
+            return xy, conf0, {
+                "pose_source": "crop_pose_empty_invalid",
+                "pose_crop_box": pose_crop_box,
+                "expected_crop_box": expected_crop_box,
+                **select_meta,
+            }
         xy = xy_crop.copy()
         xy[:, 0] += float(x1)
         xy[:, 1] += float(y1)
-        return xy, conf, {"pose_source": "crop_pose_model", "pose_crop_box": [x1, y1, x2, y2]}
+        return xy, conf, {
+            "pose_source": "crop_pose_model_spatial",
+            "pose_crop_box": pose_crop_box,
+            "expected_crop_box": expected_crop_box,
+            **select_meta,
+        }
     except Exception as e:
-        xy, conf = _as_pose_arrays_from_sample(sample)
-        return xy, conf, {"pose_source": "tracker_keypoints_pose_error", "pose_error": str(e)[:200], "pose_crop_box": [x1, y1, x2, y2]}
+        xy, conf = _invalid_pose_arrays()
+        return xy, conf, {
+            "pose_source": "crop_pose_error_invalid",
+            "pose_error": str(e)[:200],
+            "pose_crop_box": pose_crop_box,
+            "expected_crop_box": expected_crop_box,
+        }
 
 
 def _normalize_keypoints_to_bbox(xy: np.ndarray, bbox_xyxy: Sequence[float], frame_shape: tuple[int, int]) -> np.ndarray:
@@ -184,7 +319,7 @@ def _normalize_keypoints_to_bbox(xy: np.ndarray, bbox_xyxy: Sequence[float], fra
 
 
 def _angle_wrap(delta: float) -> float:
-    return (delta + math.pi) % (2 * math.pi) - math.pi
+    return math.atan2(math.sin(delta), math.cos(delta))
 
 
 def _center_of(kpts: np.ndarray, valid: np.ndarray, ids: Sequence[int]) -> np.ndarray | None:
@@ -348,19 +483,6 @@ def make_pose_feature_from_tubelet(
     pose_min_crop_size: int = 192,
     device: str = "cuda",
 ) -> tuple[np.ndarray, dict[str, Any]]:
-    """Compute the 30-D pose micro feature vector.
-
-    Parity-critical details from the old pose extractor/live tester:
-    - keypoints are re-inferred on padded person crops when a pose_model is provided;
-    - keypoints are converted back to full-frame coordinates;
-    - then every keypoint is normalized relative to that frame's tracked bbox;
-    - all speed/acceleration/shape-change features are computed on normalized coords.
-
-    The previous backend version used full-frame pixel coordinates directly. On
-    1920x1080 RTSP this inflated speeds by hundreds/thousands and produced GMM
-    scores in the millions. The trained pose scaler/GMM expects bbox-normalized
-    features.
-    """
     n = len(tubelet)
     if n == 0:
         return np.zeros((30,), dtype=np.float32), {"error": "empty_tubelet"}
@@ -369,8 +491,74 @@ def make_pose_feature_from_tubelet(
     conf_arr = np.zeros((n, 17), dtype=np.float32)
     times: list[float] = []
     pose_sources: list[str] = []
+    pose_source_meta: list[dict[str, Any]] = []
 
     use_sample_time = str(time_mode or "sample").lower().strip() == "sample"
+
+    tubelet_bws: list[float] = []
+    tubelet_bhs: list[float] = []
+    raw_centers: list[tuple[float, float]] = []
+    areas: list[float] = []
+    for s in tubelet:
+        h, w = s.frame_bgr.shape[:2]
+        bx1, by1, bx2, by2 = _clip_bbox_xyxy(s.bbox_xyxy, w, h)
+        bw = max(1.0, float(bx2 - bx1))
+        bh = max(1.0, float(by2 - by1))
+        cx = float(bx1 + bw / 2.0)
+        cy = float(by1 + bh / 2.0)
+        tubelet_bws.append(bw)
+        tubelet_bhs.append(bh)
+        raw_centers.append((cx, cy))
+        areas.append(float(bw * bh))
+
+    med_bw = float(np.median(tubelet_bws)) if tubelet_bws else 1.0
+    med_bh = float(np.median(tubelet_bhs)) if tubelet_bhs else 1.0
+    bw_cv = float(np.std(tubelet_bws) / max(1e-6, float(np.mean(tubelet_bws)))) if tubelet_bws else 0.0
+    bh_cv = float(np.std(tubelet_bhs) / max(1e-6, float(np.mean(tubelet_bhs)))) if tubelet_bhs else 0.0
+
+    # --- SURGICAL PATCH V7: Sliding Window for Centers AND Dimensions ---
+    smoothed_centers: list[tuple[float, float]] = []
+    smoothed_bws: list[float] = []
+    smoothed_bhs: list[float] = []
+    
+    center_smooth_window = 5
+    half_w = center_smooth_window // 2
+    
+    for j in range(n):
+        start_idx = max(0, j - half_w)
+        end_idx = min(n, j + half_w + 1)
+        
+        # Smooth the centers
+        cx_window = [c[0] for c in raw_centers[start_idx:end_idx]]
+        cy_window = [c[1] for c in raw_centers[start_idx:end_idx]]
+        smoothed_centers.append((float(np.median(cx_window)), float(np.median(cy_window))))
+        
+        # Smooth the widths and heights (restores depth invariance)
+        bw_window = tubelet_bws[start_idx:end_idx]
+        bh_window = tubelet_bhs[start_idx:end_idx]
+        smoothed_bws.append(float(np.median(bw_window)))
+        smoothed_bhs.append(float(np.median(bh_window)))
+
+    raw_center_jitter: list[float] = []
+    smoothed_center_jitter: list[float] = []
+    size_jitter_rel: list[float] = []
+    
+    for j in range(1, n):
+        dx_raw = float(raw_centers[j][0] - raw_centers[j - 1][0])
+        dy_raw = float(raw_centers[j][1] - raw_centers[j - 1][1])
+        raw_center_jitter.append(float(math.sqrt(dx_raw * dx_raw + dy_raw * dy_raw)))
+
+        dx_sm = float(smoothed_centers[j][0] - smoothed_centers[j - 1][0])
+        dy_sm = float(smoothed_centers[j][1] - smoothed_centers[j - 1][1])
+        smoothed_center_jitter.append(float(math.sqrt(dx_sm * dx_sm + dy_sm * dy_sm)))
+
+        prev_area = max(1e-6, float(areas[j - 1]))
+        size_jitter_rel.append(float(abs(float(areas[j]) - float(areas[j - 1])) / prev_area))
+
+    bbox_center_jitter_raw_p95 = float(np.percentile(raw_center_jitter, 95)) if raw_center_jitter else 0.0
+    bbox_center_jitter_smoothed_p95 = float(np.percentile(smoothed_center_jitter, 95)) if smoothed_center_jitter else 0.0
+    bbox_size_jitter_relative_p95 = float(np.percentile(size_jitter_rel, 95)) if size_jitter_rel else 0.0
+
     for i, s in enumerate(tubelet):
         xy, conf, src_meta = _as_pose_arrays(
             s,
@@ -382,10 +570,27 @@ def make_pose_feature_from_tubelet(
             device=device,
         )
         h, w = s.frame_bgr.shape[:2]
-        kpts_norm[i] = _normalize_keypoints_to_bbox(xy, s.bbox_xyxy, (h, w))
+        
+        # Apply fully smoothed dynamic box
+        cx, cy = smoothed_centers[i]
+        bw = smoothed_bws[i]
+        bh = smoothed_bhs[i]
+        
+        stable_bbox = [
+            cx - bw / 2.0,
+            cy - bh / 2.0,
+            cx + bw / 2.0,
+            cy + bh / 2.0,
+        ]
+        kpts_norm[i] = _normalize_keypoints_to_bbox(xy, stable_bbox, (h, w))
+        
         conf_arr[i] = np.asarray(conf[:17], dtype=np.float32) if len(conf) >= 17 else np.zeros((17,), dtype=np.float32)
-        times.append(float(i) / max(float(fps), 1e-6) if use_sample_time else float(s.captured_at.timestamp()))
+        if use_sample_time:
+           times.append(float(getattr(s, "sample_index", i)) / max(float(fps), 1e-6))
+        else:
+           times.append(float(s.captured_at.timestamp()))
         pose_sources.append(str(src_meta.get("pose_source", "unknown")))
+        pose_source_meta.append(src_meta)
 
     times_arr = np.asarray(times, dtype=np.float64)
     finite_xy = np.isfinite(kpts_norm).all(axis=2)
@@ -444,7 +649,18 @@ def make_pose_feature_from_tubelet(
         "fps": float(fps),
         "time_mode": str(time_mode),
         "coordinate_space": "bbox_normalized_xy",
+        "normalization_mode": "tubelet_median_wh_smoothed_center_v7_dynamic",
+        "median_bbox_width": float(med_bw),
+        "median_bbox_height": float(med_bh),
+        "bbox_width_cv": float(bw_cv),
+        "bbox_height_cv": float(bh_cv),
+        "bbox_center_smooth_window": int(center_smooth_window),
+        "bbox_center_jitter_raw_p95": float(bbox_center_jitter_raw_p95),
+        "bbox_center_jitter_smoothed_p95": float(bbox_center_jitter_smoothed_p95),
+        "bbox_center_jitter_p95": float(bbox_center_jitter_smoothed_p95),
+        "bbox_size_jitter_relative_p95": float(bbox_size_jitter_relative_p95),
         "pose_sources": pose_sources,
         "pose_source_counts": {src: int(pose_sources.count(src)) for src in sorted(set(pose_sources))},
+        "pose_source_meta": pose_source_meta,
     }
     return feature, meta

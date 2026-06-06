@@ -1,6 +1,7 @@
 import { VadReasoningListItem } from "@/services/vad_api";
-import { Camera } from "lucide-react";
+import { Camera, Clock } from "lucide-react";
 import { getDeepScore, getThresholdValue, getScoreRatio, getRatioBand } from "./reasoningUtils";
+import { formatDistanceToNow } from "date-fns";
 
 export function DeepCandidateCard({ item }: { item: VadReasoningListItem }) {
   if (!item) return null;
@@ -25,26 +26,27 @@ export function DeepCandidateCard({ item }: { item: VadReasoningListItem }) {
   }
 
   return (
-    <div className="bg-zinc-950 rounded-xl border border-zinc-800 p-5 mb-4">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-        <Camera size={14} /> Deep Candidate Context
+    <div className="p-2">
+      <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-200 mb-3 flex items-center gap-2 border-b border-zinc-800 pb-2">
+        <Camera size={16} className="text-blue-400" /> Deep Candidate Context
       </h3>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">Case / Job</div>
-          <div className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-            Case #{item.case?.id || item.job.case_id}
-            <span className="text-zinc-600">|</span>
-            Job #{item.job.id}
+          <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">Gate</div>
+          <div className="text-sm font-semibold text-slate-300">
+            Deep Visual Similarity
           </div>
         </div>
         
         <div>
-          <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">Gate / Version</div>
+          <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">Queue & Attempts</div>
           <div className="text-sm font-semibold text-slate-300 flex flex-col">
-            <span>{item.case?.primary_gate_name || "deep"}</span>
-            <span className="text-zinc-600 text-[10px] truncate max-w-[120px]" title={item.job.prompt_version}>{item.job.prompt_version}</span>
+            <span className="flex items-center gap-1">
+              <Clock size={12} className="text-slate-500" /> 
+              {item.job.queued_at ? formatDistanceToNow(new Date(item.job.queued_at), { addSuffix: true }) : "Unknown"}
+            </span>
+            <span className="text-zinc-500 text-xs">Attempts: {item.job.attempts} / {item.job.max_attempts}</span>
           </div>
         </div>
 

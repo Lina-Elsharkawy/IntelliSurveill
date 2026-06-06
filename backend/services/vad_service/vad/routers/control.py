@@ -11,7 +11,14 @@ router = APIRouter(prefix="/vad", tags=["VAD Control"])
 
 @router.get("/rtsp/config")
 def get_vad_config() -> dict[str, Any]:
-    return cfg.public_dict()
+    data = cfg.public_dict()
+    if getattr(sampler, "deep_gate", None) is not None:
+        data["deep_runtime"] = sampler.deep_gate.runtime_config()
+        data["deep_effective_threshold_value"] = data["deep_runtime"]["effective_threshold_value"]
+        data["deep_effective_threshold_source"] = data["deep_runtime"]["threshold_source"]
+        data["deep_effective_persistence_window"] = data["deep_runtime"]["persistence_window"]
+        data["deep_effective_persistence_required_hits"] = data["deep_runtime"]["persistence_required_hits"]
+    return data
 
 @router.post("/rtsp/start")
 def start_rtsp_sampler() -> dict[str, Any]:

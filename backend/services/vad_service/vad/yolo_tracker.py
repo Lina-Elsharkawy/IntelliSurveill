@@ -62,6 +62,7 @@ class YoloPoseTracker:
         results = self.model.track(
             source=frame_bgr,
             persist=True,
+            classes=[0],  # Parity with 04_live_multigate_rtsp_test.py: track people only.
             tracker=self.cfg.tracker_config,
             conf=self.cfg.detector_conf,
             imgsz=self.cfg.detector_imgsz,

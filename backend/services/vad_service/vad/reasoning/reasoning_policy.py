@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from .reasoning_rules import RULES_VERSION, deterministic_rule_matches
 from .reasoning_schema import (
     DeepReasoningContext,
     LlmPolicyReview,
@@ -11,6 +10,10 @@ from .reasoning_schema import (
     STRONG_VISUAL_EVENT_TYPES,
     model_to_dict,
 )
+# Import deterministic matcher from the new DB-backed rules module.
+# reasoning_policy does not load rules from DB itself; the worker passes
+# the already-loaded rule list in.
+from ..vad_anomaly_rules import deterministic_rule_matches, RULES_VERSION
 
 POLICY_VERSION = "deep_reasoning_policy_v2_vlm_llm_python_guardrails"
 SEVERITY_RANK = {"NONE": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
@@ -41,13 +44,55 @@ def _cap_severity_for_decision(decision: str, severity: str) -> str:
     return severity
 
 
+# Words that suggest the evidence is grounded in physical/visual observation
+# (body parts, objects, actions, spatial descriptors).  Evidence containing at
+# least one of these is treated as visual rather than score-based.
+_VISUAL_EVIDENCE_WORDS = frozenset({
+    # Body and posture
+    "fall", "floor", "collapse", "body", "lying", "prone", "person",
+    "arm", "leg", "head", "hand", "torso", "posture", "limb",
+    # Motion and actions
+    "running", "sprinting", "rapid", "fast", "movement", "moving", "rushing",
+    "walking", "stumbling", "crawling", "reaching",
+    # Equipment and objects
+    "equipment", "machine", "door", "window", "wall", "object", "chair",
+    "table", "cabinet", "panel", "device", "rack", "screen",
+    # Security / access
+    "intrusion", "intruder", "suspicious", "unauthorized",
+    "entering", "exiting", "climbing",
+    # Appearance and location
+    "visible", "seen", "detected", "observed", "appeared", "near",
+    "behind", "under", "against", "beside", "inside", "outside",
+})
+
+# Words that indicate the evidence is about scores/metrics, not visual facts.
+_SCORE_EVIDENCE_WORDS = frozenset({
+    "score", "threshold", "ratio", "deep", "embedding", "distance",
+    "above", "knn", "percentile", "deviation", "anomaly score",
+})
+
+
 def _only_score_based_evidence(vlm: VlmVisualReview) -> bool:
+    """Return True if the VLM anomaly evidence contains no concrete visual facts.
+
+    Evidence is score-based if it:
+    - Contains score/metric vocabulary AND
+    - Does NOT contain any physical/visual observation vocabulary.
+
+    This is more robust than pure keyword matching because it requires BOTH
+    conditions — preventing a sentence like "the person was running; score was
+    high" from being wrongly classified as score-only.
+    """
     if not vlm.anomaly_evidence:
         return True
     joined = " ".join(vlm.anomaly_evidence).lower()
-    score_words = ("score", "threshold", "ratio", "deep", "embedding", "distance", "above")
-    visual_words = ("fall", "floor", "collapse", "running", "rapid", "unsafe", "intrusion", "suspicious", "equipment", "person", "body")
-    return any(w in joined for w in score_words) and not any(w in joined for w in visual_words)
+    words = {w.strip(".,!?;:()") for w in joined.split()}
+    has_visual = bool(words & _VISUAL_EVIDENCE_WORDS)
+    # If there is ANY concrete visual word, the evidence is not score-only.
+    if has_visual:
+        return False
+    has_score = bool(words & _SCORE_EVIDENCE_WORDS)
+    return has_score
 
 
 def apply_python_final_guardrails(

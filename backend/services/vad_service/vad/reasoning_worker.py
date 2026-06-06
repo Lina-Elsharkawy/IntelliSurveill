@@ -17,13 +17,18 @@ from .reasoning.reasoning_policy import (
     build_structured_result,
 )
 from .reasoning.reasoning_prompts import build_deep_vlm_visual_prompt, build_llm_policy_prompt
-from .reasoning.reasoning_rules import RULES_VERSION, load_active_reasoning_rules, serialize_rules_for_llm
 from .reasoning.reasoning_schema import (
     DeepReasoningContext,
     fallback_llm_uncertain,
     model_to_dict,
     parse_llm_policy_review,
     parse_vlm_visual_review,
+)
+from .vad_anomaly_rules import (
+    RULES_VERSION,
+    deterministic_rule_matches,
+    load_active_vad_rules,
+    serialize_rules_for_llm,
 )
 
 log = logging.getLogger("vad.reasoning_worker")
@@ -137,6 +142,15 @@ def _build_context(bundle: dict[str, Any], image_object_keys: list[str]) -> Deep
     )
 
 
+# Maximum age of a reasoning job to still be processed.  Jobs older than this
+# were queued when Ollama was down and the evidence images are no longer fresh.
+_MAX_JOB_AGE_SEC = 3 * 3600  # 3 hours
+
+# If the VLM returns NO with at least this confidence we trust it and skip
+# the LLM stage entirely to save compute.
+_VLM_NO_SKIP_LLM_CONFIDENCE = 0.70
+
+
 class DeepReasoningWorker:
     def __init__(self, cfg: VadConfig, db: VadDB) -> None:
         self.cfg = cfg
@@ -155,6 +169,7 @@ class DeepReasoningWorker:
                     conn,
                     vlm_model=self.cfg.ollama_vlm_model,
                     llm_model=self.cfg.ollama_llm_model,
+                    max_age_sec=_MAX_JOB_AGE_SEC,
                 )
         if not job:
             return False
@@ -254,26 +269,54 @@ class DeepReasoningWorker:
         images_b64 = _load_images_b64(self.minio, object_keys)
         ctx = _build_context(bundle, object_keys)
 
+        # Load active rules from DB (falls back to built-ins on failure).
+        with self.db.connect() as _conn:
+            rules = load_active_vad_rules(self.db, _conn)
+        llm_rules = serialize_rules_for_llm(rules)
+
         # Stage 1: VLM grounded visual review.
         vlm_prompt = build_deep_vlm_visual_prompt(ctx)
         raw_vlm = self.ollama.generate(model=self.cfg.ollama_vlm_model, prompt=vlm_prompt, images_b64=images_b64)
         vlm_review, vlm_parse_info = parse_vlm_visual_review(raw_vlm)
 
-        # Stage 2: LLM policy/rules review. The LLM is part of the architecture; if it fails,
-        # the worker records an explicit UNCERTAIN fallback rather than silently skipping it.
-        rules = load_active_reasoning_rules()
-        llm_rules = serialize_rules_for_llm(rules)
+        # Stage 2: LLM policy/rules review.
+        # Optimisation: if the VLM already returned a high-confidence NO, trust it
+        # and skip the LLM call entirely.  The Python guardrails will still run.
         raw_llm: str | None = None
         llm_parse_info: dict[str, Any]
-        try:
-            llm_prompt = build_llm_policy_prompt(ctx=ctx, vlm_review=vlm_review, active_rules=llm_rules)
-            raw_llm = self.ollama.generate(model=self.cfg.ollama_llm_model, prompt=llm_prompt)
-            llm_review, llm_parse_info = parse_llm_policy_review(raw_llm, ctx=ctx, vlm=vlm_review)
-        except Exception as e:
-            log.exception("LLM policy review failed for event_id=%s; using explicit UNCERTAIN fallback: %s", ctx.event_id, e)
-            raw_llm = None
-            llm_review = fallback_llm_uncertain(f"LLM policy review failed or timed out: {e}", ctx=ctx, vlm=vlm_review)
-            llm_parse_info = {"parse_error": "llm_call_failed", "error": str(e)}
+        skip_llm = (
+            vlm_review.visual_alert_decision == "NO"
+            and vlm_review.visual_confidence >= _VLM_NO_SKIP_LLM_CONFIDENCE
+            and not (vlm_parse_info or {}).get("parse_error")
+        )
+        if skip_llm:
+            log.info(
+                "Skipping LLM stage for event_id=%s: VLM returned NO with confidence=%.2f",
+                ctx.event_id, vlm_review.visual_confidence,
+            )
+            llm_review = fallback_llm_uncertain(
+                f"LLM stage skipped: VLM returned high-confidence NO (confidence={vlm_review.visual_confidence:.2f}).",
+                ctx=ctx,
+                vlm=vlm_review,
+            )
+            llm_parse_info = {"parse_error": None, "skipped": True, "reason": "vlm_high_confidence_no"}
+        else:
+            # LLM is part of the architecture; if it fails, record an explicit UNCERTAIN
+            # fallback rather than silently skipping it.
+            try:
+                llm_prompt = build_llm_policy_prompt(ctx=ctx, vlm_review=vlm_review, active_rules=llm_rules)
+                raw_llm = self.ollama.generate(model=self.cfg.ollama_llm_model, prompt=llm_prompt)
+                llm_review, llm_parse_info = parse_llm_policy_review(raw_llm, ctx=ctx, vlm=vlm_review)
+            except Exception as e:
+                log.exception(
+                    "LLM policy review failed for event_id=%s; using explicit UNCERTAIN fallback: %s",
+                    ctx.event_id, e,
+                )
+                raw_llm = None
+                llm_review = fallback_llm_uncertain(
+                    f"LLM policy review failed or timed out: {e}", ctx=ctx, vlm=vlm_review
+                )
+                llm_parse_info = {"parse_error": "llm_call_failed", "error": str(e)}
 
         # Stage 3: Python deterministic final guardrails.
         final_result, rules_result = apply_python_final_guardrails(

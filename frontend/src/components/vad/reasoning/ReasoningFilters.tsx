@@ -8,7 +8,6 @@ export interface ReasoningFilterState {
   decision: string;
   caseId: string;
   onlyDeep: boolean;
-  onlyFailed: boolean;
 }
 
 interface ReasoningFiltersProps {
@@ -38,6 +37,7 @@ export function ReasoningFilters({ filters, setFilters, onRefresh, isLoading }: 
               <SelectItem value="running">Running</SelectItem>
               <SelectItem value="succeeded">Succeeded</SelectItem>
               <SelectItem value="failed">Failed</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
             </SelectContent>
           </Select>
         </div>

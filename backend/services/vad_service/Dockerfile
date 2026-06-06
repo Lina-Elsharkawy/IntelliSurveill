@@ -18,8 +18,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
-
+RUN python -m pip install --upgrade pip && \
+    pip install --default-timeout=1200 --retries=20 --no-cache-dir -r /app/requirements.txt
 COPY . /app
 
 EXPOSE 8000

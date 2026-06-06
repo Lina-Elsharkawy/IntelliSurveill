@@ -111,6 +111,8 @@ class DeepGate:
         self.loaded = False
         self.load_error: str | None = None
         self.threshold_value = float(cfg.deep_threshold_value)
+        self.threshold_source = cfg.deep_threshold_source
+        self.threshold_env_override = bool(cfg.deep_threshold_env_override)
         self.states: dict[int, OnlineGateState] = {}
         self.knn_path = cfg.deep_artifact_dir / "models" / "03_knn_index.joblib"
         self.thresholds_path = cfg.deep_artifact_dir / "04_thresholds.json"
@@ -126,8 +128,16 @@ class DeepGate:
                 raise FileNotFoundError(f"Deep kNN artifact not found: {self.knn_path}")
             artifact = joblib.load(self.knn_path)
             self.knn = _extract_knn_object(artifact)
-            if self.thresholds_path.exists():
+            if self.threshold_env_override:
+                # Explicit env override must win over the calibrated artifact JSON.
+                self.threshold_value = float(self.cfg.deep_threshold_value)
+                self.threshold_source = "env_override"
+            elif self.thresholds_path.exists():
                 self.threshold_value = _load_threshold(self.thresholds_path, self.cfg.deep_threshold_key, self.cfg.deep_k)
+                self.threshold_source = "artifact_json"
+            else:
+                self.threshold_value = float(self.cfg.deep_threshold_value)
+                self.threshold_source = "config_default"
 
             self.device = torch.device(self.cfg.deep_device if (self.cfg.deep_device == "cpu" or torch.cuda.is_available()) else "cpu")
             try:
@@ -141,11 +151,27 @@ class DeepGate:
 
             self.loaded = True
             self.load_error = None
-            log.info("Loaded deep gate: knn=%s threshold=%s device=%s", self.knn_path, self.threshold_value, self.device)
+            log.info("Loaded deep gate: knn=%s threshold=%s threshold_source=%s device=%s", self.knn_path, self.threshold_value, self.threshold_source, self.device)
         except Exception as e:
             self.loaded = False
             self.load_error = str(e)
             raise
+
+    def runtime_config(self) -> dict[str, Any]:
+        return {
+            "effective_threshold_value": float(self.threshold_value),
+            "threshold_source": self.threshold_source,
+            "threshold_env_override": self.threshold_env_override,
+            "threshold_key": self.cfg.deep_threshold_key,
+            "thresholds_path": str(self.thresholds_path),
+            "thresholds_path_exists": self.thresholds_path.exists(),
+            "deep_k": int(self.cfg.deep_k),
+            "persistence_window": int(self.cfg.deep_persistence_window),
+            "persistence_required_hits": int(self.cfg.deep_persistence_required_hits),
+            "min_event_gap_sec": float(self.cfg.deep_min_event_gap_sec),
+            "loaded": bool(self.loaded),
+            "load_error": self.load_error,
+        }
 
     def _state_for(self, tracker_track_id: int) -> OnlineGateState:
         st = self.states.get(tracker_track_id)
@@ -236,6 +262,10 @@ class DeepGate:
             "thresholds_path": str(self.thresholds_path),
             "deep_k": int(self.cfg.deep_k),
             "threshold_key": self.cfg.deep_threshold_key,
+            "threshold_source": self.threshold_source,
+            "effective_threshold_value": float(self.threshold_value),
+            "persistence_window": int(self.cfg.deep_persistence_window),
+            "persistence_required_hits": int(self.cfg.deep_persistence_required_hits),
             "tubelet_sample_count": len(tubelet),
         }
         return DeepGateOutput(

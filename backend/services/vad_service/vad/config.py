@@ -25,6 +25,11 @@ def _int(name: str, default: str) -> int:
         raise ValueError(f"Environment variable {name} must be an integer, got {raw!r}")
 
 
+def _env_is_set(name: str) -> bool:
+    """Return True when an environment variable was explicitly provided, even if blank."""
+    return name in os.environ
+
+
 @dataclass(frozen=True)
 class VadConfig:
     backend_direct_enabled: bool
@@ -82,6 +87,7 @@ class VadConfig:
     pose_time_mode: str
     pose_threshold_key: str
     pose_threshold_value: float
+    pose_gmm_components: int
     pose_smoothing_sigma: float
     pose_persistence_window: int
     pose_persistence_required_hits: int
@@ -92,6 +98,8 @@ class VadConfig:
     deep_k: int
     deep_threshold_key: str
     deep_threshold_value: float
+    deep_threshold_env_override: bool
+    deep_threshold_source: str
     deep_tubelet_frames: int
     deep_stride: int
     deep_bbox_pad_ratio: float
@@ -132,6 +140,7 @@ class VadConfig:
     homography_macro_stride: int
     homography_macro_threshold_key: str
     homography_macro_threshold_value: float
+    homography_macro_gmm_components: int
     homography_macro_smoothing_sigma: float
     homography_macro_persistence_window: int
     homography_macro_persistence_required_hits: int
@@ -220,6 +229,7 @@ class VadConfig:
             "pose_time_mode": self.pose_time_mode,
             "pose_threshold_key": self.pose_threshold_key,
             "pose_threshold_value": self.pose_threshold_value,
+            "pose_gmm_components": self.pose_gmm_components,
             "pose_smoothing_sigma": self.pose_smoothing_sigma,
             "pose_persistence_window": self.pose_persistence_window,
             "pose_persistence_required_hits": self.pose_persistence_required_hits,
@@ -228,6 +238,8 @@ class VadConfig:
             "deep_k": self.deep_k,
             "deep_threshold_key": self.deep_threshold_key,
             "deep_threshold_value": self.deep_threshold_value,
+            "deep_threshold_env_override": self.deep_threshold_env_override,
+            "deep_threshold_source": self.deep_threshold_source,
             "deep_tubelet_frames": self.deep_tubelet_frames,
             "deep_stride": self.deep_stride,
             "deep_bbox_pad_ratio": self.deep_bbox_pad_ratio,
@@ -261,6 +273,7 @@ class VadConfig:
             "homography_macro_stride": self.homography_macro_stride,
             "homography_macro_threshold_key": self.homography_macro_threshold_key,
             "homography_macro_threshold_value": self.homography_macro_threshold_value,
+            "homography_macro_gmm_components": self.homography_macro_gmm_components,
             "homography_macro_smoothing_sigma": self.homography_macro_smoothing_sigma,
             "homography_macro_persistence_window": self.homography_macro_persistence_window,
             "homography_macro_persistence_required_hits": self.homography_macro_persistence_required_hits,
@@ -299,14 +312,21 @@ def load_vad_config() -> VadConfig:
     camera_id_raw = os.getenv("VAD_CAMERA_ID", "").strip()
     camera_id = int(camera_id_raw) if camera_id_raw else None
 
-    detector_model_raw = os.getenv("VAD_DETECTOR_MODEL", "/models/vad/yolo/yolov8s-pose.pt").strip()
+    # Keep detector/tracker and pose re-inference models separate.
+    # This matches the standalone live Pose test setup:
+    #   detector/tracker: yolov8n.pt
+    #   pose re-inference: yolov8s-pose.pt
+    # Do not default VAD_POSE_MODEL to VAD_DETECTOR_MODEL, because yolov8n.pt is not a pose model.
+    detector_model_raw = os.getenv("VAD_DETECTOR_MODEL", "/models/vad/yolo/yolov8n.pt").strip()
     detector_model: Path | str = Path(detector_model_raw) if detector_model_raw.startswith(('/', './', '../')) or ':' in detector_model_raw else detector_model_raw
-    pose_model_raw = os.getenv("VAD_POSE_MODEL", detector_model_raw).strip()
+    pose_model_raw = os.getenv("VAD_POSE_MODEL", "/models/vad/yolo/yolov8s-pose.pt").strip()
     pose_model: Path | str = Path(pose_model_raw) if pose_model_raw.startswith(('/', './', '../')) or ':' in pose_model_raw else pose_model_raw
     homography_pose_model_raw = os.getenv("VAD_HOMOGRAPHY_POSE_MODEL", pose_model_raw).strip()
     homography_pose_model: Path | str = Path(homography_pose_model_raw) if homography_pose_model_raw.startswith(('/', './', '../')) or ':' in homography_pose_model_raw else homography_pose_model_raw
     homography_matrix_raw = os.getenv("VAD_HOMOGRAPHY_MATRIX_PATH", "").strip()
     homography_matrix_path = Path(homography_matrix_raw) if homography_matrix_raw else None
+    deep_threshold_env_override = _env_is_set("VAD_DEEP_THRESHOLD_VALUE")
+    deep_threshold_source = "env_override" if deep_threshold_env_override else "config_default"
 
     cfg = VadConfig(
         backend_direct_enabled=_bool("VAD_BACKEND_DIRECT_ENABLED", "1"),
@@ -350,8 +370,9 @@ def load_vad_config() -> VadConfig:
         pose_min_crop_size=_int("VAD_POSE_MIN_CROP_SIZE", "192"),
         pose_reinfer_enabled=_bool("VAD_POSE_REINFER_ENABLED", "1"),
         pose_time_mode=os.getenv("VAD_POSE_TIME_MODE", "sample").strip().lower(),
-        pose_threshold_key=os.getenv("VAD_POSE_THRESHOLD_KEY", "components_5_p99_5").strip(),
-        pose_threshold_value=_float("VAD_POSE_THRESHOLD_VALUE", "70.18459395136654"),
+        pose_threshold_key=os.getenv("VAD_POSE_THRESHOLD_KEY", "components_8_p95").strip(),
+        pose_threshold_value=_float("VAD_POSE_THRESHOLD_VALUE", "33.168735926695206"),
+        pose_gmm_components=_int("VAD_POSE_GMM_COMPONENTS", "8"),
         pose_smoothing_sigma=_float("VAD_POSE_SMOOTHING_SIGMA", "2.0"),
         pose_persistence_window=_int("VAD_POSE_PERSISTENCE_WINDOW", "5"),
         pose_persistence_required_hits=_int("VAD_POSE_PERSISTENCE_REQUIRED_HITS", "3"),
@@ -360,6 +381,8 @@ def load_vad_config() -> VadConfig:
         deep_k=_int("VAD_DEEP_K", "5"),
         deep_threshold_key=os.getenv("VAD_DEEP_THRESHOLD_KEY", "p99_5").strip(),
         deep_threshold_value=_float("VAD_DEEP_THRESHOLD_VALUE", "0.16680973768234253"),
+        deep_threshold_env_override=deep_threshold_env_override,
+        deep_threshold_source=deep_threshold_source,
         deep_tubelet_frames=_int("VAD_DEEP_TUBELET_FRAMES", "16"),
         deep_stride=_int("VAD_DEEP_STRIDE", "5"),
         deep_bbox_pad_ratio=_float("VAD_DEEP_BBOX_PAD_RATIO", "0.30"),
@@ -393,7 +416,8 @@ def load_vad_config() -> VadConfig:
         homography_macro_tubelet_frames=_int("VAD_HOMOGRAPHY_MACRO_TUBELET_FRAMES", "16"),
         homography_macro_stride=_int("VAD_HOMOGRAPHY_MACRO_STRIDE", "8"),
         homography_macro_threshold_key=os.getenv("VAD_HOMOGRAPHY_MACRO_THRESHOLD_KEY", "p99_5").strip(),
-        homography_macro_threshold_value=_float("VAD_HOMOGRAPHY_MACRO_THRESHOLD_VALUE", "12.774831137922204"),
+        homography_macro_threshold_value=_float("VAD_HOMOGRAPHY_MACRO_THRESHOLD_VALUE", "14.5168879100055"),
+        homography_macro_gmm_components=_int("VAD_HOMOGRAPHY_MACRO_GMM_COMPONENTS", "8"),
         homography_macro_smoothing_sigma=_float("VAD_HOMOGRAPHY_MACRO_SMOOTHING_SIGMA", "2.0"),
         homography_macro_persistence_window=_int("VAD_HOMOGRAPHY_MACRO_PERSISTENCE_WINDOW", "5"),
         homography_macro_persistence_required_hits=_int("VAD_HOMOGRAPHY_MACRO_PERSISTENCE_REQUIRED_HITS", "3"),
@@ -440,14 +464,27 @@ def load_vad_config() -> VadConfig:
         )
     if cfg.detector_conf <= 0 or cfg.detector_conf >= 1:
         raise ValueError("VAD_DETECTOR_CONF must be between 0 and 1")
+    if cfg.pose_reinfer_enabled and "pose" not in str(cfg.pose_model).lower():
+        raise ValueError(
+            "VAD_POSE_MODEL must point to a pose-capable YOLO model, e.g. /models/vad/yolo/yolov8s-pose.pt. "
+            "Do not use yolov8n.pt as the pose re-inference model."
+        )
+    if cfg.homography_groundpoint_mode == "pose_ankle" and "pose" not in str(cfg.homography_pose_model).lower():
+        raise ValueError(
+            "VAD_HOMOGRAPHY_POSE_MODEL must point to a pose-capable YOLO model when homography_groundpoint_mode=pose_ankle."
+        )
     if cfg.pose_tubelet_frames <= 1:
         raise ValueError("VAD_POSE_TUBELET_FRAMES must be > 1")
+    if cfg.pose_gmm_components <= 0:
+        raise ValueError("VAD_POSE_GMM_COMPONENTS must be > 0")
     if cfg.pose_stride <= 0:
         raise ValueError("VAD_POSE_STRIDE must be > 0")
     if cfg.pose_persistence_window <= 0 or cfg.pose_persistence_required_hits <= 0:
         raise ValueError("Pose persistence settings must be > 0")
     if cfg.deep_tubelet_frames <= 1 or cfg.deep_stride <= 0:
         raise ValueError("Deep tubelet settings must be valid")
+    if cfg.deep_persistence_window <= 0 or cfg.deep_persistence_required_hits <= 0:
+        raise ValueError("Deep persistence settings must be > 0")
     if cfg.deep_reasoning_min_ratio <= 0:
         raise ValueError("VAD_DEEP_REASONING_MIN_RATIO must be > 0")
     if cfg.deep_reasoning_priority not in {"low", "normal", "high", "urgent"}:
@@ -468,6 +505,8 @@ def load_vad_config() -> VadConfig:
         raise ValueError("VLM_MODEL/OLLAMA_VLM_MODEL must not be empty when reasoning worker is enabled")
     if cfg.homography_macro_tubelet_frames <= 1 or cfg.homography_macro_stride <= 0:
         raise ValueError("Homography/macro tubelet settings must be valid")
+    if cfg.homography_macro_gmm_components <= 0:
+        raise ValueError("VAD_HOMOGRAPHY_MACRO_GMM_COMPONENTS must be > 0")
 
     cfg.debug_save_dir.mkdir(parents=True, exist_ok=True)
     return cfg

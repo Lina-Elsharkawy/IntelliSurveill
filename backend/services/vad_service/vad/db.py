@@ -708,6 +708,7 @@ class VadDB:
         severity: str,
         event_type: str,
         start_ts: datetime,
+        peak_ts: datetime | None = None,
         peak_score: float,
         threshold_value: float,
         persistence_hits: int,
@@ -732,7 +733,7 @@ class VadDB:
             VALUES (
                 %(session_id)s, %(stream_id)s, %(camera_id)s, %(track_id)s, %(gate_name)s, %(gate_model_version_id)s,
                 %(tubelet_id)s, %(tubelet_id)s, %(score_id)s, %(score_id)s,
-                %(event_key)s, 'open', %(severity)s, %(event_type)s, %(start_ts)s, %(start_ts)s,
+                %(event_key)s, 'open', %(severity)s, %(event_type)s, %(start_ts)s, COALESCE(%(peak_ts)s, %(start_ts)s),
                 %(peak_score)s, %(threshold_value)s, %(persistence_hits)s, %(persistence_window)s,
                 %(reason_when_fired)s, %(trigger_policy_json)s::jsonb, %(feature_values_json)s::jsonb,
                 %(dominant_features_json)s::jsonb, %(quality_json)s::jsonb, %(metadata_json)s::jsonb
@@ -759,6 +760,7 @@ class VadDB:
                 "severity": severity,
                 "event_type": event_type,
                 "start_ts": start_ts,
+                "peak_ts": peak_ts,
                 "peak_score": peak_score,
                 "threshold_value": threshold_value,
                 "persistence_hits": persistence_hits,
@@ -785,6 +787,7 @@ class VadDB:
         severity: str,
         case_type: str,
         start_ts: datetime,
+        peak_ts: datetime | None = None,
         peak_score: float,
         primary_gate_name: str,
         gate_summary_json: dict[str, Any] | None = None,
@@ -819,7 +822,7 @@ class VadDB:
                 "severity": severity,
                 "case_type": case_type,
                 "start_ts": start_ts,
-                "peak_ts": start_ts,
+                "peak_ts": peak_ts or start_ts,
                 "primary_gate_name": primary_gate_name,
                 "gate_summary_json": _json(gate_summary_json or {}),
                 "score_summary_json": _json(score_summary_json or {}),
@@ -828,6 +831,33 @@ class VadDB:
             },
         ).fetchone()
         return int(row["id"])
+
+    
+    def update_anomaly_case_evidence_bundle(
+        self,
+        conn: psycopg.Connection,
+        *,
+        case_id: int,
+        evidence_bundle_json: dict[str, Any],
+    ) -> None:
+        """Persist final evidence references on the anomaly case after MinIO upload.
+
+        The case is created before visual evidence is written, so it starts with a
+        pending bundle. Updating it here keeps the case table/UI consistent with
+        vad_media_objects and vad_evidence_items.
+        """
+        conn.execute(
+            """
+            UPDATE vad_anomaly_cases
+            SET evidence_bundle_json = %(evidence_bundle_json)s::jsonb,
+                updated_at = NOW()
+            WHERE id = %(case_id)s
+            """,
+            {
+                "case_id": int(case_id),
+                "evidence_bundle_json": _json(evidence_bundle_json or {}),
+            },
+        )
 
     def get_recent_gate_events(self, conn: psycopg.Connection, *, limit: int = 50, gate_name: str | None = None) -> list[dict[str, Any]]:
         query = """
@@ -1023,7 +1053,7 @@ class VadDB:
                 WHERE rr.reasoning_job_id = j.id
                 ORDER BY rr.id DESC LIMIT 1
             ) r ON true
-            WHERE j.metadata_json ->> 'seed_name' = 'reasoning_page_demo'
+            WHERE 1=1
         """
         params: dict[str, Any] = {"limit": limit}
         
@@ -1119,12 +1149,38 @@ class VadDB:
         *,
         vlm_model: str | None = None,
         llm_model: str | None = None,
+        max_age_sec: float | None = None,
     ) -> dict[str, Any] | None:
         """Atomically claim one queued Deep reasoning job.
 
         The worker is intentionally Deep-only. Jobs from other gates are ignored
         even if they accidentally exist in the table.
+
+        Parameters
+        ----------
+        max_age_sec:
+            If provided, jobs queued more than this many seconds ago are skipped.
+            Stale jobs (queued during Ollama downtime) are marked ``expired`` so
+            they don't accumulate and get retried forever.
         """
+        # First, expire any stale jobs so the count stays clean.
+        if max_age_sec is not None:
+            conn.execute(
+                """
+                UPDATE vad_reasoning_jobs
+                SET status = 'expired', finished_at = NOW(),
+                    error_json = '{"reason": "job_too_old_skipped"}'::jsonb
+                WHERE status = 'queued'
+                  AND attempts < max_attempts
+                  AND metadata_json @> %(source_metadata)s::jsonb
+                  AND queued_at < NOW() - (%(max_age_sec)s || ' seconds')::interval
+                """,
+                {
+                    "source_metadata": _json({"source_gate_name": "deep"}),
+                    "max_age_sec": float(max_age_sec),
+                },
+            )
+
         row = conn.execute(
             """
             WITH next_job AS (
@@ -1387,4 +1443,105 @@ class VadDB:
             },
         ).fetchone()
         return int(row["id"])
+
+    # ------------------------------------------------------------------
+    # VAD Reasoning Rules (vad_reasoning_rules table)
+    # ------------------------------------------------------------------
+
+    def get_active_vad_reasoning_rules(self, conn: psycopg.Connection) -> list[dict[str, Any]]:
+        """Return all active rows from vad_reasoning_rules ordered by priority then id.
+
+        Returns an empty list (rather than raising) if the table does not yet
+        exist so the reasoning pipeline keeps working before the migration runs.
+        """
+        try:
+            rows = conn.execute(
+                """
+                SELECT id, rule_name, rule_type, event_types, conditions, effect,
+                       source, active, description
+                FROM vad_reasoning_rules
+                WHERE active = TRUE
+                ORDER BY priority ASC NULLS LAST, id ASC
+                """
+            ).fetchall()
+            return [dict(r) for r in rows]
+        except Exception:
+            # Table likely doesn't exist yet — caller will use built-in fallback.
+            return []
+
+    def insert_vad_reasoning_rule(
+        self,
+        conn: psycopg.Connection,
+        *,
+        rule_name: str,
+        rule_type: str,
+        event_types: list[str],
+        conditions: dict[str, Any] | None = None,
+        effect: dict[str, Any] | None = None,
+        source: str = "admin",
+        description: str = "",
+        priority: int = 50,
+    ) -> int:
+        """Insert a new rule into vad_reasoning_rules and return its id."""
+        row = conn.execute(
+            """
+            INSERT INTO vad_reasoning_rules (
+                rule_name, rule_type, event_types, conditions, effect,
+                source, active, description, priority
+            )
+            VALUES (
+                %(rule_name)s, %(rule_type)s, %(event_types)s::jsonb, %(conditions)s::jsonb,
+                %(effect)s::jsonb, %(source)s, TRUE, %(description)s, %(priority)s
+            )
+            RETURNING id
+            """,
+            {
+                "rule_name": rule_name,
+                "rule_type": rule_type,
+                "event_types": _json(event_types),
+                "conditions": _json(conditions or {}),
+                "effect": _json(effect or {}),
+                "source": source,
+                "description": description,
+                "priority": priority,
+            },
+        ).fetchone()
+        return int(row["id"])
+
+    def deactivate_vad_reasoning_rule(self, conn: psycopg.Connection, *, rule_id: int) -> bool:
+        """Soft-delete a rule by setting active=FALSE.  Returns True if updated."""
+        row = conn.execute(
+            """
+            UPDATE vad_reasoning_rules
+            SET active = FALSE, updated_at = NOW()
+            WHERE id = %(rule_id)s
+            RETURNING id
+            """,
+            {"rule_id": int(rule_id)},
+        ).fetchone()
+        return bool(row)
+
+    def delete_vad_reasoning_rule(self, conn: psycopg.Connection, *, rule_id: int) -> bool:
+        """Hard-delete a rule row.  Returns True if a row was deleted."""
+        row = conn.execute(
+            "DELETE FROM vad_reasoning_rules WHERE id = %(rule_id)s RETURNING id",
+            {"rule_id": int(rule_id)},
+        ).fetchone()
+        return bool(row)
+
+    def get_all_vad_reasoning_rules(self, conn: psycopg.Connection) -> list[dict[str, Any]]:
+        """Return all rules (active and inactive) for admin/UI listing."""
+        try:
+            rows = conn.execute(
+                """
+                SELECT id, rule_name, rule_type, event_types, conditions, effect,
+                       source, active, description, priority, created_at, updated_at
+                FROM vad_reasoning_rules
+                ORDER BY priority ASC NULLS LAST, id ASC
+                """
+            ).fetchall()
+            return [dict(r) for r in rows]
+        except Exception:
+            return []
+
 

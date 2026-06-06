@@ -14,9 +14,8 @@ def get_events(gate: str | None = None, limit: int = 50) -> dict[str, Any]:
     try:
         with db.connect() as conn:
             events = db.get_recent_gate_events(conn, limit=limit, gate_name=gate)
-            for evt in events:
-                evt["persistent"] = True
-                evt["event_emitted"] = True
+            # Do not synthesize persistence fields here. Return DB values as-is so
+            # the UI/evaluation layer does not mistake display defaults for measured state.
             return {"events": events}
     except Exception as e:
         log.exception("Failed to get VAD events")

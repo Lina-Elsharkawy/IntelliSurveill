@@ -322,23 +322,47 @@ def compute_homography_macro_features(
         raise ValueError("No valid time deltas in macro tubelet")
     step_dists = np.linalg.norm(step_vecs, axis=1)
     speeds_all = step_dists / np.maximum(dt, 1e-6)
+
+    # Keep backend feature math identical to the fixed offline extractor:
+    # 1) reject non-physical STEP VECTORS first,
+    # 2) compute speed/path/displacement from the same accepted steps,
+    # 3) compute VECTOR acceleration, not scalar d(speed)/dt,
+    # 4) keep straightness geometrically bounded in [0, 1].
     valid = np.isfinite(speeds_all)
     if reject_nonphysical_steps:
         valid &= speeds_all <= float(max_plausible_speed)
-    speeds = speeds_all[valid] if np.any(valid) else np.zeros(1, dtype=np.float64)
-    step_dists_used = step_dists[valid] if np.any(valid) else np.zeros(1, dtype=np.float64)
-    dt_used = dt[valid] if np.any(valid) else np.ones(1, dtype=np.float64) / 2.5
-    if len(speeds) >= 2:
+
+    step_vecs_used = step_vecs[valid] if np.any(valid) else np.zeros((0, 2), dtype=np.float64)
+    dt_used = dt[valid] if np.any(valid) else np.zeros((0,), dtype=np.float64)
+
+    if len(step_vecs_used):
+        vel_used = step_vecs_used / np.maximum(dt_used[:, None], 1e-6)
+        speeds = np.linalg.norm(vel_used, axis=1)
+    else:
+        vel_used = np.zeros((0, 2), dtype=np.float64)
+        speeds = np.zeros(1, dtype=np.float64)
+
+    if len(vel_used) >= 2:
         mid_dt = 0.5 * (dt_used[1:] + dt_used[:-1])
-        accels_all = np.abs(np.diff(speeds)) / np.maximum(mid_dt, 1e-6)
-        accels = accels_all[np.isfinite(accels_all) & (accels_all <= max_plausible_accel)] if reject_nonphysical_steps else accels_all
+        accel_vecs = np.diff(vel_used, axis=0) / np.maximum(mid_dt[:, None], 1e-6)
+        accels_all = np.linalg.norm(accel_vecs, axis=1)
+        if reject_nonphysical_steps:
+            accel_valid = np.isfinite(accels_all) & (accels_all <= float(max_plausible_accel))
+            accels = accels_all[accel_valid]
+        else:
+            accels = accels_all[np.isfinite(accels_all)]
         if len(accels) == 0:
             accels = np.array([0.0], dtype=np.float64)
     else:
+        accels_all = np.array([], dtype=np.float64)
         accels = np.array([0.0], dtype=np.float64)
-    total_path = float(np.sum(step_dists_used))
-    displacement = float(np.linalg.norm(floor[-1] - floor[0]))
-    straightness = displacement / max(total_path, 1e-6)
+
+    total_path = float(np.sum(np.linalg.norm(step_vecs_used, axis=1))) if len(step_vecs_used) else 0.0
+    displacement = float(np.linalg.norm(np.sum(step_vecs_used, axis=0))) if len(step_vecs_used) else 0.0
+    straightness = float(displacement / total_path) if total_path > 1e-9 else 0.0
+    straightness = float(np.clip(straightness, 0.0, 1.0))
+    rejected_speed_steps = int(len(speeds_all) - int(np.sum(valid)))
+    rejected_accel_steps = int(len(accels_all) - len(accels)) if len(vel_used) >= 2 else 0
     angles = np.arctan2(step_vecs[:, 1], step_vecs[:, 0])
     if len(angles) >= 2:
         deltas = np.asarray([abs(angle_wrap(float(angles[i] - angles[i - 1]))) for i in range(1, len(angles))], dtype=np.float64)
@@ -384,5 +408,7 @@ def compute_homography_macro_features(
         "bbox_raw_path_floor_units": float(np.sum(bbox_raw_step_dists)) if len(bbox_raw_step_dists) else 0.0,
         "total_path_floor_units": total_path,
         "displacement_floor_units": displacement,
+        "macro_rejected_speed_steps": rejected_speed_steps,
+        "macro_rejected_accel_steps": rejected_accel_steps,
     }
     return feature.reshape(1, -1), meta
