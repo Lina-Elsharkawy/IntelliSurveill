@@ -97,13 +97,11 @@ Constraints:
 """.strip()
 
 
-def build_llm_policy_prompt(*, ctx: DeepReasoningContext, vlm_review: VlmVisualReview, active_rules: list[dict[str, Any]]) -> str:
-    deep_context = {
+def build_llm_policy_prompt(*, ctx: DeepReasoningContext | PoseReasoningContext, vlm_review: VlmVisualReview, active_rules: list[dict[str, Any]]) -> str:
+    gate_context = {
         "event_id": ctx.event_id,
         "case_id": ctx.case_id,
         "gate_name": ctx.gate_name,
-        "deep_score": ctx.deep_score,
-        "threshold_value": ctx.threshold_value,
         "score_ratio": ctx.score_ratio,
         "ratio_band": ctx.ratio_band(),
         "camera_id": ctx.camera_id,
@@ -112,6 +110,16 @@ def build_llm_policy_prompt(*, ctx: DeepReasoningContext, vlm_review: VlmVisualR
         "tracker_track_id": ctx.tracker_track_id,
         "tubelet_id": ctx.tubelet_id,
     }
+    
+    if getattr(ctx, "gate_name", "deep") == "pose":
+        gate_context["pose_score"] = getattr(ctx, "pose_score", None)
+        context_label = "Pose context:"
+    else:
+        gate_context["deep_score"] = getattr(ctx, "deep_score", None)
+        context_label = "Deep context:"
+        
+    gate_context["threshold_value"] = ctx.threshold_value
+
     return f"""
 You are the policy and anomaly-rules reasoning layer for a backend Video Anomaly Detection system.
 
@@ -119,10 +127,10 @@ You did not see the images.
 You must not invent visual facts.
 You must rely only on the structured VLM visual review provided below.
 
-The Deep gate is a candidate detector, not ground truth.
+The {ctx.gate_name.title()} gate is a candidate detector, not ground truth.
 The VLM is the visual evidence extractor.
 Your job is to combine:
-- Deep score context
+- {ctx.gate_name.title()} score context
 - VLM visual review
 - anomaly trigger/suppress rules
 - system policy
@@ -143,8 +151,8 @@ Important rules:
 11. Suppress rules may downgrade normal/benign/unclear events.
 12. Output only valid JSON. No markdown. No prose outside JSON.
 
-Deep context:
-{_json(deep_context, 2500)}
+{context_label}
+{_json(gate_context, 2500)}
 
 VLM visual review:
 {_json(model_to_dict(vlm_review), 6500)}
@@ -212,6 +220,103 @@ Constraints:
 - If policy_alert_decision is YES, VLM anomaly_evidence must contain concrete visual evidence.
 - If policy_alert_decision is NO, explain why the event is normal/benign or suppressed.
 - If policy_alert_decision is UNCERTAIN, explain what prevents confirmation.
+- Do not output null values.
+- Output JSON only.
+""".strip()
+def build_pose_vlm_visual_prompt(ctx: Any) -> str:
+    return f"""
+You are a visual reviewer for a backend Video Anomaly Detection system.
+
+You are reviewing a candidate event produced by the Pose Micro GMM Gate. The Pose gate detects rare body articulation by scoring keypoint motion features (wrist speed, ankle speed, limb acceleration, torso motion, body angle change, crouch change, arm extension, asymmetry) against a Gaussian Mixture Model trained on normal movement. A high score means the pose sequence is statistically rare compared to normal examples. It does not prove a real anomaly occurred.
+
+Your task is to inspect only the provided visual evidence:
+- annotated_frame.jpg
+- tubelet_montage.jpg
+- selected tubelet frames if provided
+
+You must describe what is visible and produce a structured visual review.
+
+Important rules:
+1. You are not the final system decision-maker.
+2. The Pose GMM score is not ground truth.
+3. Do not blindly confirm the Pose gate.
+4. Use only visible evidence.
+5. Do not infer intent.
+6. Do not invent unseen actions.
+7. Do not claim a fall, collapse, reaching, or suspicious movement unless it is visually supported.
+8. If the person is standing, sitting, walking, turning, or making a normal posture change, say so.
+9. If the evidence is blurry, occluded, incomplete, or ambiguous, choose UNCERTAIN.
+10. If visual evidence appears normal or benign, choose NO.
+11. YES requires concrete visible abnormal body posture or movement.
+12. Do not leave explanation fields empty.
+13. Output only valid JSON. No markdown. No prose outside JSON.
+
+Pose score context:
+- pose_score: {ctx.pose_score}
+- threshold_value: {ctx.threshold_value}
+- score_ratio: {ctx.score_ratio}
+
+Score interpretation:
+- score_ratio close to 1.0 means the Pose gate is only slightly above threshold.
+- If score_ratio < 1.15, treat the Pose signal as weak.
+- A weak score should not be treated as visual proof of anomaly.
+
+Pose gate fires on rare articulation such as:
+- Sudden collapse or fall to the floor
+- Extreme crouching or low body position
+- Rapid asymmetric limb movement (one arm moving very fast)
+- Unusual reaching, twisting, or extending arms toward equipment
+- Person on the floor or in a prone position
+- Rapid running or sprinting indoors
+It also fires on benign causes such as:
+- Picking up an object from the floor
+- Stretching or adjusting posture
+- Sitting down or standing up quickly
+- Poor keypoint quality or occlusion causing noisy pose features
+
+Event metadata:
+{_json(ctx.event_metadata, 3500)}
+
+Pose gate metadata:
+{_json(ctx.pose_gate_metadata, 3500)}
+
+Scene context:
+{_json(ctx.scene_context, 2500)}
+
+Images supplied in order:
+{_json(ctx.evidence_object_keys, 1200)}
+
+Return exactly this JSON:
+
+{{
+  "schema_version": "1.0",
+  "review_type": "vlm_visual_review",
+  "visual_alert_decision": "YES | NO | UNCERTAIN",
+  "visual_severity": "NONE | LOW | MEDIUM | HIGH | CRITICAL",
+  "event_type": "normal_activity | benign_object_movement | benign_posture_change | camera_or_detection_artifact | unclear_visual_evidence | deep_semantic_spatiotemporal_anomaly | suspicious_motion | fall_or_collapse | unsafe_equipment_interaction | rapid_unusual_movement | person_on_floor | possible_intrusion_or_security_event",
+  "visual_confidence": 0.0,
+  "image_quality": "GOOD | FAIR | POOR | UNUSABLE",
+  "evidence_sufficiency": "SUFFICIENT | PARTIAL | INSUFFICIENT",
+  "visible_scene": "Describe only what is visible.",
+  "person_observation": "Describe visible person/body/posture/action only.",
+  "motion_observation": "Describe visible motion/change across the montage. If unclear, say so.",
+  "anomaly_evidence": [
+    "Concrete visible evidence supporting abnormal pose or movement, if any."
+  ],
+  "normality_evidence": [
+    "Concrete visible evidence supporting normal or benign interpretation, if any."
+  ],
+  "false_positive_risks": [
+    "Reasons the Pose event may be a false positive, if any."
+  ],
+  "visual_decision_reason": "Explain the visual decision based only on visible evidence."
+}}
+
+Constraints:
+- visual_confidence must be between 0.0 and 1.0.
+- If visual_alert_decision is YES, anomaly_evidence must contain at least one concrete visible abnormal pose or movement.
+- If visual_alert_decision is NO, normality_evidence must contain at least one concrete visible reason.
+- If visual_alert_decision is UNCERTAIN, explain the uncertainty in false_positive_risks or evidence_sufficiency.
 - Do not output null values.
 - Output JSON only.
 """.strip()

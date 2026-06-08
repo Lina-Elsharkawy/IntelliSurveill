@@ -900,6 +900,53 @@ class VadDB:
             {"case_id": case_id, "gate_event_id": gate_event_id, "relation": relation},
         )
 
+    def get_overlapping_gate_event_with_evidence(
+        self,
+        conn: psycopg.Connection,
+        *,
+        session_id: int,
+        db_track_id: int,
+        my_gate_event_id: int,
+        my_start_ts: datetime,
+        my_peak_ts: datetime,
+    ) -> dict[str, Any] | None:
+        """Return another gate event on the same track with overlapping time and uploaded evidence.
+
+        Used at VLM queuing time to detect co-fires between pose and deep gates.
+        Returns the overlapping event ordered so deep comes before pose (gate_name DESC).
+        """
+        row = conn.execute(
+            """
+            SELECT
+                e.id,
+                e.gate_name,
+                e.start_ts,
+                e.peak_ts,
+                e.track_id,
+                c.id AS case_id,
+                c.evidence_bundle_json
+            FROM vad_gate_events e
+            JOIN vad_case_gate_events cge ON cge.gate_event_id = e.id
+            JOIN vad_anomaly_cases c ON c.id = cge.case_id
+            WHERE e.session_id = %(session_id)s
+              AND e.track_id = %(track_id)s
+              AND e.id != %(my_gate_event_id)s
+              AND e.start_ts < %(my_peak_ts)s
+              AND e.peak_ts > %(my_start_ts)s
+              AND c.evidence_bundle_json->>'status' = 'uploaded'
+            ORDER BY e.gate_name DESC, e.id DESC
+            LIMIT 1
+            """,
+            {
+                "session_id": int(session_id),
+                "track_id": int(db_track_id),
+                "my_gate_event_id": int(my_gate_event_id),
+                "my_start_ts": my_start_ts,
+                "my_peak_ts": my_peak_ts,
+            },
+        ).fetchone()
+        return dict(row) if row else None
+
 
     def get_existing_reasoning_job_for_gate_event(
         self,
@@ -1168,7 +1215,7 @@ class VadDB:
             conn.execute(
                 """
                 UPDATE vad_reasoning_jobs
-                SET status = 'expired', finished_at = NOW(),
+                SET status = 'failed', finished_at = NOW(),
                     error_json = '{"reason": "job_too_old_skipped"}'::jsonb
                 WHERE status = 'queued'
                   AND attempts < max_attempts
@@ -1221,7 +1268,77 @@ class VadDB:
             },
         ).fetchone()
         return dict(row) if row else None
+    def claim_next_reasoning_job(
+        self,
+        conn: psycopg.Connection,
+        *,
+        gate_name: str,
+        vlm_model: str | None = None,
+        llm_model: str | None = None,
+        max_age_sec: float | None = None,
+    ) -> dict[str, Any] | None:
+        """Atomically claim one queued reasoning job for the given gate_name.
 
+        Works identically to claim_next_deep_reasoning_job but accepts any gate_name,
+        so pose (and future gates) can share the same claim logic.
+        """
+        if max_age_sec is not None:
+            conn.execute(
+                """
+                UPDATE vad_reasoning_jobs
+                SET status = 'failed', finished_at = NOW(),
+                    error_json = '{"reason": "job_too_old_skipped"}'::jsonb
+                WHERE status = 'queued'
+                  AND attempts < max_attempts
+                  AND metadata_json @> %(source_metadata)s::jsonb
+                  AND queued_at < NOW() - (%(max_age_sec)s || ' seconds')::interval
+                """,
+                {
+                    "source_metadata": _json({"source_gate_name": str(gate_name)}),
+                    "max_age_sec": float(max_age_sec),
+                },
+            )
+
+        row = conn.execute(
+            """
+            WITH next_job AS (
+                SELECT id
+                FROM vad_reasoning_jobs
+                WHERE status = 'queued'
+                  AND attempts < max_attempts
+                  AND metadata_json @> %(source_metadata)s::jsonb
+                ORDER BY
+                    CASE priority
+                        WHEN 'urgent' THEN 0
+                        WHEN 'high' THEN 1
+                        WHEN 'normal' THEN 2
+                        WHEN 'low' THEN 3
+                        ELSE 4
+                    END,
+                    queued_at ASC,
+                    id ASC
+                LIMIT 1
+                FOR UPDATE SKIP LOCKED
+            )
+            UPDATE vad_reasoning_jobs j
+            SET status = 'running',
+                attempts = attempts + 1,
+                started_at = NOW(),
+                finished_at = NULL,
+                vlm_model = COALESCE(%(vlm_model)s, vlm_model),
+                llm_model = COALESCE(%(llm_model)s, llm_model),
+                error_json = '{}'::jsonb
+            FROM next_job
+            WHERE j.id = next_job.id
+            RETURNING j.*
+            """,
+            {
+                "source_metadata": _json({"source_gate_name": str(gate_name)}),
+                "vlm_model": vlm_model,
+                "llm_model": llm_model,
+            },
+        ).fetchone()
+        return dict(row) if row else None
     def mark_reasoning_job_succeeded(
         self,
         conn: psycopg.Connection,

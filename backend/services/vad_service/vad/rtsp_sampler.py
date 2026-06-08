@@ -20,7 +20,7 @@ from .homography_features import MacroSample
 from .homography_gate import HomographyMacroGate
 from .minio_client import VadMinioClient
 from .pose_gate import PoseGate
-from .reasoning_jobs import queue_deep_reasoning_job
+from .reasoning_jobs import queue_deep_reasoning_job, queue_pose_reasoning_job, queue_cofire_reasoning_job
 from .tubelet_buffer import TrackTubeletBuffer
 from .yolo_tracker import YoloPoseTracker
 
@@ -563,29 +563,93 @@ class VadRtspSampler:
                 self.last_error = f"Evidence upload failed for {gate_name} event {gate_event_id}: {e}"
                 log.exception(self.last_error)
 
-        if gate_name == "deep":
+        if gate_name in {"deep", "pose"}:
             try:
-                job_id = queue_deep_reasoning_job(
+                tubelet_start_ts = tubelet_samples[0].captured_at
+                tubelet_peak_ts = tubelet_samples[-1].captured_at
+
+                overlap = self.db.get_overlapping_gate_event_with_evidence(
                     conn,
-                    cfg=self.cfg,
-                    db=self.db,
-                    case_id=case_id,
-                    gate_event_id=gate_event_id,
                     session_id=self.session_id,
-                    stream_id=self.stream_id,
-                    camera_id=self.cfg.camera_id,
                     db_track_id=sample.db_track_id,
-                    tracker_track_id=sample.tracker_track_id,
-                    tubelet_id=tubelet_id,
-                    score_id=score_id,
-                    gate_out=gate_out,
-                    gate_summary=gate_summary,
-                    event_policy=event_policy,
-                    evidence_result=evidence_result,
+                    my_gate_event_id=gate_event_id,
+                    my_start_ts=tubelet_start_ts,
+                    my_peak_ts=tubelet_peak_ts,
                 )
-                reasoning_jobs = 1 if job_id is not None else 0
+
+                if overlap:
+                    # Co-fire: deep and pose both fired on same track + time
+                    # Queue exactly one VLM job using deep frames
+                    job_id = queue_cofire_reasoning_job(
+                        conn,
+                        cfg=self.cfg,
+                        db=self.db,
+                        my_gate_name=gate_name,
+                        my_case_id=case_id,
+                        my_gate_event_id=gate_event_id,
+                        my_gate_out=gate_out,
+                        my_gate_summary=gate_summary,
+                        my_event_policy=event_policy,
+                        my_evidence_result=evidence_result,
+                        overlap=overlap,
+                        session_id=self.session_id,
+                        stream_id=self.stream_id,
+                        camera_id=self.cfg.camera_id,
+                        db_track_id=sample.db_track_id,
+                        tracker_track_id=sample.tracker_track_id,
+                        tubelet_id=tubelet_id,
+                        score_id=score_id,
+                        tubelet_start_ts=tubelet_start_ts,
+                        tubelet_peak_ts=tubelet_peak_ts,
+                    )
+                    reasoning_jobs = 1 if job_id is not None else 0
+                    log.info(
+                        "Co-fire detected gate=%s track=%s overlap_gate=%s",
+                        gate_name, sample.tracker_track_id, overlap["gate_name"],
+                    )
+                elif gate_name == "deep":
+                    job_id = queue_deep_reasoning_job(
+                        conn,
+                        cfg=self.cfg,
+                        db=self.db,
+                        case_id=case_id,
+                        gate_event_id=gate_event_id,
+                        session_id=self.session_id,
+                        stream_id=self.stream_id,
+                        camera_id=self.cfg.camera_id,
+                        db_track_id=sample.db_track_id,
+                        tracker_track_id=sample.tracker_track_id,
+                        tubelet_id=tubelet_id,
+                        score_id=score_id,
+                        gate_out=gate_out,
+                        gate_summary=gate_summary,
+                        event_policy=event_policy,
+                        evidence_result=evidence_result,
+                    )
+                    reasoning_jobs = 1 if job_id is not None else 0
+                else:
+                    job_id = queue_pose_reasoning_job(
+                        conn,
+                        cfg=self.cfg,
+                        db=self.db,
+                        case_id=case_id,
+                        gate_event_id=gate_event_id,
+                        session_id=self.session_id,
+                        stream_id=self.stream_id,
+                        camera_id=self.cfg.camera_id,
+                        db_track_id=sample.db_track_id,
+                        tracker_track_id=sample.tracker_track_id,
+                        tubelet_id=tubelet_id,
+                        score_id=score_id,
+                        gate_out=gate_out,
+                        gate_summary=gate_summary,
+                        event_policy=event_policy,
+                        evidence_result=evidence_result,
+                    )
+                    reasoning_jobs = 1 if job_id is not None else 0
+
             except Exception as e:
-                self.last_error = f"Deep reasoning job queue failed for event {gate_event_id}: {e}"
+                self.last_error = f"{gate_name} reasoning job queue failed for event {gate_event_id}: {e}"
                 log.exception(self.last_error)
 
         return gate_event_id, evidence_objects, evidence_items, reasoning_jobs

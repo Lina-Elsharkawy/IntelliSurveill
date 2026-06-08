@@ -16,9 +16,10 @@ from .reasoning.reasoning_policy import (
     apply_python_final_guardrails,
     build_structured_result,
 )
-from .reasoning.reasoning_prompts import build_deep_vlm_visual_prompt, build_llm_policy_prompt
+from .reasoning.reasoning_prompts import build_deep_vlm_visual_prompt, build_llm_policy_prompt, build_pose_vlm_visual_prompt
 from .reasoning.reasoning_schema import (
     DeepReasoningContext,
+    PoseReasoningContext,
     fallback_llm_uncertain,
     model_to_dict,
     parse_llm_policy_review,
@@ -140,7 +141,31 @@ def _build_context(bundle: dict[str, Any], image_object_keys: list[str]) -> Deep
         deep_gate_metadata=deep_gate,
         scene_context=bundle.get("scene_context") or {},
     )
-
+def _build_pose_context(bundle: dict[str, Any], image_object_keys: list[str]) -> PoseReasoningContext:
+    event = bundle.get("event") or {}
+    pose_gate = bundle.get("pose_gate") or {}
+    threshold = _safe_float(event.get("threshold_value"))
+    score = _safe_float(event.get("peak_score"))
+    ratio = _safe_float(event.get("ratio"))
+    if ratio is None and score is not None and threshold and threshold > 0:
+        ratio = score / threshold
+    return PoseReasoningContext(
+        event_id=int(event.get("gate_event_id")) if event.get("gate_event_id") is not None else None,
+        case_id=int(event.get("case_id")) if event.get("case_id") is not None else None,
+        gate_name="pose",
+        pose_score=score,
+        threshold_value=threshold,
+        score_ratio=ratio,
+        camera_id=int(event.get("camera_id")) if event.get("camera_id") is not None else None,
+        stream_key=event.get("stream_key"),
+        camera_key=event.get("camera_key"),
+        tracker_track_id=int(event.get("tracker_track_id")) if event.get("tracker_track_id") is not None else None,
+        tubelet_id=int(event.get("tubelet_id")) if event.get("tubelet_id") is not None else None,
+        evidence_object_keys=image_object_keys,
+        event_metadata=event,
+        pose_gate_metadata=pose_gate,
+        scene_context=bundle.get("scene_context") or {},
+    )
 
 # Maximum age of a reasoning job to still be processed.  Jobs older than this
 # were queued when Ollama was down and the evidence images are no longer fresh.
@@ -165,15 +190,23 @@ class DeepReasoningWorker:
     def process_one(self) -> bool:
         with self.db.connect() as conn:
             with conn.transaction():
-                job = self.db.claim_next_deep_reasoning_job(
+                job = self.db.claim_next_reasoning_job(
                     conn,
+                    gate_name="deep",
                     vlm_model=self.cfg.ollama_vlm_model,
                     llm_model=self.cfg.ollama_llm_model,
                     max_age_sec=_MAX_JOB_AGE_SEC,
                 )
-        if not job:
-            return False
-
+                if not job:
+                    job = self.db.claim_next_reasoning_job(
+                        conn,
+                        gate_name="pose",
+                        vlm_model=self.cfg.ollama_vlm_model,
+                        llm_model=self.cfg.ollama_llm_model,
+                        max_age_sec=_MAX_JOB_AGE_SEC,
+                    )
+                if not job:
+                    return False
         job_id = int(job["id"])
         case_id = int(job["case_id"])
         attempts = int(job.get("attempts") or 0)
@@ -254,20 +287,27 @@ class DeepReasoningWorker:
 
     def _process_claimed_job(self, job: dict[str, Any]) -> ReasoningCallResult:
         metadata = job.get("metadata_json") or {}
-        if metadata.get("source_gate_name") != "deep":
-            raise RuntimeError(f"Refusing non-Deep reasoning job: metadata={metadata}")
+        source_gate = metadata.get("source_gate_name")
+        if source_gate not in {"deep", "pose"}:
+            raise RuntimeError(f"Unsupported source_gate_name in reasoning job: {source_gate}")
 
         bundle = job.get("input_bundle_json") or {}
         if not isinstance(bundle, dict):
             raise RuntimeError("input_bundle_json is not an object")
-        if bundle.get("reasoning_scope") != "deep_gate_only":
-            raise RuntimeError(f"Unsupported reasoning scope: {bundle.get('reasoning_scope')}")
+
+        scope = bundle.get("reasoning_scope")
+        if scope not in {"deep_gate_only", "pose_gate_only"}:
+            raise RuntimeError(f"Unsupported reasoning scope: {scope}")
 
         object_keys = _select_evidence_object_keys(bundle, self.cfg)
         if not object_keys:
             raise RuntimeError("No usable visual evidence object keys found in reasoning bundle")
         images_b64 = _load_images_b64(self.minio, object_keys)
-        ctx = _build_context(bundle, object_keys)
+
+        if source_gate == "pose":
+            ctx = _build_pose_context(bundle, object_keys)
+        else:
+            ctx = _build_context(bundle, object_keys)
 
         # Load active rules from DB (falls back to built-ins on failure).
         with self.db.connect() as _conn:
@@ -275,7 +315,10 @@ class DeepReasoningWorker:
         llm_rules = serialize_rules_for_llm(rules)
 
         # Stage 1: VLM grounded visual review.
-        vlm_prompt = build_deep_vlm_visual_prompt(ctx)
+        if source_gate == "pose":
+            vlm_prompt = build_pose_vlm_visual_prompt(ctx)
+        else:
+            vlm_prompt = build_deep_vlm_visual_prompt(ctx)
         raw_vlm = self.ollama.generate(model=self.cfg.ollama_vlm_model, prompt=vlm_prompt, images_b64=images_b64)
         vlm_review, vlm_parse_info = parse_vlm_visual_review(raw_vlm)
 
@@ -349,7 +392,7 @@ class DeepReasoningWorker:
 
     def run_forever(self) -> None:
         log.info(
-            "Starting Deep-only VAD reasoning worker provider=%s vlm=%s llm=%s poll=%.2fs batch=%s policy=%s rules=%s",
+            "Starting Deep + Pose VAD reasoning worker provider=%s vlm=%s llm=%s poll=%.2fs batch=%s policy=%s rules=%s",
             self.cfg.reasoning_provider,
             self.cfg.ollama_vlm_model,
             self.cfg.ollama_llm_model,

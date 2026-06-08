@@ -4,6 +4,7 @@ from typing import Any
 
 from .reasoning_schema import (
     DeepReasoningContext,
+    PoseReasoningContext,
     LlmPolicyReview,
     PythonFinalResult,
     VlmVisualReview,
@@ -97,7 +98,7 @@ def _only_score_based_evidence(vlm: VlmVisualReview) -> bool:
 
 def apply_python_final_guardrails(
     *,
-    ctx: DeepReasoningContext,
+    ctx: DeepReasoningContext | PoseReasoningContext,
     vlm: VlmVisualReview,
     llm: LlmPolicyReview,
     rules: list[dict[str, Any]],
@@ -228,7 +229,7 @@ def apply_python_final_guardrails(
 
 def build_structured_result(
     *,
-    ctx: DeepReasoningContext,
+    ctx: DeepReasoningContext | PoseReasoningContext,
     vlm: VlmVisualReview,
     llm: LlmPolicyReview,
     final: PythonFinalResult,
@@ -244,8 +245,8 @@ def build_structured_result(
         "event_id": ctx.event_id,
         "case_id": ctx.case_id,
         "gate_name": ctx.gate_name,
-        "deep_gate": {
-            "peak_score": ctx.deep_score,
+        f"{ctx.gate_name}_gate": {
+            "peak_score": getattr(ctx, "deep_score", getattr(ctx, "pose_score", None)),
             "threshold_value": ctx.threshold_value,
             "score_ratio": ctx.score_ratio,
             "ratio_band": ctx.ratio_band(),

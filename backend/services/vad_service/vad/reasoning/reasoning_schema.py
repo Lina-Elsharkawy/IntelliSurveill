@@ -54,7 +54,32 @@ class DeepReasoningContext(BaseModel):
         if ratio < 1.50:
             return "moderate"
         return "strong"
+class PoseReasoningContext(BaseModel):
+    event_id: int | None = None
+    case_id: int | None = None
+    gate_name: str = "pose"
+    pose_score: float | None = None
+    threshold_value: float | None = None
+    score_ratio: float | None = None
+    camera_id: int | None = None
+    stream_key: str | None = None
+    camera_key: str | None = None
+    tracker_track_id: int | None = None
+    tubelet_id: int | None = None
+    evidence_object_keys: list[str] = Field(default_factory=list)
+    event_metadata: dict[str, Any] = Field(default_factory=dict)
+    pose_gate_metadata: dict[str, Any] = Field(default_factory=dict)
+    scene_context: dict[str, Any] = Field(default_factory=dict)
 
+    def ratio_band(self) -> str:
+        ratio = self.score_ratio
+        if ratio is None:
+            return "weak"
+        if ratio < 1.15:
+            return "weak"
+        if ratio < 1.50:
+            return "moderate"
+        return "strong"
 
 class VlmVisualReview(BaseModel):
     schema_version: str = "1.0"
@@ -236,7 +261,7 @@ def fallback_vlm_uncertain(reason: str) -> VlmVisualReview:
     )
 
 
-def fallback_llm_uncertain(reason: str, *, ctx: DeepReasoningContext | None = None, vlm: VlmVisualReview | None = None) -> LlmPolicyReview:
+def fallback_llm_uncertain(reason: str, *, ctx: DeepReasoningContext | PoseReasoningContext | None = None, vlm: VlmVisualReview | None = None) -> LlmPolicyReview:
     ratio = ctx.score_ratio if ctx else None
     has_norm = bool(vlm and vlm.normality_evidence)
     has_fp = bool(vlm and vlm.false_positive_risks)
@@ -305,7 +330,7 @@ def parse_vlm_visual_review(raw_text: str) -> tuple[VlmVisualReview, dict[str, A
         }
 
 
-def parse_llm_policy_review(raw_text: str, *, ctx: DeepReasoningContext, vlm: VlmVisualReview) -> tuple[LlmPolicyReview, dict[str, Any]]:
+def parse_llm_policy_review(raw_text: str, *, ctx: DeepReasoningContext | PoseReasoningContext, vlm: VlmVisualReview) -> tuple[LlmPolicyReview, dict[str, Any]]:
     raw = extract_json_object(raw_text)
     if not raw:
         return fallback_llm_uncertain("LLM did not return parseable JSON.", ctx=ctx, vlm=vlm), {"parse_error": "empty_or_invalid_json"}
