@@ -286,15 +286,15 @@ services:
       # ------------------------------------------------------------------
       VAD_DEEP_GATE_ENABLED: "1"
       VAD_DEEP_K: "5"
-      VAD_DEEP_THRESHOLD_KEY: p99_5
-      VAD_DEEP_THRESHOLD_VALUE: "0.11"
+      VAD_DEEP_THRESHOLD_KEY: p95
+      VAD_DEEP_THRESHOLD_VALUE: "0.11937740445137024"
       VAD_DEEP_TUBELET_FRAMES: "16"
-      VAD_DEEP_STRIDE: "5"
+      VAD_DEEP_STRIDE: "8"
       VAD_DEEP_BBOX_PAD_RATIO: "0.30"
       VAD_DEEP_CROP_SIZE: "224"
-      VAD_DEEP_SMOOTHING_SIGMA: "2.0"
-      VAD_DEEP_PERSISTENCE_WINDOW: "1"
-      VAD_DEEP_PERSISTENCE_REQUIRED_HITS: "1"
+      VAD_DEEP_SMOOTHING_SIGMA: "0.0"
+      VAD_DEEP_PERSISTENCE_WINDOW: "3"
+      VAD_DEEP_PERSISTENCE_REQUIRED_HITS: "2"
       VAD_DEEP_MIN_EVENT_GAP_SEC: "5.0"
       VAD_DEEP_DEVICE: cuda
       VAD_DEEP_FP16: "1"
@@ -341,14 +341,18 @@ services:
       VAD_SAVE_EVIDENCE_ON_PERSISTENT_HIT: "0"  
 
       # ------------------------------------------------------------------
-      # Deep-only VLM/LLM reasoning queue
+      # VLM/LLM reasoning queue
       # ------------------------------------------------------------------
       VAD_DEEP_REASONING_ENABLED: "1"
       VAD_DEEP_REASONING_REQUIRE_EVIDENCE: "1"
       VAD_DEEP_REASONING_MIN_RATIO: "1.0"
-      VAD_DEEP_REASONING_PROMPT_VERSION: deep_vlm_reasoning_v1
-      VAD_DEEP_REASONING_PRIORITY: normal
+      VAD_DEEP_REASONING_PROMPT_VERSION: "gate_p2c_reasoning_v1"
+      VAD_DEEP_REASONING_PRIORITY: "normal"
       VAD_DEEP_REASONING_MAX_ATTEMPTS: "3"
+
+      VLM_MODEL: openbmb/minicpm-v4.5:8b
+      LLM_MODEL: qwen3:8b
+      VAD_OLLAMA_TIMEOUT_SEC: 300
     volumes:
       # Mount source code so future Python edits need restart only, not rebuild
       - ./backend/services/vad_service:/app
@@ -357,7 +361,8 @@ services:
       - ./backend/models/yolo:/models/vad/yolo:ro
 
       # Gate artifact folders
-      - D:/Embeddings_Distribution/normality_models/deep_gate/deep_branch_artifacts_v3_gaussian:/models/vad/deep:ro
+      # Gate artifact folders
+      - D:/Embeddings_Distribution/normality_models/deep_gate/deep_branch_artifacts_v5_liveparity_2p5fps_16f_s8_causal_smooth_thresholds:/models/vad/deep:ro
       - D:/Embeddings_Distribution/normality_models/pose_gate/pose_micro_gmm_gate_backend_parity_50vid_yolov8s_5fps_24f_s6_allk_allp:/models/vad/pose:ro
       - D:/Embeddings_Distribution/normality_models/homography_gate/homography_gate_live_parity_stage3_pose_contract_fixed_50vid/homography_macro_gmm_gate_allk_p995_p997:/models/vad/homography_macro:ro
 
@@ -397,8 +402,11 @@ services:
       VAD_DEEP_REASONING_ENABLED: "1"
       VAD_DEEP_REASONING_REQUIRE_EVIDENCE: "1"
       VAD_DEEP_REASONING_MIN_RATIO: "1.0"
-      VAD_DEEP_REASONING_PROMPT_VERSION: deep_vlm_reasoning_v1
+      VAD_DEEP_REASONING_PROMPT_VERSION: "gate_p2c_reasoning_v1"
       VAD_DEEP_REASONING_MAX_ATTEMPTS: "3"
+
+      VAD_REASONING_IMAGE_ROLES: "tubelet_frame"
+      VAD_REASONING_MAX_IMAGES: "24"
 
       VAD_MINIO_ENDPOINT: minio:9000
       VAD_MINIO_ACCESS_KEY: minioadmin

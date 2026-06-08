@@ -20,7 +20,7 @@ from .homography_features import MacroSample
 from .homography_gate import HomographyMacroGate
 from .minio_client import VadMinioClient
 from .pose_gate import PoseGate
-from .reasoning_jobs import queue_deep_reasoning_job, queue_pose_reasoning_job, queue_cofire_reasoning_job
+from .reasoning_jobs import queue_deep_reasoning_job, queue_pose_reasoning_job
 from .tubelet_buffer import TrackTubeletBuffer
 from .yolo_tracker import YoloPoseTracker
 
@@ -92,8 +92,9 @@ class VadRtspSampler:
         self.evidence_object_count = 0
         self.evidence_item_count = 0
         self.deep_reasoning_job_count = 0
-        self._gate_active_persistent: dict[tuple[str, int], bool] = {}
-        self._gate_last_event_monotonic: dict[tuple[str, int], float] = {}
+        self.pose_reasoning_job_count = 0
+        self._gate_active_persistent: dict[tuple[int, str, int], bool] = {}
+        self._gate_last_event_monotonic: dict[tuple[int, str, int], float] = {}
         self.started_monotonic: float | None = None
         self.last_error: str | None = None
         self.last_debug_path: str | None = None
@@ -151,6 +152,7 @@ class VadRtspSampler:
             self.evidence_object_count = 0
             self.evidence_item_count = 0
             self.deep_reasoning_job_count = 0
+            self.pose_reasoning_job_count = 0
             self._gate_active_persistent.clear()
             self._gate_last_event_monotonic.clear()
             self.started_monotonic = time.monotonic()
@@ -269,7 +271,10 @@ class VadRtspSampler:
                 "evidence_object_count": self.evidence_object_count,
                 "evidence_item_count": self.evidence_item_count,
                 "deep_reasoning_enabled": self.cfg.deep_reasoning_enabled,
+                "pose_reasoning_enabled": self.cfg.pose_reasoning_enabled,
+                "reasoning_job_count": self.deep_reasoning_job_count + self.pose_reasoning_job_count,
                 "deep_reasoning_job_count": self.deep_reasoning_job_count,
+                "pose_reasoning_job_count": self.pose_reasoning_job_count,
             }
 
     def save_latest_debug_frame(self) -> dict[str, Any]:
@@ -408,7 +413,12 @@ class VadRtspSampler:
         }.get(gate_name, "other")
 
     def _should_emit_gate_event(self, *, gate_name: str, tracker_track_id: int, persistent: bool) -> tuple[bool, dict[str, Any]]:
-        key = (gate_name, int(tracker_track_id))
+        # Scope persistent/rising-edge state by session.  Otherwise a restarted
+        # RTSP session can inherit the previous in-memory gate state and suppress
+        # the first Deep/Pose event even though the current session has new
+        # persistent scores.
+        session_key = int(self.session_id or -1)
+        key = (session_key, gate_name, int(tracker_track_id))
         was_active = bool(self._gate_active_persistent.get(key, False))
         rising_edge = bool(persistent and not was_active)
         now_mono = time.monotonic()
@@ -420,6 +430,11 @@ class VadRtspSampler:
         self._gate_active_persistent[key] = bool(persistent)
         if emit:
             self._gate_last_event_monotonic[key] = now_mono
+        elif persistent:
+            log.debug(
+                "Persistent %s score did not emit event session=%s track=%s previous_persistent=%s rising_edge=%s cooldown_ok=%s seconds_since_last=%.3f min_gap=%.3f",
+                gate_name, session_key, tracker_track_id, was_active, rising_edge, cooldown_ok, seconds_since_last, min_gap,
+            )
         return emit, {
             "event_policy": "persistent_rising_edge_with_per_track_cooldown",
             "persistent_rising_edge": rising_edge,
@@ -529,128 +544,123 @@ class VadRtspSampler:
         evidence_result = None
         if self.evidence_writer and self.cfg.evidence_enabled and self.cfg.save_evidence_on_gate_event:
             try:
-                evidence_result = self.evidence_writer.write_gate_event_evidence(
-                    conn,
-                    session_id=self.session_id,
-                    stream_id=self.stream_id,
-                    camera_id=self.cfg.camera_id,
-                    gate_name=gate_name,
-                    gate_event_id=gate_event_id,
-                    case_id=case_id,
-                    tubelet_id=tubelet_id,
-                    score_id=score_id,
-                    db_track_id=sample.db_track_id,
-                    tracker_track_id=sample.tracker_track_id,
-                    tubelet_samples=tubelet_samples,
-                    gate_summary=gate_summary | {"event_policy": event_policy},
-                )
-                evidence_objects = len(evidence_result.media_object_ids)
-                evidence_items = len(evidence_result.evidence_item_ids)
-                self.db.update_anomaly_case_evidence_bundle(
-                    conn,
-                    case_id=case_id,
-                    evidence_bundle_json={
-                        "status": "uploaded",
-                        "object_keys": list(evidence_result.object_keys),
-                        "media_object_ids": [int(x) for x in evidence_result.media_object_ids],
-                        "evidence_item_ids": [int(x) for x in evidence_result.evidence_item_ids],
-                        "gate_event_id": int(gate_event_id),
-                        "tubelet_id": int(tubelet_id),
-                        "score_id": int(score_id),
-                    },
-                )
+                # Evidence writes run in a nested transaction/savepoint. If
+                # MinIO upload or evidence metadata insertion fails, rollback
+                # only this savepoint; do not poison the outer event/case
+                # transaction.
+                with conn.transaction():
+                    evidence_result = self.evidence_writer.write_gate_event_evidence(
+                        conn,
+                        session_id=self.session_id,
+                        stream_id=self.stream_id,
+                        camera_id=self.cfg.camera_id,
+                        gate_name=gate_name,
+                        gate_event_id=gate_event_id,
+                        case_id=case_id,
+                        tubelet_id=tubelet_id,
+                        score_id=score_id,
+                        db_track_id=sample.db_track_id,
+                        tracker_track_id=sample.tracker_track_id,
+                        tubelet_samples=tubelet_samples,
+                        gate_summary=gate_summary | {"event_policy": event_policy},
+                    )
+                    evidence_objects = len(evidence_result.media_object_ids)
+                    evidence_items = len(evidence_result.evidence_item_ids)
+                    self.db.update_anomaly_case_evidence_bundle(
+                        conn,
+                        case_id=case_id,
+                        evidence_bundle_json={
+                            "status": "uploaded",
+                            "object_keys": list(evidence_result.object_keys),
+                            "media_object_ids": [int(x) for x in evidence_result.media_object_ids],
+                            "evidence_item_ids": [int(x) for x in evidence_result.evidence_item_ids],
+                            "gate_event_id": int(gate_event_id),
+                            "tubelet_id": int(tubelet_id),
+                            "score_id": int(score_id),
+                        },
+                    )
             except Exception as e:
+                evidence_result = None
+                evidence_objects = 0
+                evidence_items = 0
                 self.last_error = f"Evidence upload failed for {gate_name} event {gate_event_id}: {e}"
                 log.exception(self.last_error)
 
         if gate_name in {"deep", "pose"}:
             try:
-                tubelet_start_ts = tubelet_samples[0].captured_at
-                tubelet_peak_ts = tubelet_samples[-1].captured_at
-
-                overlap = self.db.get_overlapping_gate_event_with_evidence(
-                    conn,
-                    session_id=self.session_id,
-                    db_track_id=sample.db_track_id,
-                    my_gate_event_id=gate_event_id,
-                    my_start_ts=tubelet_start_ts,
-                    my_peak_ts=tubelet_peak_ts,
-                )
-
-                if overlap:
-                    # Co-fire: deep and pose both fired on same track + time
-                    # Queue exactly one VLM job using deep frames
-                    job_id = queue_cofire_reasoning_job(
-                        conn,
-                        cfg=self.cfg,
-                        db=self.db,
-                        my_gate_name=gate_name,
-                        my_case_id=case_id,
-                        my_gate_event_id=gate_event_id,
-                        my_gate_out=gate_out,
-                        my_gate_summary=gate_summary,
-                        my_event_policy=event_policy,
-                        my_evidence_result=evidence_result,
-                        overlap=overlap,
-                        session_id=self.session_id,
-                        stream_id=self.stream_id,
-                        camera_id=self.cfg.camera_id,
-                        db_track_id=sample.db_track_id,
-                        tracker_track_id=sample.tracker_track_id,
-                        tubelet_id=tubelet_id,
-                        score_id=score_id,
-                        tubelet_start_ts=tubelet_start_ts,
-                        tubelet_peak_ts=tubelet_peak_ts,
-                    )
+                # Queue reasoning in a nested transaction/savepoint. If job
+                # insertion or duplicate-check logic fails, rollback only this
+                # savepoint and still commit the gate event/case transaction.
+                with conn.transaction():
+                    # Architecture decision: Deep and Pose reasoning are queued
+                    # as separate gate-specific jobs. Deep/Pose co-fire is
+                    # correlation metadata/logging only, not a fused replacement.
+                    if gate_name == "deep":
+                        job_id = queue_deep_reasoning_job(
+                            conn,
+                            cfg=self.cfg,
+                            db=self.db,
+                            case_id=case_id,
+                            gate_event_id=gate_event_id,
+                            session_id=self.session_id,
+                            stream_id=self.stream_id,
+                            camera_id=self.cfg.camera_id,
+                            db_track_id=sample.db_track_id,
+                            tracker_track_id=sample.tracker_track_id,
+                            tubelet_id=tubelet_id,
+                            score_id=score_id,
+                            gate_out=gate_out,
+                            gate_summary=gate_summary,
+                            event_policy=event_policy,
+                            evidence_result=evidence_result,
+                        )
+                    else:
+                        job_id = queue_pose_reasoning_job(
+                            conn,
+                            cfg=self.cfg,
+                            db=self.db,
+                            case_id=case_id,
+                            gate_event_id=gate_event_id,
+                            session_id=self.session_id,
+                            stream_id=self.stream_id,
+                            camera_id=self.cfg.camera_id,
+                            db_track_id=sample.db_track_id,
+                            tracker_track_id=sample.tracker_track_id,
+                            tubelet_id=tubelet_id,
+                            score_id=score_id,
+                            gate_out=gate_out,
+                            gate_summary=gate_summary,
+                            event_policy=event_policy,
+                            evidence_result=evidence_result,
+                        )
                     reasoning_jobs = 1 if job_id is not None else 0
-                    log.info(
-                        "Co-fire detected gate=%s track=%s overlap_gate=%s",
-                        gate_name, sample.tracker_track_id, overlap["gate_name"],
-                    )
-                elif gate_name == "deep":
-                    job_id = queue_deep_reasoning_job(
-                        conn,
-                        cfg=self.cfg,
-                        db=self.db,
-                        case_id=case_id,
-                        gate_event_id=gate_event_id,
-                        session_id=self.session_id,
-                        stream_id=self.stream_id,
-                        camera_id=self.cfg.camera_id,
-                        db_track_id=sample.db_track_id,
-                        tracker_track_id=sample.tracker_track_id,
-                        tubelet_id=tubelet_id,
-                        score_id=score_id,
-                        gate_out=gate_out,
-                        gate_summary=gate_summary,
-                        event_policy=event_policy,
-                        evidence_result=evidence_result,
-                    )
-                    reasoning_jobs = 1 if job_id is not None else 0
-                else:
-                    job_id = queue_pose_reasoning_job(
-                        conn,
-                        cfg=self.cfg,
-                        db=self.db,
-                        case_id=case_id,
-                        gate_event_id=gate_event_id,
-                        session_id=self.session_id,
-                        stream_id=self.stream_id,
-                        camera_id=self.cfg.camera_id,
-                        db_track_id=sample.db_track_id,
-                        tracker_track_id=sample.tracker_track_id,
-                        tubelet_id=tubelet_id,
-                        score_id=score_id,
-                        gate_out=gate_out,
-                        gate_summary=gate_summary,
-                        event_policy=event_policy,
-                        evidence_result=evidence_result,
-                    )
-                    reasoning_jobs = 1 if job_id is not None else 0
-
             except Exception as e:
                 self.last_error = f"{gate_name} reasoning job queue failed for event {gate_event_id}: {e}"
                 log.exception(self.last_error)
+
+            # Optional, non-blocking co-fire observation for logs/debugging.
+            # It does not alter the job type or prevent either gate from being
+            # reasoned independently.
+            try:
+                with conn.transaction():
+                    tubelet_start_ts = tubelet_samples[0].captured_at
+                    tubelet_peak_ts = tubelet_samples[-1].captured_at
+                    overlap = self.db.get_overlapping_gate_event_with_evidence(
+                        conn,
+                        session_id=self.session_id,
+                        db_track_id=sample.db_track_id,
+                        my_gate_event_id=gate_event_id,
+                        my_gate_name=gate_name,
+                        my_start_ts=tubelet_start_ts,
+                        my_peak_ts=tubelet_peak_ts,
+                    )
+                    if overlap:
+                        log.info(
+                            "Deep/Pose co-fire correlation observed current_gate=%s current_event=%s overlap_gate=%s overlap_event=%s track=%s",
+                            gate_name, gate_event_id, overlap.get("gate_name"), overlap.get("id"), sample.tracker_track_id,
+                        )
+            except Exception:
+                log.debug("Co-fire correlation lookup failed for gate_event_id=%s", gate_event_id, exc_info=True)
 
         return gate_event_id, evidence_objects, evidence_items, reasoning_jobs
 
@@ -773,7 +783,7 @@ class VadRtspSampler:
                 self.gate_event_count += new_events
                 self.evidence_object_count += new_evidence_objects
                 self.evidence_item_count += new_evidence_items
-                self.deep_reasoning_job_count += new_reasoning_jobs
+                self.pose_reasoning_job_count += new_reasoning_jobs
             if gate_out.persistent:
                 log.warning(
                     "POSE persistent hit track=%s score=%.4f smooth=%.4f threshold=%.4f hits=%s/%s",
@@ -1023,7 +1033,6 @@ class VadRtspSampler:
                 self.gate_event_count += new_events
                 self.evidence_object_count += new_evidence_objects
                 self.evidence_item_count += new_evidence_items
-                self.deep_reasoning_job_count += new_reasoning_jobs
             if gate_out.persistent:
                 log.warning("MACRO persistent hit track=%s score=%.4f smooth=%.4f threshold=%.4f hits=%s/%s", sample.tracker_track_id, gate_out.raw_score, gate_out.smoothed_score, gate_out.threshold_value, gate_out.persistence_hits, self.cfg.homography_macro_persistence_window)
         except Exception as e:
@@ -1261,7 +1270,9 @@ class VadRtspSampler:
             "homography_macro_tubelets": self.homography_macro_tubelet_count,
             "homography_macro_scores": self.homography_macro_score_count,
             "homography_macro_persistent_hits": self.homography_macro_persistent_count,
+            "reasoning_jobs": self.deep_reasoning_job_count + self.pose_reasoning_job_count,
             "deep_reasoning_jobs": self.deep_reasoning_job_count,
+            "pose_reasoning_jobs": self.pose_reasoning_job_count,
         }
         runtime_stats = {
             "source_frame_count": self.source_frame_index,
@@ -1282,7 +1293,9 @@ class VadRtspSampler:
             "homography_macro_tubelet_count": self.homography_macro_tubelet_count,
             "homography_macro_score_count": self.homography_macro_score_count,
             "homography_macro_persistent_count": self.homography_macro_persistent_count,
+            "reasoning_job_count": self.deep_reasoning_job_count + self.pose_reasoning_job_count,
             "deep_reasoning_job_count": self.deep_reasoning_job_count,
+            "pose_reasoning_job_count": self.pose_reasoning_job_count,
             "last_error": self.last_error,
         }
         with self.db.connect() as conn:

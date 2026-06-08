@@ -52,6 +52,8 @@ _VISUAL_EVIDENCE_WORDS = frozenset({
     # Body and posture
     "fall", "floor", "collapse", "body", "lying", "prone", "person",
     "arm", "leg", "head", "hand", "torso", "posture", "limb",
+    "fight", "fighting", "altercation", "push", "pushing", "shove", "shoving",
+    "grapple", "grappling", "wrestle", "wrestling", "aggressive", "contact", "hit", "hitting",
     # Motion and actions
     "running", "sprinting", "rapid", "fast", "movement", "moving", "rushing",
     "walking", "stumbling", "crawling", "reaching",
@@ -71,6 +73,47 @@ _SCORE_EVIDENCE_WORDS = frozenset({
     "score", "threshold", "ratio", "deep", "embedding", "distance",
     "above", "knn", "percentile", "deviation", "anomaly score",
 })
+
+
+_OPEN_SET_RULE_IDS = {"OPEN_SET_VISUAL_ANOMALY", "open_set_visual_anomaly", "open_set_anomaly"}
+
+
+def _llm_open_set_trigger(llm: LlmPolicyReview) -> bool:
+    """Return True when the LLM explicitly used the open-set anomaly escape hatch.
+
+    This preserves the P2C design: rules remain primary, but the cognition
+    layer may still flag clearly unsafe/security-relevant observations that are
+    not yet represented in the active rule table.  Python guardrails then
+    require concrete VLM evidence before allowing the YES to stand.
+    """
+    for rule in llm.matched_trigger_rules:
+        rid = str(getattr(rule, "rule_id", "") or "").strip()
+        rname = str(getattr(rule, "rule_name", "") or "").lower()
+        if rid in _OPEN_SET_RULE_IDS or "open-set" in rname or "open set" in rname:
+            return bool(getattr(rule, "applied", False))
+    return False
+
+
+def _has_concrete_open_set_visual_evidence(vlm: VlmVisualReview, llm: LlmPolicyReview) -> bool:
+    """Open-set YES is allowed only with usable, concrete VLM perception.
+
+    The LLM can decide beyond the rules, but it cannot invent evidence or rely
+    on score-only deviation.  This function is deliberately stricter than a
+    normal rule match.
+    """
+    if not _llm_open_set_trigger(llm):
+        return False
+    if vlm.visual_alert_decision != "YES":
+        return False
+    if not vlm.anomaly_evidence:
+        return False
+    if vlm.image_quality == "UNUSABLE":
+        return False
+    if _only_score_based_evidence(vlm):
+        return False
+    if llm.policy_confidence < 0.60:
+        return False
+    return True
 
 
 def _only_score_based_evidence(vlm: VlmVisualReview) -> bool:
@@ -133,7 +176,8 @@ def apply_python_final_guardrails(
         confidence = min(confidence, 0.40)
         actions.append({"rule_id": "LLM_USED_NON_VLM_VISUAL_FACTS", "effect": "downgraded to UNCERTAIN", "reason": "LLM reported that it did not rely only on VLM evidence."})
 
-    strong_visual = bool(vlm.anomaly_evidence and vlm.event_type in STRONG_VISUAL_EVENT_TYPES)
+    open_set_visual = _has_concrete_open_set_visual_evidence(vlm, llm)
+    strong_visual = bool(vlm.anomaly_evidence and vlm.event_type in STRONG_VISUAL_EVENT_TYPES) or open_set_visual
     if decision == "YES" and not vlm.anomaly_evidence:
         decision = "UNCERTAIN"
         severity = "LOW"
@@ -176,9 +220,28 @@ def apply_python_final_guardrails(
         recommended_action = "review_only"
         actions.append({"rule_id": "LOW_CONFIDENCE_CANNOT_CONFIRM_YES", "effect": "downgraded YES to UNCERTAIN", "reason": f"policy_confidence={confidence:.2f} is below 0.45."})
 
-    # Deterministic verification of project rules. LLM may explain rules, but Python records/verifies exact matches.
+    # Deterministic verification of project rules. LLM explains rule mapping, but
+    # Python independently records/verifies exact matches using the active rule set.
     deterministic_rules = deterministic_rule_matches(ctx=ctx, vlm=vlm, rules=rules)
+    has_visual_trigger_evidence = (
+        vlm.visual_alert_decision == "YES"
+        and bool(vlm.anomaly_evidence)
+        and vlm.image_quality != "UNUSABLE"
+        and not _only_score_based_evidence(vlm)
+    )
+    has_matched_trigger = bool(deterministic_rules["matched_trigger_rules"])
+    has_llm_open_set_trigger = open_set_visual
+
     for rule in deterministic_rules["matched_suppress_rules"]:
+        # A suppress rule should not bury a concrete trigger-rule visual cue. This
+        # is rule-based, not hardcoded to one anomaly class.
+        if (has_matched_trigger or has_llm_open_set_trigger) and has_visual_trigger_evidence:
+            actions.append({
+                "rule_id": rule.get("rule_id"),
+                "effect": "suppress blocked",
+                "reason": "A matched explicit trigger rule or guarded open-set anomaly has concrete VLM visual evidence, so the suppress rule is not allowed to override it.",
+            })
+            continue
         effect = rule.get("effect") or {}
         if decision in {"YES", "UNCERTAIN"}:
             decision = effect.get("policy_alert_decision", decision)
@@ -187,14 +250,32 @@ def apply_python_final_guardrails(
             confidence = min(confidence, 0.70)
             actions.append({"rule_id": rule.get("rule_id"), "effect": "applied suppress rule", "reason": rule.get("reason")})
 
+    if open_set_visual:
+        actions.append({
+            "rule_id": "OPEN_SET_VISUAL_ANOMALY",
+            "effect": "allowed LLM open-set anomaly decision",
+            "reason": "The LLM identified a clearly supported laboratory-relevant anomaly not covered by active rules, and Python verified concrete VLM visual evidence.",
+        })
+        if decision == "YES":
+            severity = _min_severity(severity, "MEDIUM")
+            recommended_action = _action_for(decision, severity)
+
     for rule in deterministic_rules["matched_trigger_rules"]:
         effect = rule.get("effect") or {}
-        if decision == "YES" and strong_visual:
-            severity = _min_severity(severity, str(effect.get("minimum_severity") or severity))
-            recommended_action = str(effect.get("recommended_action") or recommended_action)
+        if has_visual_trigger_evidence:
+            if decision != "YES":
+                actions.append({
+                    "rule_id": rule.get("rule_id"),
+                    "effect": f"upgraded {decision} to YES",
+                    "reason": "Active trigger rule matched concrete VLM perception evidence.",
+                })
+            decision = "YES"
+            severity = _min_severity(severity, str(effect.get("minimum_severity") or "MEDIUM"))
+            recommended_action = str(effect.get("recommended_action") or _action_for(decision, severity))
+            confidence = max(confidence, min(0.85, float(vlm.visual_confidence)))
             actions.append({"rule_id": rule.get("rule_id"), "effect": "applied trigger rule", "reason": rule.get("reason")})
-        elif decision != "YES":
-            actions.append({"rule_id": rule.get("rule_id"), "effect": "trigger not applied", "reason": "Trigger rules cannot upgrade a non-YES decision without a visually confirmed anomaly."})
+        else:
+            actions.append({"rule_id": rule.get("rule_id"), "effect": "trigger not applied", "reason": "Trigger rule matched by label, but VLM perception did not provide enough concrete usable visual evidence."})
 
     severity = _cap_severity_for_decision(decision, severity)
     normalized_action = _action_for(decision, severity)

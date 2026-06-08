@@ -210,6 +210,18 @@ export const vadApi = {
     return details;
   },
 
+  async getEvidenceUrls(keys: string[]): Promise<Record<string, string>> {
+    if (!keys || keys.length === 0) return {};
+    const res = await fetch(`${VAD_BASE_URL}/evidence/urls`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ object_keys: keys })
+    });
+    if (!res.ok) throw new Error("Failed to fetch evidence urls");
+    const data = await res.json();
+    return data.urls || {};
+  },
+
   async getReasoningJobs(
     params?: { status?: string; decision?: string; case_id?: number; limit?: number }
   ): Promise<{ items: VadReasoningListItem[], summary: VadReasoningSummary }> {

@@ -189,6 +189,26 @@ class VadConfig:
             "homography_macro": self.homography_macro_route_fps,
         }
 
+    # ------------------------------------------------------------------
+    # Pose reasoning aliases
+    # These delegate to the shared deep_reasoning_* config fields.
+    # Both gates share the same enable/ratio/evidence env vars for now.
+    # If independent Pose tuning is needed later, introduce separate env
+    # vars (VAD_POSE_REASONING_ENABLED, etc.) and update load_vad_config.
+    # ------------------------------------------------------------------
+
+    @property
+    def pose_reasoning_enabled(self) -> bool:
+        return self.deep_reasoning_enabled
+
+    @property
+    def pose_reasoning_min_ratio(self) -> float:
+        return self.deep_reasoning_min_ratio
+
+    @property
+    def pose_reasoning_require_evidence(self) -> bool:
+        return self.deep_reasoning_require_evidence
+
     def public_dict(self) -> dict[str, object]:
         """Safe config view that never returns the RTSP URL/password."""
         return {
@@ -406,8 +426,8 @@ def load_vad_config() -> VadConfig:
         reasoning_batch_size=_int("VAD_REASONING_BATCH_SIZE", "1"),
         reasoning_provider=os.getenv("VAD_REASONING_PROVIDER", "ollama").strip().lower(),
         reasoning_use_llm_normalizer=_bool("VAD_REASONING_USE_LLM_NORMALIZER", "1"),
-        reasoning_max_images=_int("VAD_REASONING_MAX_IMAGES", "6"),
-        reasoning_image_roles=os.getenv("VAD_REASONING_IMAGE_ROLES", "annotated_frame,tubelet_montage,tubelet_frame").strip(),
+        reasoning_max_images=_int("VAD_REASONING_MAX_IMAGES", "24"),
+        reasoning_image_roles=os.getenv("VAD_REASONING_IMAGE_ROLES", "tubelet_frame").strip(),
         ollama_base_url=os.getenv("OLLAMA_BASE_URL", "http://ollama:11434").strip().rstrip("/"),
         ollama_vlm_model=os.getenv("VLM_MODEL", os.getenv("OLLAMA_VLM_MODEL", "llava:7b")).strip(),
         ollama_llm_model=os.getenv("LLM_MODEL", os.getenv("OLLAMA_LLM_MODEL", "qwen3:8b")).strip(),

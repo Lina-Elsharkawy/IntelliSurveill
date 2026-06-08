@@ -1,6 +1,6 @@
 import { VadReasoningListItem } from "@/services/vad_api";
 import { StatusBadge, DecisionBadge } from "./ReasoningBadges";
-import { getFinalDecision, getShortError, getVlmReview, getFinalSeverity } from "./reasoningUtils";
+import { getFinalDecision, getShortError, getVlmReview, getSeverity, getGateDisplayName, getGateBadgeVariant, getShortReason } from "./reasoningUtils";
 import { formatDistanceToNow } from "date-fns";
 import { AlertCircle, ChevronRight, Video } from "lucide-react";
 
@@ -28,11 +28,14 @@ export function ReasoningJobList({
       {items.map((item) => {
         const isSelected = item.job.id === selectedId;
         const finalDecision = getFinalDecision(item);
-        const severity = getFinalSeverity(item);
+        const severity = getSeverity(item);
         const error = getShortError(item);
         const timeAgo = item.job.queued_at ? formatDistanceToNow(new Date(item.job.queued_at), { addSuffix: true }) : '';
         const vlm = getVlmReview(item);
-        const eventType = vlm?.event_type || item.job.input_bundle_json?.event?.event_type || "Unknown Event";
+        const rawEventType = vlm?.event_type || item.job.input_bundle_json?.event?.event_type;
+        const gateDisplayName = getGateDisplayName(item);
+        const eventType = rawEventType && rawEventType !== "unknown_event" ? rawEventType : gateDisplayName;
+        const gateBadge = getGateBadgeVariant(item);
         const streamKey = item.job.input_bundle_json?.event?.stream_key || "Unknown Camera";
 
         return (
@@ -69,6 +72,9 @@ export function ReasoningJobList({
 
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
+                <div className={`px-2 py-0.5 rounded-sm border text-[9px] font-bold tracking-widest uppercase ${gateBadge.color}`}>
+                  {getGateDisplayName(item).split(' ')[0]}
+                </div>
                 {item.job.status === 'succeeded' || item.job.status === 'completed' ? (
                   <DecisionBadge decision={finalDecision} />
                 ) : null}
@@ -84,8 +90,7 @@ export function ReasoningJobList({
             </div>
 
             <div className="text-[10px] text-slate-500 leading-snug italic truncate">
-              {item.job.status === 'failed' ? (error || "Reasoning failed") : 
-               (item.result?.python_final_result_json?.final_decision_reason || item.result?.llm_policy_review_json?.decision_reason || "Reasoning completed")}
+              {item.job.status === 'failed' ? (error || "Reasoning failed") : getShortReason(item)}
             </div>
             
             {isSelected && <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 opacity-50" size={20} />}

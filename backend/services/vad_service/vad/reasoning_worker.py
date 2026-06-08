@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import signal
 import time
 from dataclasses import dataclass
@@ -9,6 +10,7 @@ from typing import Any
 
 from .config import VadConfig, load_vad_config
 from .db import VadDB
+from .json_utils import sanitize_json
 from .minio_client import VadMinioClient
 from .reasoning.reasoning_client import OllamaClient
 from .reasoning.reasoning_policy import (
@@ -16,10 +18,13 @@ from .reasoning.reasoning_policy import (
     apply_python_final_guardrails,
     build_structured_result,
 )
-from .reasoning.reasoning_prompts import build_deep_vlm_visual_prompt, build_llm_policy_prompt, build_pose_vlm_visual_prompt
+from .reasoning.reasoning_prompts import build_deep_vlm_visual_prompt, build_llm_policy_prompt, build_pose_vlm_visual_prompt, build_vlm_observation_hints
 from .reasoning.reasoning_schema import (
     DeepReasoningContext,
     PoseReasoningContext,
+    EvidenceAssessment,
+    LlmPolicyReview,
+    ScoreAssessment,
     fallback_llm_uncertain,
     model_to_dict,
     parse_llm_policy_review,
@@ -44,27 +49,103 @@ class ReasoningCallResult:
 
 
 def _json_default(value: Any) -> Any:
-    try:
-        json.dumps(value)
-        return value
-    except Exception:
-        return str(value)
+    return sanitize_json(value)
+
+
+def _frame_index_from_key(key: str) -> int:
+    """Return the numeric frame index for .../frames/frame_###.jpg keys."""
+    match = re.search(r"(?:^|/)frames/frame_(\d+)\.(?:jpg|jpeg|png|webp)$", key.lower())
+    if not match:
+        return 10**9
+    return int(match.group(1))
+
+
+def _infer_image_role_from_key(key: str) -> str:
+    """Infer evidence role from object-key naming used by EvidenceWriter."""
+    lower = key.lower().strip().lstrip("/")
+    name = lower.rsplit("/", 1)[-1]
+    if name == "tubelet_montage.jpg":
+        return "tubelet_montage"
+    if name == "annotated_frame.jpg":
+        return "annotated_frame"
+    if re.search(r"(?:^|/)frames/frame_\d+\.(?:jpg|jpeg|png|webp)$", lower):
+        return "tubelet_frame"
+    return "image"
+
+
+def _evenly_sample(keys: list[str], limit: int) -> list[str]:
+    """Keep temporal coverage across the whole tubelet when frames exceed budget."""
+    if limit <= 0:
+        return []
+    if len(keys) <= limit:
+        return list(keys)
+    if limit == 1:
+        return [keys[0]]
+    last = len(keys) - 1
+    indexes = sorted({round(i * last / (limit - 1)) for i in range(limit)})
+    # Rounding can theoretically collapse adjacent indexes. Fill missing slots from the front
+    # while keeping chronological order and without exceeding the budget.
+    if len(indexes) < limit:
+        for idx in range(len(keys)):
+            if idx not in indexes:
+                indexes.append(idx)
+                if len(indexes) == limit:
+                    break
+        indexes = sorted(indexes)
+    return [keys[i] for i in indexes[:limit]]
 
 
 def _select_evidence_object_keys(bundle: dict[str, Any], cfg: VadConfig) -> list[str]:
-    visual = bundle.get("visual_evidence") or {}
-    selected: list[str] = []
+    """Select VLM evidence with raw chronological tubelet frames as the primary input.
 
-    def add_key(key: Any) -> None:
+    Current reasoning design:
+    - The VLM should inspect the event as a temporal sequence.
+    - For the local MiniCPM/Ollama VLM, tiny montage cells and annotated overview images can
+      be less useful than full raw evidence frames.
+    - Therefore the default selection is frame-first / frame-only: all chronological
+      frames/frame_### images up to VAD_REASONING_MAX_IMAGES.
+
+    Configuration:
+    - VAD_REASONING_IMAGE_ROLES controls which roles are preferred.
+      Recommended default: "tubelet_frame".
+    - If "tubelet_montage" or "annotated_frame" are explicitly included in
+      VAD_REASONING_IMAGE_ROLES, they will be included before frames.
+    - If no tubelet frames are available, the function falls back to montage/annotated/other
+      images rather than failing with no visual evidence.
+
+    If the number of frame images is greater than the configured budget, frames are sampled
+    evenly across the full event window, never by taking only the first frames.
+    """
+    visual = bundle.get("visual_evidence") or {}
+    preferred_roles = [r.strip() for r in str(cfg.reasoning_image_roles).split(",") if r.strip()]
+    if not preferred_roles:
+        preferred_roles = ["tubelet_frame"]
+    preferred_set = set(preferred_roles)
+    max_images = max(1, int(cfg.reasoning_max_images or 32))
+
+    # role -> ordered unique keys. Collect all roles first, then apply preference/fallback
+    # after role grouping. This avoids accidentally discarding fallback evidence.
+    by_role: dict[str, list[str]] = {
+        "tubelet_montage": [],
+        "annotated_frame": [],
+        "tubelet_frame": [],
+        "image": [],
+    }
+    seen: set[str] = set()
+
+    def add_key(key: Any, role: str | None = None) -> None:
         if not isinstance(key, str):
             return
-        key = key.strip().lstrip("/")
-        if not key:
+        clean = key.strip().lstrip("/")
+        if not clean:
             return
-        if not key.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
+        if not clean.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
             return
-        if key not in selected:
-            selected.append(key)
+        inferred_role = (role or "").strip() or _infer_image_role_from_key(clean)
+        if clean in seen:
+            return
+        seen.add(clean)
+        by_role.setdefault(inferred_role, []).append(clean)
 
     # Manual-test bundle format: visual_evidence.object_keys = ["...jpg", "...jpg"]
     for key in visual.get("object_keys") or []:
@@ -74,8 +155,6 @@ def _select_evidence_object_keys(bundle: dict[str, Any], cfg: VadConfig) -> list
     objects: list[Any] = []
     objects.extend(visual.get("objects") or [])
     objects.extend(visual.get("evidence_objects") or [])
-
-    allowed_roles = {r.strip() for r in str(cfg.reasoning_image_roles).split(",") if r.strip()}
 
     for obj in objects:
         if not isinstance(obj, dict):
@@ -89,12 +168,57 @@ def _select_evidence_object_keys(bundle: dict[str, Any], cfg: VadConfig) -> list
             or content_type.startswith("image/")
             or object_key.lower().endswith((".jpg", ".jpeg", ".png", ".webp"))
         )
-        role_ok = not allowed_roles or role in allowed_roles
-        if object_key and is_image and role_ok:
-            add_key(object_key)
+        if object_key and is_image:
+            add_key(object_key, role=role)
 
-    return selected[: max(1, int(cfg.reasoning_max_images or 6))]
+    montage = by_role.get("tubelet_montage", [])
+    annotated = by_role.get("annotated_frame", [])
+    frames = sorted(by_role.get("tubelet_frame", []), key=_frame_index_from_key)
+    other = by_role.get("image", [])
 
+    selected: list[str] = []
+
+    # Include overview images only when explicitly requested. The default compose/config now
+    # requests tubelet_frame only because raw frames are more legible for the VLM.
+    if "tubelet_montage" in preferred_set:
+        selected.extend(montage[:1])
+    if "annotated_frame" in preferred_set:
+        selected.extend([k for k in annotated[:1] if k not in selected])
+
+    # Raw chronological frames are the primary evidence for temporal reasoning.
+    if "tubelet_frame" in preferred_set:
+        remaining = max_images - len(selected)
+        selected.extend([k for k in _evenly_sample(frames, remaining) if k not in selected])
+
+    # If the preferred roles produced nothing, fall back gracefully.
+    if not selected:
+        fallback_order = frames + montage[:1] + annotated[:1] + other
+        selected = _evenly_sample(fallback_order, max_images)
+
+    # If preferred roles included only overview images and there is still budget, add frames.
+    if len(selected) < max_images and "tubelet_frame" not in preferred_set:
+        for key in _evenly_sample(frames, max_images - len(selected)):
+            if key not in selected:
+                selected.append(key)
+
+    selected = selected[:max_images]
+
+    role_counts = {role: len(keys) for role, keys in by_role.items() if keys}
+    selected_role_counts: dict[str, int] = {}
+    for key in selected:
+        role = _infer_image_role_from_key(key)
+        selected_role_counts[role] = selected_role_counts.get(role, 0) + 1
+    log.info(
+        "VLM evidence selection: available_image_count=%s selected_image_count=%s max_images=%s preferred_roles=%s role_counts=%s selected_role_counts=%s selected_keys=%s",
+        sum(role_counts.values()),
+        len(selected),
+        max_images,
+        preferred_roles,
+        role_counts,
+        selected_role_counts,
+        selected,
+    )
+    return selected
 
 def _load_images_b64(minio: VadMinioClient, object_keys: list[str]) -> list[str]:
     import base64
@@ -173,10 +297,10 @@ _MAX_JOB_AGE_SEC = 3 * 3600  # 3 hours
 
 # If the VLM returns NO with at least this confidence we trust it and skip
 # the LLM stage entirely to save compute.
-_VLM_NO_SKIP_LLM_CONFIDENCE = 0.70
+_VLM_NO_SKIP_LLM_CONFIDENCE = 0.95
 
 
-class DeepReasoningWorker:
+class GateReasoningWorker:
     def __init__(self, cfg: VadConfig, db: VadDB) -> None:
         self.cfg = cfg
         self.db = db
@@ -230,16 +354,17 @@ class DeepReasoningWorker:
                         event_type=vlm_json.get("event_type"),
                         confidence=final.get("final_confidence"),
                         visual_evidence=json.dumps(
-                            {
+                            sanitize_json({
                                 "visible_scene": vlm_json.get("visible_scene"),
                                 "person_observation": vlm_json.get("person_observation"),
                                 "motion_observation": vlm_json.get("motion_observation"),
                                 "anomaly_evidence": vlm_json.get("anomaly_evidence"),
                                 "normality_evidence": vlm_json.get("normality_evidence"),
                                 "false_positive_risks": vlm_json.get("false_positive_risks"),
-                            },
+                            }),
                             ensure_ascii=False,
                             default=_json_default,
+                            allow_nan=False,
                         ),
                         reasoning_summary=final.get("final_decision_reason"),
                         decision_reason=final.get("final_decision_reason"),
@@ -314,17 +439,22 @@ class DeepReasoningWorker:
             rules = load_active_vad_rules(self.db, _conn)
         llm_rules = serialize_rules_for_llm(rules)
 
-        # Stage 1: VLM grounded visual review.
+        # Stage 1: VLM grounded perception review.
+        # The VLM receives only perception-oriented observation hints derived from
+        # the active rule set. It must not apply rules or make the final anomaly
+        # decision; rule cognition remains in the LLM/Python layers.
+        visual_observation_hints = build_vlm_observation_hints(llm_rules)
         if source_gate == "pose":
-            vlm_prompt = build_pose_vlm_visual_prompt(ctx)
+            vlm_prompt = build_pose_vlm_visual_prompt(ctx, visual_observation_hints=visual_observation_hints)
         else:
-            vlm_prompt = build_deep_vlm_visual_prompt(ctx)
+            vlm_prompt = build_deep_vlm_visual_prompt(ctx, visual_observation_hints=visual_observation_hints)
         raw_vlm = self.ollama.generate(model=self.cfg.ollama_vlm_model, prompt=vlm_prompt, images_b64=images_b64)
         vlm_review, vlm_parse_info = parse_vlm_visual_review(raw_vlm)
 
         # Stage 2: LLM policy/rules review.
-        # Optimisation: if the VLM already returned a high-confidence NO, trust it
-        # and skip the LLM call entirely.  The Python guardrails will still run.
+        # Per the decoupled P2C architecture, this stage should normally run for
+        # every VLM perception result because active anomaly rules are injected here.
+        # The legacy skip path is effectively disabled by _VLM_NO_SKIP_LLM_CONFIDENCE > 1.0.
         raw_llm: str | None = None
         llm_parse_info: dict[str, Any]
         skip_llm = (
@@ -337,10 +467,30 @@ class DeepReasoningWorker:
                 "Skipping LLM stage for event_id=%s: VLM returned NO with confidence=%.2f",
                 ctx.event_id, vlm_review.visual_confidence,
             )
-            llm_review = fallback_llm_uncertain(
-                f"LLM stage skipped: VLM returned high-confidence NO (confidence={vlm_review.visual_confidence:.2f}).",
-                ctx=ctx,
-                vlm=vlm_review,
+            llm_review = LlmPolicyReview(
+                policy_alert_decision="NO",
+                policy_severity="NONE",
+                policy_confidence=min(1.0, max(0.0, float(vlm_review.visual_confidence))),
+                recommended_action="ignore",
+                score_assessment=ScoreAssessment(
+                    score_ratio=ctx.score_ratio,
+                    ratio_band=ctx.ratio_band(),
+                    score_reasoning="LLM stage skipped because the VLM produced a high-confidence visual NO; score is not used to override visible normality.",
+                ),
+                evidence_assessment=EvidenceAssessment(
+                    uses_only_vlm_evidence=True,
+                    has_strong_visual_anomaly_evidence=False,
+                    has_normality_evidence=bool(vlm_review.normality_evidence),
+                    has_false_positive_risk=bool(vlm_review.false_positive_risks),
+                ),
+                matched_trigger_rules=[],
+                matched_suppress_rules=[],
+                rule_reasoning=["LLM stage skipped after high-confidence VLM NO to save compute."],
+                decision_reason=(
+                    f"The VLM returned a high-confidence NO (confidence={vlm_review.visual_confidence:.2f}). "
+                    "The policy layer preserves that conservative NO instead of converting it to UNCERTAIN."
+                ),
+                limitations=["No separate LLM cognition call was made for this high-confidence visual NO."],
             )
             llm_parse_info = {"parse_error": None, "skipped": True, "reason": "vlm_high_confidence_no"}
         else:
@@ -418,7 +568,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO)
     cfg = load_vad_config()
     db = VadDB(cfg.db_dsn)
-    worker = DeepReasoningWorker(cfg, db)
+    worker = GateReasoningWorker(cfg, db)
     signal.signal(signal.SIGTERM, worker.stop)
     signal.signal(signal.SIGINT, worker.stop)
     worker.run_forever()

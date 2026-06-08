@@ -186,18 +186,24 @@ def _choose_best_pose_result(
         cmean = float(mean_conf[i]) if np.isfinite(mean_conf[i]) else 0.0
         if pbox is None:
             score = -10.0 + cmean
-            dist_norm = float("inf")
+            dist_norm = None
             iou = 0.0
         else:
-            dist_norm = float(np.linalg.norm(_box_center(pbox) - exp_center) / exp_diag)
+            denom = float(exp_diag) if math.isfinite(float(exp_diag)) and float(exp_diag) > 0.0 else 0.0
+            if denom <= 0.0:
+                dist_norm = None
+            else:
+                candidate_dist = float(np.linalg.norm(_box_center(pbox) - exp_center) / denom)
+                dist_norm = candidate_dist if math.isfinite(candidate_dist) else None
             iou = _box_iou(pbox, exp)
-            score = (3.0 * iou) - (2.0 * dist_norm) + (0.5 * cmean) + (0.25 * valid_ratio)
+            finite_dist_for_score = float(dist_norm) if dist_norm is not None else 1e6
+            score = (3.0 * iou) - (2.0 * finite_dist_for_score) + (0.5 * cmean) + (0.25 * valid_ratio)
         if score > best_score:
             best_score = float(score)
             best_idx = int(i)
             best_diag = {
                 "selected_pose_score": float(score),
-                "selected_pose_center_distance_norm": float(dist_norm),
+                "selected_pose_center_distance_norm": float(dist_norm) if dist_norm is not None else None,
                 "selected_pose_iou_with_tracker_box": float(iou),
                 "selected_pose_mean_conf": float(cmean),
                 "selected_pose_keypoint_valid_ratio_loose": float(valid_ratio),

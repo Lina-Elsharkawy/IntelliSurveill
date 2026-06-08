@@ -9,6 +9,7 @@ from psycopg.rows import dict_row
 
 from .config import VadConfig
 from .frame_types import TrackedPerson
+from .json_utils import sanitize_json
 
 
 def utc_now() -> datetime:
@@ -16,7 +17,8 @@ def utc_now() -> datetime:
 
 
 def _json(value: Any) -> str:
-    return json.dumps(value if value is not None else {}, ensure_ascii=False)
+    """Serialize JSONB payloads after removing NaN/Infinity/NumPy values."""
+    return json.dumps(sanitize_json(value if value is not None else {}), ensure_ascii=False, allow_nan=False)
 
 
 class VadDB:
@@ -909,12 +911,22 @@ class VadDB:
         my_gate_event_id: int,
         my_start_ts: datetime,
         my_peak_ts: datetime,
+        my_gate_name: str | None = None,
     ) -> dict[str, Any] | None:
-        """Return another gate event on the same track with overlapping time and uploaded evidence.
+        """Return overlapping opposite Deep/Pose event with uploaded evidence.
 
-        Used at VLM queuing time to detect co-fires between pose and deep gates.
-        Returns the overlapping event ordered so deep comes before pose (gate_name DESC).
+        This is correlation metadata only.  It deliberately excludes same-gate
+        overlaps and Homography, so a Deep/Deep, Pose/Pose, or Homography event
+        cannot be mislabeled as a Deep+Pose co-fire.
         """
+        my_gate = str(my_gate_name or "").strip().lower()
+        if my_gate == "deep":
+            other_gate = "pose"
+        elif my_gate == "pose":
+            other_gate = "deep"
+        else:
+            other_gate = None
+
         row = conn.execute(
             """
             SELECT
@@ -931,10 +943,12 @@ class VadDB:
             WHERE e.session_id = %(session_id)s
               AND e.track_id = %(track_id)s
               AND e.id != %(my_gate_event_id)s
+              AND e.gate_name IN ('deep', 'pose')
+              AND (%(other_gate)s IS NULL OR e.gate_name = %(other_gate)s)
               AND e.start_ts < %(my_peak_ts)s
               AND e.peak_ts > %(my_start_ts)s
               AND c.evidence_bundle_json->>'status' = 'uploaded'
-            ORDER BY e.gate_name DESC, e.id DESC
+            ORDER BY e.id DESC
             LIMIT 1
             """,
             {
@@ -943,9 +957,11 @@ class VadDB:
                 "my_gate_event_id": int(my_gate_event_id),
                 "my_start_ts": my_start_ts,
                 "my_peak_ts": my_peak_ts,
+                "other_gate": other_gate,
             },
         ).fetchone()
         return dict(row) if row else None
+
 
 
     def get_existing_reasoning_job_for_gate_event(
@@ -1190,84 +1206,11 @@ class VadDB:
 
 
 
-    def claim_next_deep_reasoning_job(
-        self,
-        conn: psycopg.Connection,
-        *,
-        vlm_model: str | None = None,
-        llm_model: str | None = None,
-        max_age_sec: float | None = None,
-    ) -> dict[str, Any] | None:
-        """Atomically claim one queued Deep reasoning job.
+    # NOTE: The old claim_next_deep_reasoning_job() method was removed.
+    # Current architecture is gate-generic: the worker calls
+    # claim_next_reasoning_job(gate_name="deep") and
+    # claim_next_reasoning_job(gate_name="pose").
 
-        The worker is intentionally Deep-only. Jobs from other gates are ignored
-        even if they accidentally exist in the table.
-
-        Parameters
-        ----------
-        max_age_sec:
-            If provided, jobs queued more than this many seconds ago are skipped.
-            Stale jobs (queued during Ollama downtime) are marked ``expired`` so
-            they don't accumulate and get retried forever.
-        """
-        # First, expire any stale jobs so the count stays clean.
-        if max_age_sec is not None:
-            conn.execute(
-                """
-                UPDATE vad_reasoning_jobs
-                SET status = 'failed', finished_at = NOW(),
-                    error_json = '{"reason": "job_too_old_skipped"}'::jsonb
-                WHERE status = 'queued'
-                  AND attempts < max_attempts
-                  AND metadata_json @> %(source_metadata)s::jsonb
-                  AND queued_at < NOW() - (%(max_age_sec)s || ' seconds')::interval
-                """,
-                {
-                    "source_metadata": _json({"source_gate_name": "deep"}),
-                    "max_age_sec": float(max_age_sec),
-                },
-            )
-
-        row = conn.execute(
-            """
-            WITH next_job AS (
-                SELECT id
-                FROM vad_reasoning_jobs
-                WHERE status = 'queued'
-                  AND attempts < max_attempts
-                  AND metadata_json @> %(source_metadata)s::jsonb
-                ORDER BY
-                    CASE priority
-                        WHEN 'urgent' THEN 0
-                        WHEN 'high' THEN 1
-                        WHEN 'normal' THEN 2
-                        WHEN 'low' THEN 3
-                        ELSE 4
-                    END,
-                    queued_at ASC,
-                    id ASC
-                LIMIT 1
-                FOR UPDATE SKIP LOCKED
-            )
-            UPDATE vad_reasoning_jobs j
-            SET status = 'running',
-                attempts = attempts + 1,
-                started_at = NOW(),
-                finished_at = NULL,
-                vlm_model = COALESCE(%(vlm_model)s, vlm_model),
-                llm_model = COALESCE(%(llm_model)s, llm_model),
-                error_json = '{}'::jsonb
-            FROM next_job
-            WHERE j.id = next_job.id
-            RETURNING j.*
-            """,
-            {
-                "source_metadata": _json({"source_gate_name": "deep"}),
-                "vlm_model": vlm_model,
-                "llm_model": llm_model,
-            },
-        ).fetchone()
-        return dict(row) if row else None
     def claim_next_reasoning_job(
         self,
         conn: psycopg.Connection,
@@ -1279,8 +1222,10 @@ class VadDB:
     ) -> dict[str, Any] | None:
         """Atomically claim one queued reasoning job for the given gate_name.
 
-        Works identically to claim_next_deep_reasoning_job but accepts any gate_name,
-        so pose (and future gates) can share the same claim logic.
+        Generic queue claiming for Deep and Pose reasoning jobs.
+
+        The worker calls this method with gate_name="deep" or gate_name="pose".
+        Homography jobs are intentionally not queued for VLM/LLM reasoning.
         """
         if max_age_sec is not None:
             conn.execute(

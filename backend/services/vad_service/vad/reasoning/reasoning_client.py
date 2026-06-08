@@ -9,6 +9,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+from ..json_utils import sanitize_json
+
 log = logging.getLogger("vad.reasoning_client")
 
 # Retry configuration: up to 3 attempts with exponential backoff.
@@ -45,7 +47,7 @@ class OllamaClient:
         if images_b64:
             payload["images"] = images_b64
 
-        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        data = json.dumps(sanitize_json(payload), ensure_ascii=False, allow_nan=False).encode("utf-8")
         url = f"{self.base_url}/api/generate"
 
         last_exc: Exception | None = None

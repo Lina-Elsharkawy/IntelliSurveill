@@ -569,6 +569,7 @@ CREATE INDEX vad_anomaly_cases_status_time_idx ON public.vad_anomaly_cases(statu
 CREATE INDEX vad_media_objects_case_role_idx ON public.vad_media_objects(case_id, media_role);
 CREATE INDEX vad_evidence_items_case_role_idx ON public.vad_evidence_items(case_id, evidence_role, evidence_rank);
 CREATE INDEX vad_reasoning_jobs_status_queue_idx ON public.vad_reasoning_jobs(status, queued_at);
+CREATE INDEX IF NOT EXISTS idx_vad_reasoning_jobs_metadata_jsonb ON public.vad_reasoning_jobs USING GIN (metadata_json);
 
 -- JSONB indexes for flexible feature/metadata search.
 CREATE INDEX vad_tubelets_feature_values_gin_idx ON public.vad_tubelets USING gin (feature_values_json);

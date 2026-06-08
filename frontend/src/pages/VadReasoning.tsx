@@ -6,7 +6,7 @@ import { Network, ShieldAlert } from "lucide-react";
 
 import { ReasoningSummaryCards } from "@/components/vad/reasoning/ReasoningSummaryCards";
 import { ReasoningFilters, ReasoningFilterState } from "@/components/vad/reasoning/ReasoningFilters";
-import { ReasoningJobList } from "@/components/vad/reasoning/ReasoningJobList";
+import { ReasoningJobTable } from "@/components/vad/reasoning/ReasoningJobTable";
 import { ReasoningDetailPanel } from "@/components/vad/reasoning/ReasoningDetailPanel";
 
 export default function VadReasoning() {
@@ -21,8 +21,12 @@ export default function VadReasoning() {
   const [filters, setFilters] = useState<ReasoningFilterState>({
     status: 'all',
     decision: 'all',
+    severity: 'all',
     caseId: '',
-    onlyDeep: true,
+    gate: 'all',
+    sessionId: '',
+    trackId: '',
+    evidenceOnly: false,
   });
 
   const fetchData = useCallback(async (silent = false) => {
@@ -38,11 +42,40 @@ export default function VadReasoning() {
       
       let fetchedItems = res.items || [];
       
-      if (filters.onlyDeep) {
+      if (filters.gate && filters.gate !== 'all') {
         fetchedItems = fetchedItems.filter(i => {
-          const gateName = i.case?.primary_gate_name;
-          if (gateName && gateName !== 'deep') return false;
-          return true;
+          const gateName = i.job?.metadata_json?.source_gate_name ?? i.case?.primary_gate_name ?? "deep";
+          return gateName === filters.gate;
+        });
+      }
+      
+      if (filters.severity && filters.severity !== 'all') {
+        fetchedItems = fetchedItems.filter(i => {
+          const sev = i.result?.python_final_result_json?.final_severity || i.result?.alert_severity || 'LOW';
+          return sev.toUpperCase() === filters.severity.toUpperCase();
+        });
+      }
+
+      if (filters.sessionId) {
+        fetchedItems = fetchedItems.filter(i => {
+          const sid = String(i.case?.session_id || "");
+          return sid.includes(filters.sessionId);
+        });
+      }
+
+      if (filters.trackId) {
+        fetchedItems = fetchedItems.filter(i => {
+          const tid = String(i.case?.track_id || "");
+          return tid.includes(filters.trackId);
+        });
+      }
+
+      if (filters.evidenceOnly) {
+        fetchedItems = fetchedItems.filter(i => {
+          const evidenceKeys = i.job?.input_bundle_json?.visual_evidence?.object_keys || 
+                               i.case?.evidence_bundle_json?.object_keys || 
+                               (Array.isArray(i.case?.evidence_bundle_json) ? i.case?.evidence_bundle_json.map((e: any) => e.object_key) : []);
+          return evidenceKeys && evidenceKeys.length > 0;
         });
       }
       
@@ -67,7 +100,7 @@ export default function VadReasoning() {
 
   useEffect(() => {
     fetchData();
-  }, [filters.status, filters.decision, filters.onlyDeep]); // intentionally not including caseId to allow typing without fetching per keystroke
+  }, [filters.status, filters.decision, filters.gate]); // intentionally not including caseId to allow typing without fetching per keystroke
 
   // Auto-refresh every 30 seconds if there are active jobs
   useEffect(() => {
@@ -89,26 +122,26 @@ export default function VadReasoning() {
 
   return (
     <DashboardLayout>
-      <div className="h-[calc(100vh-2rem)] overflow-hidden flex flex-col w-full max-w-[1800px] mx-auto animate-in fade-in duration-500">
+      <div className="h-[calc(100vh-120px)] overflow-hidden flex flex-col w-full max-w-[1800px] mx-auto animate-in fade-in duration-500">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border pb-3 mb-3 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-gradient-to-br from-indigo-500/20 to-indigo-500/5 rounded-xl border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.15)]">
-              <Network className="h-7 w-7 text-indigo-400" />
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-border pb-2 mb-2 shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-gradient-to-br from-indigo-500/20 to-indigo-500/5 rounded-lg border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.15)]">
+              <Network className="h-5 w-5 text-indigo-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-white font-['Space_Grotesk'] flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight text-white font-['Space_Grotesk'] flex items-center gap-2">
                 VAD Reasoning
               </h1>
-              <p className="text-sm text-slate-400 mt-1">Deep-gate visual reasoning, LLM policy review, and Python final guardrails.</p>
+              <p className="text-xs text-slate-400 mt-0.5">Multi-gate visual reasoning, LLM policy review, and Python final guardrails.</p>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
             <Badge label="Indoor Lab" />
-            <Badge label="Deep Gate" />
-            <Badge label="Live Monitoring" icon={<span className="relative flex h-2 w-2 mr-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span>} />
+            <Badge label="P2C Pipeline" />
+            <Badge label="Live Monitoring" icon={<span className="relative flex h-2 w-2 mr-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span>} />
           </div>
         </div>
 
@@ -128,7 +161,7 @@ export default function VadReasoning() {
         <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-12 gap-6 overflow-hidden">
           
           {/* Left Pane: Job List */}
-          <div className="xl:col-span-4 h-full min-h-0 flex flex-col">
+          <div className="xl:col-span-6 h-full min-h-0 flex flex-col">
             <div className="bg-zinc-950/50 rounded-xl border border-zinc-800 p-4 h-full flex flex-col shadow-xl overflow-hidden">
               <div className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-3">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">Reasoning Jobs</h2>
@@ -142,7 +175,7 @@ export default function VadReasoning() {
                   <p className="text-red-500/70 text-xs mt-1">{apiError}</p>
                 </div>
               ) : (
-                <ReasoningJobList 
+                <ReasoningJobTable 
                   items={items} 
                   selectedId={selectedJobId} 
                   onSelect={(item) => setSelectedJobId(item.job.id)} 
@@ -152,7 +185,7 @@ export default function VadReasoning() {
           </div>
 
           {/* Right Pane: Detail Panel */}
-          <div className="xl:col-span-8 h-full min-h-0 flex flex-col">
+          <div className="xl:col-span-6 h-full min-h-0 flex flex-col">
             <div className="bg-zinc-950/80 rounded-xl border border-zinc-800 p-4 lg:p-6 h-full shadow-2xl backdrop-blur-sm flex flex-col overflow-hidden">
               <ReasoningDetailPanel item={selectedItem} />
             </div>

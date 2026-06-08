@@ -118,6 +118,24 @@ _BUILTIN_FALLBACK_RULES: list[dict[str, Any]] = [
         "active": True,
         "description": "Alert operator when someone is visually confirmed to interact unsafely with lab equipment.",
     },
+
+    {
+        "id": "builtin_trigger_aggressive_physical_gestures",
+        "rule_name": "Escalate visually supported aggressive physical gesture or person-person contact",
+        "rule_type": "trigger",
+        "event_types": [
+            "physical_altercation",
+            "fighting",
+            "pushing_or_shoving",
+            "grappling_or_wrestling",
+            "aggressive_contact",
+        ],
+        "conditions": {"requires_anomaly_evidence": True},
+        "effect": {"minimum_severity": "MEDIUM", "recommended_action": "alert_operator"},
+        "source": "builtin",
+        "active": True,
+        "description": "Alert operator when the perception layer reports visible aggressive physical gestures, pushing, grappling, struggling, or forceful person-person contact in the laboratory.",
+    },
     {
         "id": "builtin_trigger_possible_security_event",
         "rule_name": "Escalate visually supported suspicious or security event",

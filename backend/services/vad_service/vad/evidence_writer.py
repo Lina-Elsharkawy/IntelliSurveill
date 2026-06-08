@@ -13,6 +13,7 @@ import psycopg
 from .config import VadConfig
 from .db import VadDB
 from .frame_types import SampledPerson
+from .json_utils import sanitize_json
 from .minio_client import VadMinioClient, UploadedObject
 
 log = logging.getLogger("vad.evidence_writer")
@@ -39,13 +40,7 @@ class EvidenceWriter:
 
     @staticmethod
     def _json_default(value: Any) -> Any:
-        if isinstance(value, datetime):
-            return value.isoformat()
-        if isinstance(value, np.ndarray):
-            return value.tolist()
-        if isinstance(value, (np.floating, np.integer)):
-            return value.item()
-        return str(value)
+        return sanitize_json(value)
 
     def _encode_jpeg(self, frame_bgr: np.ndarray) -> bytes:
         ok, encoded = cv2.imencode(".jpg", frame_bgr, [int(cv2.IMWRITE_JPEG_QUALITY), int(self.cfg.jpeg_quality)])
@@ -308,7 +303,13 @@ class EvidenceWriter:
                 for s in tubelet_samples
             ],
         }
-        meta_bytes = json.dumps(metadata_payload, ensure_ascii=False, indent=2, default=self._json_default).encode("utf-8")
+        meta_bytes = json.dumps(
+            sanitize_json(metadata_payload),
+            ensure_ascii=False,
+            indent=2,
+            default=self._json_default,
+            allow_nan=False,
+        ).encode("utf-8")
         up = self.minio.upload_bytes(
             object_key=f"{base_key}/event_metadata.json",
             data=meta_bytes,

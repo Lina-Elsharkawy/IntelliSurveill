@@ -16,6 +16,11 @@ EVENT_TYPES = {
     "unclear_visual_evidence",
     "deep_semantic_spatiotemporal_anomaly",
     "suspicious_motion",
+    "physical_altercation",
+    "fighting",
+    "pushing_or_shoving",
+    "grappling_or_wrestling",
+    "aggressive_contact",
     "fall_or_collapse",
     "unsafe_equipment_interaction",
     "rapid_unusual_movement",
@@ -94,6 +99,11 @@ class VlmVisualReview(BaseModel):
         "unclear_visual_evidence",
         "deep_semantic_spatiotemporal_anomaly",
         "suspicious_motion",
+        "physical_altercation",
+        "fighting",
+        "pushing_or_shoving",
+        "grappling_or_wrestling",
+        "aggressive_contact",
         "fall_or_collapse",
         "unsafe_equipment_interaction",
         "rapid_unusual_movement",
@@ -289,10 +299,173 @@ def fallback_llm_uncertain(reason: str, *, ctx: DeepReasoningContext | PoseReaso
     )
 
 
+
+def _first_non_empty(*values: Any) -> str:
+    """Return the first non-empty scalar/list/dict-ish value as text."""
+    for value in values:
+        if value is None:
+            continue
+        if isinstance(value, list):
+            items = [str(x).strip() for x in value if str(x).strip()]
+            if items:
+                return "; ".join(items)
+            continue
+        if isinstance(value, dict):
+            try:
+                text = json.dumps(value, ensure_ascii=False, default=str)
+            except Exception:
+                text = str(value)
+        else:
+            text = str(value)
+        text = text.strip()
+        if text:
+            return text
+    return ""
+
+
+
+_SCORE_ONLY_TERMS = {
+    "score", "threshold", "ratio", "percentile", "embedding", "distance",
+    "gmm", "knn", "statistical", "statistically", "deviation",
+}
+_VISUAL_GROUNDING_TERMS = {
+    "person", "people", "subject", "body", "arm", "hand", "leg", "head",
+    "torso", "limb", "floor", "fall", "collapse", "stumble", "kneel",
+    "lean", "push", "shove", "grapple", "fight", "contact", "hold",
+    "pull", "hit", "run", "walk", "chair", "object", "equipment",
+    "door", "table", "movement", "posture", "visible", "frame",
+}
+
+
+def _looks_score_only_evidence(text: Any) -> bool:
+    """True when an alleged VLM evidence item is metric-based, not visual.
+
+    The VLM perception layer must not use gate scores, thresholds, ratios, or model
+    internals as visual evidence.  Such metadata belongs to the LLM cognition layer.
+    A sentence such as "pose score exceeds the threshold" is not visual evidence even
+    if it also contains generic words like "motion" or "posture".
+    """
+    s = str(text or "").strip().lower()
+    if not s:
+        return False
+    has_score = any(re.search(r"\b" + re.escape(term) + r"\b", s) for term in _SCORE_ONLY_TERMS)
+    if not has_score:
+        return False
+    concrete_visual_terms = {
+        "hand", "hands", "arm", "arms", "leg", "legs", "head", "torso",
+        "floor", "knees", "body", "contact", "push", "shove", "grapple",
+        "fight", "hit", "pull", "hold", "restrain", "collapse", "fall",
+        "stumble", "lean", "chair", "table", "equipment", "door", "object",
+    }
+    has_concrete_visual_detail = any(
+        re.search(r"\b" + re.escape(term) + r"\b", s) for term in concrete_visual_terms
+    )
+    return not has_concrete_visual_detail
+
+
+def _listify_text(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(x).strip() for x in value if str(x).strip()]
+    text = str(value).strip()
+    return [text] if text else []
+
+
+def _filter_vlm_score_only_evidence(raw: dict[str, Any]) -> None:
+    """Remove score-only statements from VLM anomaly_evidence.
+
+    This protects the P2C boundary.  The VLM may describe visible posture/motion/contact,
+    but it must not treat "score above threshold" as visual evidence.  Score context is
+    still preserved for the LLM through gate metadata.
+    """
+    evidence = _listify_text(raw.get("anomaly_evidence"))
+    kept: list[str] = []
+    removed: list[str] = []
+    for item in evidence:
+        if _looks_score_only_evidence(item):
+            removed.append(item)
+        else:
+            kept.append(item)
+    raw["anomaly_evidence"] = kept
+
+    if removed:
+        risks = _listify_text(raw.get("false_positive_risks"))
+        risks.append(
+            "Parser removed score/threshold-only text from VLM anomaly_evidence because VLM evidence must be visual only."
+        )
+        raw["false_positive_risks"] = risks
+        raw.setdefault("_normalization_warnings", [])
+        raw["_normalization_warnings"].append({
+            "type": "score_only_vlm_evidence_removed",
+            "removed_items": removed,
+        })
+
+
+def _normalize_vlm_json(raw: dict[str, Any]) -> dict[str, Any]:
+    """Make local VLM outputs robust without changing the P2C contract.
+
+    Local multimodal models often return semantically correct JSON with slightly different
+    key names, or omit the explanatory `visual_decision_reason` while still providing scene,
+    person, and motion fields.  The previous parser threw away the whole perception payload
+    in those cases, causing the dashboard to show the generic UNCERTAIN fallback for many
+    events.  This normalizer preserves usable perception text and synthesizes only the missing
+    explanation field when needed.
+    """
+    if not isinstance(raw, dict):
+        return {}
+
+    # Common naming variants produced by MiniCPM/LLaVA/Qwen-VL-like local models.
+    raw.setdefault("visible_scene", _first_non_empty(
+        raw.get("visible_scene"), raw.get("scene"), raw.get("scene_description"),
+        raw.get("global_perception"), raw.get("environment"), raw.get("visible_environment"),
+    ))
+    raw.setdefault("person_observation", _first_non_empty(
+        raw.get("person_observation"), raw.get("people_observation"), raw.get("subject_observation"),
+        raw.get("local_perception"), raw.get("person_description"), raw.get("people"),
+        raw.get("subjects"), raw.get("human_observation"),
+    ))
+    raw.setdefault("motion_observation", _first_non_empty(
+        raw.get("motion_observation"), raw.get("motion_description"), raw.get("action_observation"),
+        raw.get("kinetic_description"), raw.get("temporal_description"), raw.get("movement"),
+        raw.get("actions"), raw.get("activity"),
+    ))
+    raw.setdefault("visual_decision_reason", _first_non_empty(
+        raw.get("visual_decision_reason"), raw.get("decision_reason"), raw.get("reason"),
+        raw.get("rationale"), raw.get("explanation"), raw.get("visual_reason"),
+        raw.get("why"), raw.get("assessment"),
+    ))
+
+    # Enforce the P2C boundary before validation: VLM evidence must be visual,
+    # not based on gate scores/thresholds/ratios.
+    _filter_vlm_score_only_evidence(raw)
+    if _upper_allowed(raw.get("visual_alert_decision", raw.get("alert_decision")), ALERT_DECISIONS, "UNCERTAIN") == "YES" and not _listify_text(raw.get("anomaly_evidence")):
+        raw["visual_alert_decision"] = "UNCERTAIN"
+        raw.setdefault("_normalization_warnings", [])
+        raw["_normalization_warnings"].append({
+            "type": "downgraded_yes_without_visual_anomaly_evidence",
+            "reason": "The VLM perception flag was YES, but no concrete visual anomaly_evidence remained after score-only evidence filtering.",
+        })
+
+    # If the VLM gave the three perception fields but forgot the reason, keep the useful
+    # perception and synthesize a neutral reason instead of discarding everything.
+    if not str(raw.get("visual_decision_reason", "")).strip():
+        decision = _upper_allowed(raw.get("visual_alert_decision", raw.get("alert_decision")), ALERT_DECISIONS, "UNCERTAIN")
+        if decision == "YES" and raw.get("anomaly_evidence"):
+            raw["visual_decision_reason"] = "Perception flag set to YES because concrete concerning visual cues were described in anomaly_evidence; final rule cognition remains with the LLM."
+        elif decision == "NO" and raw.get("normality_evidence"):
+            raw["visual_decision_reason"] = "Perception flag set to NO because the described visible activity appears ordinary or benign; final rule cognition remains with the LLM."
+        elif str(raw.get("motion_observation", "")).strip() or str(raw.get("person_observation", "")).strip():
+            raw["visual_decision_reason"] = "The VLM provided perception details but omitted a separate visual_decision_reason; the parser preserved the perception text and marked the reason as synthesized."
+
+    return raw
+
 def parse_vlm_visual_review(raw_text: str) -> tuple[VlmVisualReview, dict[str, Any]]:
     raw = extract_json_object(raw_text)
     if not raw:
         return fallback_vlm_uncertain("VLM did not return parseable JSON."), {"parse_error": "empty_or_invalid_json"}
+
+    raw = _normalize_vlm_json(raw)
 
     # Backward-compatible alias normalization for earlier shallow outputs.
     if "visual_alert_decision" not in raw and "alert_decision" in raw:
@@ -310,18 +483,30 @@ def parse_vlm_visual_review(raw_text: str) -> tuple[VlmVisualReview, dict[str, A
     raw["evidence_sufficiency"] = _upper_allowed(raw.get("evidence_sufficiency"), EVIDENCE_SUFFICIENCIES, "PARTIAL")
     raw["visual_confidence"] = _confidence(raw.get("visual_confidence"), 0.3)
 
-    # Force shallow old output to become an explicit fallback rather than a fake success.
-    required_text = ["visible_scene", "person_observation", "motion_observation", "visual_decision_reason"]
-    missing = [k for k in required_text if not str(raw.get(k, "")).strip()]
-    if missing:
-        return fallback_vlm_uncertain(f"VLM JSON was incomplete; missing fields: {', '.join(missing)}."), {
+    # Preserve partially useful VLM perception when possible.  Only fall back to the generic
+    # UNCERTAIN object when core perception fields are absent; a missing reason is synthesized
+    # above and reported as a warning, not treated as total failure.
+    core_required_text = ["visible_scene", "person_observation", "motion_observation"]
+    missing_core = [k for k in core_required_text if not str(raw.get(k, "")).strip()]
+    if missing_core:
+        return fallback_vlm_uncertain(f"VLM JSON was incomplete; missing core perception fields: {', '.join(missing_core)}."), {
             "parse_error": "missing_required_vlm_fields",
-            "missing_fields": missing,
+            "missing_fields": missing_core,
             "raw_json": raw,
         }
+    if not str(raw.get("visual_decision_reason", "")).strip():
+        raw["visual_decision_reason"] = "The VLM omitted visual_decision_reason; perception text was preserved and final cognition is deferred to the LLM."
 
     try:
-        return VlmVisualReview.model_validate(raw), {"parse_error": None}
+        parse_info: dict[str, Any] = {"parse_error": None, "raw_json": raw}
+        if raw.get("_normalization_warnings"):
+            parse_info["normalization_warnings"] = raw.get("_normalization_warnings")
+        if "visual_decision_reason" not in extract_json_object(raw_text):
+            parse_info["normalization_warnings"] = parse_info.get("normalization_warnings", []) + [{
+                "type": "synthesized_visual_decision_reason",
+                "reason": raw.get("visual_decision_reason"),
+            }]
+        return VlmVisualReview.model_validate(raw), parse_info
     except ValidationError as e:
         return fallback_vlm_uncertain(f"VLM JSON failed schema validation: {e.errors()[:3]}"), {
             "parse_error": "vlm_schema_validation_failed",
@@ -379,4 +564,9 @@ STRONG_VISUAL_EVENT_TYPES = {
     "rapid_unusual_movement",
     "possible_intrusion_or_security_event",
     "suspicious_motion",
+    "physical_altercation",
+    "fighting",
+    "pushing_or_shoving",
+    "grappling_or_wrestling",
+    "aggressive_contact",
 }
