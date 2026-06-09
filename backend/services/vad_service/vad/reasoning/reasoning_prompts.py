@@ -20,16 +20,16 @@ Key design changes (paper-backed):
     LLM layer.
 
 [3] LLM RULES-ONLY DECISION  (AnomalyRuler, ECCV 2024, arXiv:2407.10299)
-    The LLM receives the VLM caption PLUS the full active rule set (both
-    vad_reasoning_rules AND the Anomaly_Rules table from the rules engine).
+    The LLM receives the VLM caption PLUS the full active Anomaly_Rules table.
+    Anomaly_Rules is the single source of truth.
     It must answer YES/NO/UNCERTAIN by matching the caption against rules.
     OPEN_SET_VISUAL_ANOMALY is removed: the Unified Framework (NeurIPS 2025,
     arXiv:2511.00962) showed that unrestricted open-set reasoning introduces
     content weakly related to true anomalies and increases false positives.
 
-[4] FRAME BUDGET  (VADER, arXiv:2511.07299; ASK-Hint, arXiv:2510.02155)
-    8 keyframes is the recommended budget.  The keyframe_selector module
-    handles the 24→8 reduction using peak-score + diversity selection.
+[4] FRAME BUDGET  (Holmes-VAD, ReCoVAD, AnyAnomaly)
+    6–8 keyframes is the recommended budget. The keyframe_selector module
+    handles the 24→8 reduction using sparse CLIP/diversity selection.
     The VLM prompt explicitly states the frame count and their role.
 ────────────────────────────────────────────────────────────────────────────────
 """
@@ -55,9 +55,9 @@ def _json(obj: Any, max_chars: int = 9000) -> str:
 def _rule_to_visual_question(rule: dict[str, Any]) -> str:
     """Convert one active rule into a specific, action-grounded visual question.
 
-    This implements the ASK-Hint insight: instead of asking "is there an anomaly?",
-    ask concrete questions like "is a person lying on the floor?" or "are two people
-    in physical contact?".  The VLM answers with visual facts, not anomaly labels.
+    This implements the ASK-Hint insight: instead of asking broad judgement questions, ask concrete questions like
+    "is a person lying on the floor?" or "are two people in physical contact?".
+    The VLM answers with visual facts, not policy labels.
     """
     rule_text = (
         rule.get("rule_text")
@@ -75,12 +75,12 @@ def _rule_to_visual_question(rule: dict[str, Any]) -> str:
 
     # Map structured event types → concrete visual observation questions.
     question_map = {
-        "fall_detected":    "Is any person falling, collapsed, lying on the floor, or in an unusual low posture?",
+        "fall_detected":    "Is any person falling, collapsed, lying on the floor, or in a very low uncontrolled posture?",
         "fight_detection":  "Are two or more people in close physical contact — hitting, pushing, shoving, grappling, or struggling?",
         "intrusion":        f"Is a person present in a restricted area or near secured access points in {location}?",
         "loitering":        f"Is a person standing still for an extended time without an obvious task in {location}?",
         "after_hours":      f"Is a person present in {location} when the area should be unoccupied?",
-        "sudden_movement":  "Is any person running, sprinting, or moving at unusually high speed?",
+        "sudden_movement":  "Is any person running, sprinting, or moving at very high speed?",
         "camera_tamper":    "Is the camera view being blocked, covered, or physically disturbed?",
         "smoke_fire":       "Is there visible smoke, flame, or fire in the scene?",
         "crowd_detection":  f"Are more than two people gathered in a group in {location}?",
@@ -89,9 +89,9 @@ def _rule_to_visual_question(rule: dict[str, Any]) -> str:
         "pushing_or_shoving":   "Is one person pushing, shoving, or forcibly moving another person?",
         "grappling_or_wrestling": "Are two people locked in a grapple, hold, or wrestling posture?",
         "fall_or_collapse":     "Is any person falling, stumbling, or collapsing to the ground?",
-        "unsafe_equipment_interaction": "Is a person interacting with equipment in an unsafe or unusual way?",
+        "unsafe_equipment_interaction": "Is a person interacting with equipment in an visibly risky or uncontrolled way?",
         "rapid_unusual_movement": "Is any person making rapid, jerky, or uncontrolled movements?",
-        "possible_intrusion_or_security_event": "Is there evidence of unauthorized entry or security-relevant activity?",
+        "possible_intrusion_or_security_event": "Is there evidence of unauthorized entry or restricted-entry or access-control activity?",
     }
 
     # Try structured event_type first.
@@ -146,7 +146,7 @@ def build_vlm_observation_hints(active_rules: list[dict[str, Any]] | None) -> li
 def _format_rules_for_llm(active_rules: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Format active rules for the LLM cognition layer.
 
-    Includes both vad_reasoning_rules and Anomaly_Rules table rules.
+    Uses Anomaly_Rules table rules as the single source of truth.
     The LLM sees rule_id, rule_type (trigger/suppress), event_type,
     conditions, and a human-readable description.
     This is the AnomalyRuler design: the LLM must match captions to rules
@@ -199,7 +199,8 @@ def build_deep_vlm_visual_prompt(
 
 IMPORTANT RULES:
 - Describe only what you can directly observe. Do not guess, infer intent, or make judgements.
-- Do not use words like: anomaly, unusual, suspicious, abnormal, concerning, dangerous, threat, incident, alert.
+- You are a witness, not a judge: do NOT decide whether the event is an alert, anomaly, threat, fight, or suspicious activity.
+- Do NOT output alert_decision, visual_decision, severity, event_type, or final_action. Those fields belong only to the LLM/Python rule stages.
 - Describe body posture, limb positions, movement direction, speed, proximity, and physical contact in concrete terms.
 - Compare early frames (first third) to middle frames to late frames (last third) to describe how the scene changes.
 
@@ -225,9 +226,8 @@ Return ONLY valid JSON matching this exact structure. No markdown. No null value
 {{
   "schema_version": "1.0",
   "review_type": "vlm_visual_review",
-  "visual_alert_decision": "YES | NO | UNCERTAIN",
-  "visual_severity": "NONE | LOW | MEDIUM | HIGH | CRITICAL",
-  "event_type": "normal_activity | benign_object_movement | benign_posture_change | camera_or_detection_artifact | unclear_visual_evidence | deep_semantic_spatiotemporal_anomaly | suspicious_motion | physical_altercation | fighting | pushing_or_shoving | grappling_or_wrestling | aggressive_contact | fall_or_collapse | unsafe_equipment_interaction | rapid_unusual_movement | person_on_floor | possible_intrusion_or_security_event",
+  "observation_status": "OBSERVED | NOT_OBSERVED | UNCLEAR",
+  "dominant_visible_activity": "Neutral short label such as walking, standing, sitting, lying_on_floor, object_interaction, person_contact, unclear_view. Do not use anomaly labels.",
   "visual_confidence": 0.0,
   "image_quality": "GOOD | FAIR | POOR | UNUSABLE",
   "evidence_sufficiency": "SUFFICIENT | PARTIAL | INSUFFICIENT",
@@ -238,7 +238,7 @@ Return ONLY valid JSON matching this exact structure. No markdown. No null value
     "Q1": "Direct factual answer to observation question 1.",
     "Q2": "Direct factual answer to observation question 2 (if present)."
   }},
-  "anomaly_evidence": [
+  "rule_relevant_visual_facts": [
     "List only concrete visible facts that would need a rule to evaluate — e.g. 'person lying flat on floor', 'two people in direct physical contact'. Empty list if none."
   ],
   "normality_evidence": [
@@ -247,15 +247,15 @@ Return ONLY valid JSON matching this exact structure. No markdown. No null value
   "false_positive_risks": [
     "List visual limitations: occlusion, motion blur, camera angle, partial body visible, low resolution."
   ],
-  "visual_decision_reason": "State in one sentence what the dominant visible activity is, using only observable facts. Do not judge whether it is normal or not."
+  "observation_summary": "State in one sentence what the dominant visible activity is, using only observable facts. Do not judge whether it is normal, abnormal, suspicious, or dangerous."
 }}
 
 Output rules:
-- visual_alert_decision YES: at least one concrete visible fact in anomaly_evidence that matches an observation question.
-- visual_alert_decision NO: at least one concrete visible fact in normality_evidence.
-- visual_alert_decision UNCERTAIN: explain the uncertainty in visual_decision_reason.
+- observation_status OBSERVED: you can clearly describe at least one concrete visual fact in rule_relevant_visual_facts or normality_evidence.
+- observation_status NOT_OBSERVED: the requested observation questions are clearly not visible.
+- observation_status UNCLEAR: image quality, occlusion, distance, or ambiguity prevents a reliable description.
 - visual_confidence: your confidence in the accuracy of your visual description (0.0–1.0), not in any rule judgement.
-- event_type: choose the most specific category that matches the observed action. Prefer specific types over unclear_visual_evidence.
+- dominant_visible_activity must be a neutral activity label only. Do not output policy labels such as physical altercation, anomaly, suspicious, threat, alert, severity, or decision.
 - Do NOT use gate names, model names, or score values as evidence.
 """.strip()
 
@@ -289,7 +289,8 @@ def build_pose_vlm_visual_prompt(
 
 IMPORTANT RULES:
 - Describe only what you can directly observe. Do not guess, infer intent, or make judgements.
-- Do not use words like: anomaly, unusual, suspicious, abnormal, concerning, dangerous, threat, incident, alert.
+- You are a witness, not a judge: do NOT decide whether the event is an alert, anomaly, threat, fight, or suspicious activity.
+- Do NOT output alert_decision, visual_decision, severity, event_type, or final_action. Those fields belong only to the LLM/Python rule stages.
 - Focus specifically on: joint positions (shoulders, elbows, wrists, hips, knees, ankles), torso angle, bilateral symmetry, speed of limb movement, and contact with other people or objects.
 - Compare early frames (first third) to middle frames to late frames (last third) to describe how posture changes.
 
@@ -315,9 +316,8 @@ Return ONLY valid JSON matching this exact structure. No markdown. No null value
 {{
   "schema_version": "1.0",
   "review_type": "vlm_visual_review",
-  "visual_alert_decision": "YES | NO | UNCERTAIN",
-  "visual_severity": "NONE | LOW | MEDIUM | HIGH | CRITICAL",
-  "event_type": "normal_activity | benign_object_movement | benign_posture_change | camera_or_detection_artifact | unclear_visual_evidence | deep_semantic_spatiotemporal_anomaly | suspicious_motion | physical_altercation | fighting | pushing_or_shoving | grappling_or_wrestling | aggressive_contact | fall_or_collapse | unsafe_equipment_interaction | rapid_unusual_movement | person_on_floor | possible_intrusion_or_security_event",
+  "observation_status": "OBSERVED | NOT_OBSERVED | UNCLEAR",
+  "dominant_visible_activity": "Neutral short label such as walking, standing, sitting, lying_on_floor, object_interaction, person_contact, unclear_view. Do not use anomaly labels.",
   "visual_confidence": 0.0,
   "image_quality": "GOOD | FAIR | POOR | UNUSABLE",
   "evidence_sufficiency": "SUFFICIENT | PARTIAL | INSUFFICIENT",
@@ -328,7 +328,7 @@ Return ONLY valid JSON matching this exact structure. No markdown. No null value
     "Q1": "Direct factual answer to observation question 1.",
     "Q2": "Direct factual answer to observation question 2 (if present)."
   }},
-  "anomaly_evidence": [
+  "rule_relevant_visual_facts": [
     "List only concrete posture/movement facts that would need a rule to evaluate — e.g. 'person torso horizontal, face toward floor', 'rapid arm extension toward second person'. Empty list if none."
   ],
   "normality_evidence": [
@@ -337,14 +337,15 @@ Return ONLY valid JSON matching this exact structure. No markdown. No null value
   "false_positive_risks": [
     "List visual limitations: partial occlusion, body part cut off by frame edge, low keypoint visibility, perspective distortion."
   ],
-  "visual_decision_reason": "State in one sentence what the dominant visible body activity is, using only observable facts."
+  "observation_summary": "State in one sentence what the dominant visible body activity is, using only observable facts. Do not judge whether it is normal, abnormal, suspicious, or dangerous."
 }}
 
 Output rules:
-- visual_alert_decision YES: at least one concrete posture/movement fact in anomaly_evidence that matches an observation question.
-- visual_alert_decision NO: at least one concrete fact in normality_evidence.
-- visual_alert_decision UNCERTAIN: explain the uncertainty in visual_decision_reason.
-- visual_confidence: your confidence in the accuracy of your posture description (0.0–1.0).
+- observation_status OBSERVED: you can clearly describe at least one concrete posture/movement fact in rule_relevant_visual_facts or normality_evidence.
+- observation_status NOT_OBSERVED: the requested posture/movement observations are clearly not visible.
+- observation_status UNCLEAR: image quality, occlusion, distance, or ambiguity prevents a reliable posture description.
+- visual_confidence: your confidence in the accuracy of your posture description (0.0–1.0), not in any rule judgement.
+- dominant_visible_activity must be a neutral activity label only. Do not output policy labels such as physical altercation, anomaly, suspicious, threat, alert, severity, or decision.
 - Do NOT use pose score, threshold, GMM distance, or statistical values as evidence.
 """.strip()
 
@@ -363,9 +364,8 @@ def build_llm_policy_prompt(
 
     Design (AnomalyRuler, ECCV 2024):
     - The LLM receives the VLM caption plus the COMPLETE active rule set.
-    - The active rule set includes BOTH vad_reasoning_rules AND Anomaly_Rules
-      from the surveillance rule engine (trigger rules: alert on X; suppress
-      rules: ignore X).
+    - The active rule set comes from Anomaly_Rules only: trigger rules create alerts,
+      suppress rules silence known benign cases.
     - The LLM must match the caption to rules. It must NOT invent evidence or
       reason beyond what the VLM caption says.
     - OPEN_SET_VISUAL_ANOMALY is removed per the Unified Framework finding
@@ -463,8 +463,8 @@ Step 4 — Final decision:
   - UNCERTAIN: caption is ambiguous, image quality is poor, or evidence is
     insufficient to confirm or deny a trigger rule match.
   
-  NOTE: Do not output YES if the VLM caption's visual_alert_decision is NO and
-  normality_evidence is strong. Score ratio alone is never sufficient for YES.
+  NOTE: The VLM is only a neutral visual witness. It does not make an alert decision.
+  Do not treat any VLM observation_status as a policy decision. Score ratio alone is never sufficient for YES.
 
 ─── OUTPUT FORMAT ────────────────────────────────────────────────────────────
 Return ONLY valid JSON. No markdown. No explanation outside the JSON.

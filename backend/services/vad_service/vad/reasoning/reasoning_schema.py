@@ -33,6 +33,66 @@ ACTIONS = {"ignore", "review_only", "save_for_dataset", "alert_operator", "urgen
 RATIO_BANDS = {"weak", "moderate", "strong"}
 
 
+def _textify_vlm_field(value: Any) -> str:
+    """Coerce MiniCPM/LLaVA-style nested JSON fields into readable text.
+
+    Local VLMs often return person_observation/motion_observation as dicts or
+    lists even when the schema asks for a string. That is still useful visual
+    perception, so we normalize it instead of failing the whole review.
+    """
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, (int, float, bool)):
+        return str(value).strip()
+    if isinstance(value, list):
+        parts: list[str] = []
+        for item in value:
+            txt = _textify_vlm_field(item)
+            if txt:
+                parts.append(txt)
+        return "; ".join(parts).strip()
+    if isinstance(value, dict):
+        # Common MiniCPM format: {"total": 2, "description": [...]}
+        if "description" in value:
+            desc = _textify_vlm_field(value.get("description"))
+            total = value.get("total")
+            if total is not None and desc:
+                return f"{total} visible person(s): {desc}"
+            if desc:
+                return desc
+        parts: list[str] = []
+        for key, val in value.items():
+            if val is None or key in {"schema_version", "review_type"}:
+                continue
+            txt = _textify_vlm_field(val)
+            if txt:
+                parts.append(f"{key}: {txt}")
+        if parts:
+            return "; ".join(parts).strip()
+        try:
+            return json.dumps(value, ensure_ascii=False, default=str).strip()
+        except Exception:
+            return str(value).strip()
+    return str(value or "").strip()
+
+
+def _listify_vlm_field(value: Any) -> list[str]:
+    """Coerce list-like VLM fields while preserving nested visual facts."""
+    if value is None:
+        return []
+    if isinstance(value, list):
+        out: list[str] = []
+        for item in value:
+            txt = _textify_vlm_field(item)
+            if txt:
+                out.append(txt)
+        return out
+    txt = _textify_vlm_field(value)
+    return [txt] if txt else []
+
+
 class DeepReasoningContext(BaseModel):
     event_id: int | None = None
     case_id: int | None = None
@@ -121,10 +181,10 @@ class VlmVisualReview(BaseModel):
     false_positive_risks: list[str] = Field(default_factory=list)
     visual_decision_reason: str
 
-    @field_validator("visible_scene", "person_observation", "motion_observation", "visual_decision_reason")
+    @field_validator("visible_scene", "person_observation", "motion_observation", "visual_decision_reason", mode="before")
     @classmethod
-    def non_empty_text(cls, value: str) -> str:
-        value = str(value or "").strip()
+    def non_empty_text(cls, value: Any) -> str:
+        value = _textify_vlm_field(value)
         if not value:
             raise ValueError("field must not be empty")
         return value
@@ -132,12 +192,7 @@ class VlmVisualReview(BaseModel):
     @field_validator("anomaly_evidence", "normality_evidence", "false_positive_risks", mode="before")
     @classmethod
     def listify(cls, value: Any) -> list[str]:
-        if value is None:
-            return []
-        if isinstance(value, list):
-            return [str(x).strip() for x in value if str(x).strip()]
-        text = str(value).strip()
-        return [text] if text else []
+        return _listify_vlm_field(value)
 
 
 class RuleApplication(BaseModel):
@@ -256,7 +311,7 @@ def fallback_vlm_uncertain(reason: str) -> VlmVisualReview:
     reason = str(reason or "VLM visual review unavailable").strip()
     return VlmVisualReview(
         visual_alert_decision="UNCERTAIN",
-        visual_severity="LOW",
+        visual_severity="NONE",
         event_type="unclear_visual_evidence",
         visual_confidence=0.25,
         image_quality="FAIR",
@@ -364,16 +419,11 @@ def _looks_score_only_evidence(text: Any) -> bool:
 
 
 def _listify_text(value: Any) -> list[str]:
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return [str(x).strip() for x in value if str(x).strip()]
-    text = str(value).strip()
-    return [text] if text else []
+    return _listify_vlm_field(value)
 
 
 def _filter_vlm_score_only_evidence(raw: dict[str, Any]) -> None:
-    """Remove score-only statements from VLM anomaly_evidence.
+    """Remove score-only statements from VLM visual evidence.
 
     This protects the P2C boundary.  The VLM may describe visible posture/motion/contact,
     but it must not treat "score above threshold" as visual evidence.  Score context is
@@ -415,6 +465,27 @@ def _normalize_vlm_json(raw: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(raw, dict):
         return {}
 
+    # Witness-only VLM aliases. The VLM is asked for neutral visual facts only.
+    # It must not provide policy decisions (YES/NO alerts), severity, or event_type.
+    # Internally we keep old field names only for DB/dashboard compatibility.
+    if "anomaly_evidence" not in raw and "rule_relevant_visual_facts" in raw:
+        raw["anomaly_evidence"] = raw.get("rule_relevant_visual_facts")
+    if "anomaly_evidence" not in raw and "visual_facts_relevant_to_rules" in raw:
+        raw["anomaly_evidence"] = raw.get("visual_facts_relevant_to_rules")
+
+    # Preserve old/third-party status wording as metadata, but never treat it as an alert decision.
+    raw["observation_status"] = _upper_allowed(
+        raw.get("observation_status", raw.get("visual_review_flag", raw.get("visual_alert_decision"))),
+        {"OBSERVED", "NOT_OBSERVED", "UNCLEAR"},
+        "UNCLEAR",
+    )
+    raw["visual_alert_decision"] = "UNCERTAIN"
+    raw["visual_severity"] = "NONE"
+
+    # The VLM is not allowed to set policy event types such as physical_altercation.
+    # The LLM/Python rule layers derive final event type from matched Anomaly_Rules.
+    raw["event_type"] = "unclear_visual_evidence"
+
     # Common naming variants produced by MiniCPM/LLaVA/Qwen-VL-like local models.
     raw.setdefault("visible_scene", _first_non_empty(
         raw.get("visible_scene"), raw.get("scene"), raw.get("scene_description"),
@@ -431,32 +502,37 @@ def _normalize_vlm_json(raw: dict[str, Any]) -> dict[str, Any]:
         raw.get("actions"), raw.get("activity"),
     ))
     raw.setdefault("visual_decision_reason", _first_non_empty(
-        raw.get("visual_decision_reason"), raw.get("decision_reason"), raw.get("reason"),
-        raw.get("rationale"), raw.get("explanation"), raw.get("visual_reason"),
-        raw.get("why"), raw.get("assessment"),
+        raw.get("visual_decision_reason"), raw.get("observation_summary"), raw.get("summary"),
+        raw.get("decision_reason"), raw.get("reason"), raw.get("rationale"),
+        raw.get("explanation"), raw.get("visual_reason"), raw.get("why"), raw.get("assessment"),
     ))
+
+    # MiniCPM often returns these as nested dict/list objects even when prompted
+    # for strings. Preserve the visual information by normalizing to text before
+    # Pydantic validation, rather than falling back to an unusable UNCERTAIN parse.
+    for _field in ("visible_scene", "person_observation", "motion_observation", "visual_decision_reason"):
+        if _field in raw:
+            raw[_field] = _textify_vlm_field(raw.get(_field))
+    for _field in ("anomaly_evidence", "rule_relevant_visual_facts", "visual_facts_relevant_to_rules", "normality_evidence", "false_positive_risks"):
+        if _field in raw:
+            raw[_field] = _listify_vlm_field(raw.get(_field))
 
     # Enforce the P2C boundary before validation: VLM evidence must be visual,
     # not based on gate scores/thresholds/ratios.
     _filter_vlm_score_only_evidence(raw)
-    if _upper_allowed(raw.get("visual_alert_decision", raw.get("alert_decision")), ALERT_DECISIONS, "UNCERTAIN") == "YES" and not _listify_text(raw.get("anomaly_evidence")):
-        raw["visual_alert_decision"] = "UNCERTAIN"
-        raw.setdefault("_normalization_warnings", [])
-        raw["_normalization_warnings"].append({
-            "type": "downgraded_yes_without_visual_anomaly_evidence",
-            "reason": "The VLM perception flag was YES, but no concrete visual anomaly_evidence remained after score-only evidence filtering.",
-        })
+    # Hard P2C boundary: VLM never emits a usable alert decision.
+    # Concrete visual facts remain available in anomaly_evidence for rule matching.
+    raw["visual_alert_decision"] = "UNCERTAIN"
+    raw["visual_severity"] = "NONE"
+    raw["event_type"] = "unclear_visual_evidence"
 
     # If the VLM gave the three perception fields but forgot the reason, keep the useful
     # perception and synthesize a neutral reason instead of discarding everything.
     if not str(raw.get("visual_decision_reason", "")).strip():
-        decision = _upper_allowed(raw.get("visual_alert_decision", raw.get("alert_decision")), ALERT_DECISIONS, "UNCERTAIN")
-        if decision == "YES" and raw.get("anomaly_evidence"):
-            raw["visual_decision_reason"] = "Perception flag set to YES because concrete concerning visual cues were described in anomaly_evidence; final rule cognition remains with the LLM."
-        elif decision == "NO" and raw.get("normality_evidence"):
-            raw["visual_decision_reason"] = "Perception flag set to NO because the described visible activity appears ordinary or benign; final rule cognition remains with the LLM."
+        if raw.get("anomaly_evidence") or raw.get("normality_evidence"):
+            raw["visual_decision_reason"] = "The VLM provided neutral visual facts; final rule cognition remains with the LLM and Python guardrails."
         elif str(raw.get("motion_observation", "")).strip() or str(raw.get("person_observation", "")).strip():
-            raw["visual_decision_reason"] = "The VLM provided perception details but omitted a separate visual_decision_reason; the parser preserved the perception text and marked the reason as synthesized."
+            raw["visual_decision_reason"] = "The VLM provided perception details but omitted an observation summary; the parser preserved the perception text and marked the summary as synthesized."
 
     return raw
 
@@ -468,17 +544,17 @@ def parse_vlm_visual_review(raw_text: str) -> tuple[VlmVisualReview, dict[str, A
     raw = _normalize_vlm_json(raw)
 
     # Backward-compatible alias normalization for earlier shallow outputs.
-    if "visual_alert_decision" not in raw and "alert_decision" in raw:
-        raw["visual_alert_decision"] = _upper_allowed(raw.get("alert_decision"), ALERT_DECISIONS, "UNCERTAIN")
-    if "visual_severity" not in raw and "severity" in raw:
-        raw["visual_severity"] = _upper_allowed(raw.get("severity"), SEVERITIES, "LOW")
+    # Ignore legacy/third-party alert_decision and severity fields at VLM stage.
+    # The VLM is only a witness; LLM/Python are the only decision layers.
+    raw["visual_alert_decision"] = "UNCERTAIN"
+    raw["visual_severity"] = "NONE"
     if "visual_confidence" not in raw and "confidence" in raw:
         raw["visual_confidence"] = _confidence(raw.get("confidence"), 0.3)
     raw["review_type"] = "vlm_visual_review"
     raw["schema_version"] = str(raw.get("schema_version") or "1.0")
-    raw["visual_alert_decision"] = _upper_allowed(raw.get("visual_alert_decision"), ALERT_DECISIONS, "UNCERTAIN")
-    raw["visual_severity"] = _upper_allowed(raw.get("visual_severity"), SEVERITIES, "LOW")
-    raw["event_type"] = _lower_allowed(raw.get("event_type"), EVENT_TYPES, "unclear_visual_evidence")
+    raw["visual_alert_decision"] = "UNCERTAIN"
+    raw["visual_severity"] = "NONE"
+    raw["event_type"] = "unclear_visual_evidence"
     raw["image_quality"] = _upper_allowed(raw.get("image_quality"), IMAGE_QUALITIES, "FAIR")
     raw["evidence_sufficiency"] = _upper_allowed(raw.get("evidence_sufficiency"), EVIDENCE_SUFFICIENCIES, "PARTIAL")
     raw["visual_confidence"] = _confidence(raw.get("visual_confidence"), 0.3)
@@ -495,7 +571,7 @@ def parse_vlm_visual_review(raw_text: str) -> tuple[VlmVisualReview, dict[str, A
             "raw_json": raw,
         }
     if not str(raw.get("visual_decision_reason", "")).strip():
-        raw["visual_decision_reason"] = "The VLM omitted visual_decision_reason; perception text was preserved and final cognition is deferred to the LLM."
+        raw["visual_decision_reason"] = "The VLM omitted an observation summary; perception text was preserved and final cognition is deferred to the LLM."
 
     try:
         parse_info: dict[str, Any] = {"parse_error": None, "raw_json": raw}

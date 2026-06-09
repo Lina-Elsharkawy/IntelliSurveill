@@ -1235,11 +1235,18 @@ class VadDB:
                     error_json = '{"reason": "job_too_old_skipped"}'::jsonb
                 WHERE status = 'queued'
                   AND attempts < max_attempts
-                  AND metadata_json @> %(source_metadata)s::jsonb
+                  AND (
+                        metadata_json @> %(source_metadata)s::jsonb
+                        OR metadata_json ->> 'source_gate_name' = %(gate_name)s
+                        OR input_bundle_json -> 'event' ->> 'gate_name' = %(gate_name)s
+                        OR input_bundle_json ->> 'reasoning_scope' = %(reasoning_scope)s
+                  )
                   AND queued_at < NOW() - (%(max_age_sec)s || ' seconds')::interval
                 """,
                 {
                     "source_metadata": _json({"source_gate_name": str(gate_name)}),
+                    "gate_name": str(gate_name),
+                    "reasoning_scope": f"{str(gate_name)}_gate_only",
                     "max_age_sec": float(max_age_sec),
                 },
             )
@@ -1251,7 +1258,12 @@ class VadDB:
                 FROM vad_reasoning_jobs
                 WHERE status = 'queued'
                   AND attempts < max_attempts
-                  AND metadata_json @> %(source_metadata)s::jsonb
+                  AND (
+                        metadata_json @> %(source_metadata)s::jsonb
+                        OR metadata_json ->> 'source_gate_name' = %(gate_name)s
+                        OR input_bundle_json -> 'event' ->> 'gate_name' = %(gate_name)s
+                        OR input_bundle_json ->> 'reasoning_scope' = %(reasoning_scope)s
+                  )
                 ORDER BY
                     CASE priority
                         WHEN 'urgent' THEN 0
@@ -1279,6 +1291,8 @@ class VadDB:
             """,
             {
                 "source_metadata": _json({"source_gate_name": str(gate_name)}),
+                "gate_name": str(gate_name),
+                "reasoning_scope": f"{str(gate_name)}_gate_only",
                 "vlm_model": vlm_model,
                 "llm_model": llm_model,
             },

@@ -56,6 +56,26 @@ def _json_default(value: Any) -> Any:
     return sanitize_json(value)
 
 
+
+def _final_event_type_from_rules(final: dict[str, Any], rules_json: dict[str, Any], vlm_json: dict[str, Any]) -> str:
+    """Return a dashboard-safe event type.
+
+    The VLM is only a visual witness, so we do not store VLM event_type as the
+    final result event type. If the final decision is YES, use the first matched
+    trigger rule event_type. Otherwise return a neutral final-state label.
+    """
+    decision = str((final or {}).get("final_alert_decision") or "UNCERTAIN").upper()
+    if decision == "YES":
+        for rule in (rules_json or {}).get("matched_trigger_rules", []) or []:
+            et = rule.get("event_type") or (rule.get("event_types") or [None])[0]
+            if et:
+                return str(et)
+        return "rule_matched_alert"
+    if decision == "NO":
+        return "no_rule_alert"
+    return "requires_human_review"
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # CLIP keyframe selector singleton
 # Loaded once at worker startup, reused across all jobs.
@@ -218,7 +238,7 @@ def _images_b64_from_map(object_keys: list[str], image_bytes_map: dict[str, byte
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Merged rule loading: vad_reasoning_rules + Anomaly_Rules table
+# Rule loading: Anomaly_Rules table only
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _load_merged_rules(db: VadDB, conn) -> list[dict[str, Any]]:
@@ -362,10 +382,20 @@ class GateReasoningWorker:
         try:
             result = self._process_claimed_job(job)
             s = result.structured
-            final = s.get("python_final_result") or {}
+            # build_structured_result stores the deterministic final decision under
+            # "python_final_guardrails". Keep fallbacks for older result schemas.
+            final = (
+                s.get("python_final_guardrails")
+                or s.get("python_final_result")
+                or {}
+            )
             vlm_json = s.get("vlm_visual_review") or {}
             llm_json = s.get("llm_policy_review") or {}
-            rules_json = s.get("rules_result") or {}
+            rules_json = (
+                s.get("rule_evaluation")
+                or s.get("rules_result")
+                or {}
+            )
 
             with self.db.connect() as conn:
                 with conn.transaction():
@@ -375,7 +405,7 @@ class GateReasoningWorker:
                         case_id=case_id,
                         alert_decision=final.get("final_alert_decision"),
                         severity=final.get("final_severity"),
-                        event_type=vlm_json.get("event_type"),
+                        event_type=_final_event_type_from_rules(final, rules_json, vlm_json),
                         confidence=final.get("final_confidence"),
                         visual_evidence=json.dumps(
                             sanitize_json({
@@ -385,6 +415,7 @@ class GateReasoningWorker:
                                 "anomaly_evidence": vlm_json.get("anomaly_evidence"),
                                 "normality_evidence": vlm_json.get("normality_evidence"),
                                 "false_positive_risks": vlm_json.get("false_positive_risks"),
+                                "observation_status": vlm_json.get("observation_status"),
                             }),
                             ensure_ascii=False,
                             default=_json_default,
@@ -469,7 +500,7 @@ class GateReasoningWorker:
         else:
             ctx = _build_context(bundle, object_keys)
 
-        # ── Step 3: Load merged rules (vad_reasoning_rules + Anomaly_Rules) ──
+        # ── Step 3: Load active rules from Anomaly_Rules ─────────────────
         with self.db.connect() as _conn:
             rules = _load_merged_rules(self.db, _conn)
 
