@@ -18,7 +18,12 @@ from .reasoning.reasoning_policy import (
     apply_python_final_guardrails,
     build_structured_result,
 )
-from .reasoning.reasoning_prompts import build_deep_vlm_visual_prompt, build_llm_policy_prompt, build_pose_vlm_visual_prompt, build_vlm_observation_hints
+from .reasoning.reasoning_prompts import (
+    build_deep_vlm_visual_prompt,
+    build_llm_policy_prompt,
+    build_pose_vlm_visual_prompt,
+    build_vlm_observation_hints,
+)
 from .reasoning.reasoning_schema import (
     DeepReasoningContext,
     PoseReasoningContext,
@@ -33,8 +38,7 @@ from .reasoning.reasoning_schema import (
 from .vad_anomaly_rules import (
     RULES_VERSION,
     deterministic_rule_matches,
-    load_active_vad_rules,
-    serialize_rules_for_llm,
+    load_anomaly_rules,
 )
 
 log = logging.getLogger("vad.reasoning_worker")
@@ -52,8 +56,26 @@ def _json_default(value: Any) -> Any:
     return sanitize_json(value)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# CLIP keyframe selector singleton
+# Loaded once at worker startup, reused across all jobs.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _get_clip_selector():
+    """Return the module-level CLIP keyframe selector singleton."""
+    try:
+        from .keyframe_selector import get_selector
+        return get_selector()
+    except ImportError:
+        log.warning("keyframe_selector module not found — will use even-spacing fallback.")
+        return None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Frame key helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
 def _frame_index_from_key(key: str) -> int:
-    """Return the numeric frame index for .../frames/frame_###.jpg keys."""
     match = re.search(r"(?:^|/)frames/frame_(\d+)\.(?:jpg|jpeg|png|webp)$", key.lower())
     if not match:
         return 10**9
@@ -61,7 +83,6 @@ def _frame_index_from_key(key: str) -> int:
 
 
 def _infer_image_role_from_key(key: str) -> str:
-    """Infer evidence role from object-key naming used by EvidenceWriter."""
     lower = key.lower().strip().lstrip("/")
     name = lower.rsplit("/", 1)[-1]
     if name == "tubelet_montage.jpg":
@@ -73,169 +94,155 @@ def _infer_image_role_from_key(key: str) -> str:
     return "image"
 
 
-def _evenly_sample(keys: list[str], limit: int) -> list[str]:
-    """Keep temporal coverage across the whole tubelet when frames exceed budget."""
+def _even_sample(keys: list[str], limit: int) -> list[str]:
     if limit <= 0:
         return []
     if len(keys) <= limit:
         return list(keys)
-    if limit == 1:
-        return [keys[0]]
     last = len(keys) - 1
     indexes = sorted({round(i * last / (limit - 1)) for i in range(limit)})
-    # Rounding can theoretically collapse adjacent indexes. Fill missing slots from the front
-    # while keeping chronological order and without exceeding the budget.
-    if len(indexes) < limit:
-        for idx in range(len(keys)):
-            if idx not in indexes:
-                indexes.append(idx)
-                if len(indexes) == limit:
-                    break
-        indexes = sorted(indexes)
     return [keys[i] for i in indexes[:limit]]
 
 
-def _select_evidence_object_keys(bundle: dict[str, Any], cfg: VadConfig) -> list[str]:
-    """Select VLM evidence with raw chronological tubelet frames as the primary input.
+# ─────────────────────────────────────────────────────────────────────────────
+# Evidence key collection + CLIP keyframe selection
+# ─────────────────────────────────────────────────────────────────────────────
 
-    Current reasoning design:
-    - The VLM should inspect the event as a temporal sequence.
-    - For the local MiniCPM/Ollama VLM, tiny montage cells and annotated overview images can
-      be less useful than full raw evidence frames.
-    - Therefore the default selection is frame-first / frame-only: all chronological
-      frames/frame_### images up to VAD_REASONING_MAX_IMAGES.
-
-    Configuration:
-    - VAD_REASONING_IMAGE_ROLES controls which roles are preferred.
-      Recommended default: "tubelet_frame".
-    - If "tubelet_montage" or "annotated_frame" are explicitly included in
-      VAD_REASONING_IMAGE_ROLES, they will be included before frames.
-    - If no tubelet frames are available, the function falls back to montage/annotated/other
-      images rather than failing with no visual evidence.
-
-    If the number of frame images is greater than the configured budget, frames are sampled
-    evenly across the full event window, never by taking only the first frames.
-    """
+def _collect_frame_keys(bundle: dict[str, Any]) -> list[str]:
+    """Collect all tubelet_frame keys from the reasoning bundle in chronological order."""
     visual = bundle.get("visual_evidence") or {}
-    preferred_roles = [r.strip() for r in str(cfg.reasoning_image_roles).split(",") if r.strip()]
-    if not preferred_roles:
-        preferred_roles = ["tubelet_frame"]
-    preferred_set = set(preferred_roles)
-    max_images = max(1, int(cfg.reasoning_max_images or 32))
-
-    # role -> ordered unique keys. Collect all roles first, then apply preference/fallback
-    # after role grouping. This avoids accidentally discarding fallback evidence.
-    by_role: dict[str, list[str]] = {
-        "tubelet_montage": [],
-        "annotated_frame": [],
-        "tubelet_frame": [],
-        "image": [],
-    }
     seen: set[str] = set()
+    frames: list[str] = []
 
-    def add_key(key: Any, role: str | None = None) -> None:
+    def _add(key: Any, role: str | None = None) -> None:
         if not isinstance(key, str):
             return
         clean = key.strip().lstrip("/")
-        if not clean:
+        if not clean or clean in seen:
             return
         if not clean.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
             return
-        inferred_role = (role or "").strip() or _infer_image_role_from_key(clean)
-        if clean in seen:
-            return
-        seen.add(clean)
-        by_role.setdefault(inferred_role, []).append(clean)
+        inferred = role or _infer_image_role_from_key(clean)
+        if inferred == "tubelet_frame":
+            seen.add(clean)
+            frames.append(clean)
 
-    # Manual-test bundle format: visual_evidence.object_keys = ["...jpg", "...jpg"]
     for key in visual.get("object_keys") or []:
-        add_key(key)
+        _add(key)
+    for obj in (visual.get("objects") or []) + (visual.get("evidence_objects") or []):
+        if isinstance(obj, dict):
+            _add(
+                obj.get("object_key"),
+                role=(obj.get("role") or obj.get("media_role") or "").strip() or None,
+            )
 
-    # Automatic bundle formats: visual_evidence.objects or visual_evidence.evidence_objects.
-    objects: list[Any] = []
-    objects.extend(visual.get("objects") or [])
-    objects.extend(visual.get("evidence_objects") or [])
+    frames.sort(key=_frame_index_from_key)
+    return frames
 
-    for obj in objects:
-        if not isinstance(obj, dict):
-            continue
-        role = str(obj.get("role") or obj.get("media_role") or obj.get("evidence_role") or "").strip()
-        object_key = str(obj.get("object_key") or "").strip().lstrip("/")
-        media_type = str(obj.get("media_type") or "").lower()
-        content_type = str(obj.get("content_type") or "").lower()
-        is_image = (
-            media_type == "image"
-            or content_type.startswith("image/")
-            or object_key.lower().endswith((".jpg", ".jpeg", ".png", ".webp"))
+
+def _select_evidence_object_keys(
+    bundle: dict[str, Any],
+    cfg: VadConfig,
+    minio: VadMinioClient,
+) -> tuple[list[str], dict[str, bytes]]:
+    """
+    Download all tubelet frames then apply CLIP keyframe selection.
+
+    Returns
+    -------
+    selected_keys : list[str]
+        Up to VAD_REASONING_MAX_IMAGES frame keys in chronological order.
+    image_bytes_map : dict[str, bytes]
+        Raw JPEG bytes for every selected key (needed by _load_images_b64).
+    """
+    max_images = max(1, int(cfg.reasoning_max_images or 8))
+    frame_keys = _collect_frame_keys(bundle)
+
+    if not frame_keys:
+        # No tubelet frames — fall back to montage/annotated.
+        visual = bundle.get("visual_evidence") or {}
+        fallback: list[str] = []
+        for key in visual.get("object_keys") or []:
+            if isinstance(key, str) and key.strip().lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
+                fallback.append(key.strip().lstrip("/"))
+        fallback = fallback[:max_images]
+        bytes_map = {}
+        for k in fallback:
+            try:
+                bytes_map[k] = minio.download_bytes(k)
+            except Exception as e:
+                log.warning("Could not download fallback frame %s: %s", k, e)
+        return fallback, bytes_map
+
+    # Download all frames first (needed for CLIP).
+    all_bytes: dict[str, bytes] = {}
+    for key in frame_keys:
+        try:
+            all_bytes[key] = minio.download_bytes(key)
+        except Exception as e:
+            log.warning("Could not download frame %s: %s", key, e)
+
+    # Apply CLIP keyframe selection.
+    selector = _get_clip_selector()
+    if selector is not None and len(frame_keys) > max_images:
+        selected = selector.select(
+            frame_keys=frame_keys,
+            image_bytes_map=all_bytes,
+            budget=max_images,
         )
-        if object_key and is_image:
-            add_key(object_key, role=role)
+    else:
+        selected = _even_sample(frame_keys, max_images)
 
-    montage = by_role.get("tubelet_montage", [])
-    annotated = by_role.get("annotated_frame", [])
-    frames = sorted(by_role.get("tubelet_frame", []), key=_frame_index_from_key)
-    other = by_role.get("image", [])
+    # Keep only bytes for selected keys.
+    selected_bytes = {k: all_bytes[k] for k in selected if k in all_bytes}
 
-    selected: list[str] = []
-
-    # Include overview images only when explicitly requested. The default compose/config now
-    # requests tubelet_frame only because raw frames are more legible for the VLM.
-    if "tubelet_montage" in preferred_set:
-        selected.extend(montage[:1])
-    if "annotated_frame" in preferred_set:
-        selected.extend([k for k in annotated[:1] if k not in selected])
-
-    # Raw chronological frames are the primary evidence for temporal reasoning.
-    if "tubelet_frame" in preferred_set:
-        remaining = max_images - len(selected)
-        selected.extend([k for k in _evenly_sample(frames, remaining) if k not in selected])
-
-    # If the preferred roles produced nothing, fall back gracefully.
-    if not selected:
-        fallback_order = frames + montage[:1] + annotated[:1] + other
-        selected = _evenly_sample(fallback_order, max_images)
-
-    # If preferred roles included only overview images and there is still budget, add frames.
-    if len(selected) < max_images and "tubelet_frame" not in preferred_set:
-        for key in _evenly_sample(frames, max_images - len(selected)):
-            if key not in selected:
-                selected.append(key)
-
-    selected = selected[:max_images]
-
-    role_counts = {role: len(keys) for role, keys in by_role.items() if keys}
-    selected_role_counts: dict[str, int] = {}
-    for key in selected:
-        role = _infer_image_role_from_key(key)
-        selected_role_counts[role] = selected_role_counts.get(role, 0) + 1
     log.info(
-        "VLM evidence selection: available_image_count=%s selected_image_count=%s max_images=%s preferred_roles=%s role_counts=%s selected_role_counts=%s selected_keys=%s",
-        sum(role_counts.values()),
-        len(selected),
-        max_images,
-        preferred_roles,
-        role_counts,
-        selected_role_counts,
-        selected,
+        "Frame selection: total_frames=%d selected=%d max_images=%d",
+        len(frame_keys), len(selected), max_images,
     )
-    return selected
+    return selected, selected_bytes
 
-def _load_images_b64(minio: VadMinioClient, object_keys: list[str]) -> list[str]:
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Load images as base64 from already-downloaded bytes
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _images_b64_from_map(object_keys: list[str], image_bytes_map: dict[str, bytes]) -> list[str]:
     import base64
-
-    images: list[str] = []
+    result = []
     for key in object_keys:
-        data = minio.download_bytes(key)
-        images.append(base64.b64encode(data).decode("ascii"))
-    return images
+        data = image_bytes_map.get(key)
+        if data:
+            result.append(base64.b64encode(data).decode("ascii"))
+    return result
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Merged rule loading: vad_reasoning_rules + Anomaly_Rules table
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _load_merged_rules(db: VadDB, conn) -> list[dict[str, Any]]:
+    """Load active rules from the Anomaly_Rules table.
+
+    Single rule source — vad_reasoning_rules is unused.
+    Rules are created by admins via the anomaly-rules-service UI.
+
+    AnomalyRuler (ECCV 2024): the LLM matches the VLM caption against
+    this rule list — it cannot reason freely beyond what the rules cover.
+    """
+    rules = load_anomaly_rules(conn)
+    log.info("Rules loaded from Anomaly_Rules: %d active", len(rules))
+    return rules
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Context builders
+# ─────────────────────────────────────────────────────────────────────────────
 
 def _safe_float(value: Any) -> float | None:
     try:
         out = float(value)
-        if out != out:
-            return None
-        return out
+        return None if out != out else out
     except Exception:
         return None
 
@@ -249,22 +256,24 @@ def _build_context(bundle: dict[str, Any], image_object_keys: list[str]) -> Deep
     if ratio is None and score is not None and threshold and threshold > 0:
         ratio = score / threshold
     return DeepReasoningContext(
-        event_id=int(event.get("gate_event_id")) if event.get("gate_event_id") is not None else None,
-        case_id=int(event.get("case_id")) if event.get("case_id") is not None else None,
+        event_id=int(event["gate_event_id"]) if event.get("gate_event_id") is not None else None,
+        case_id=int(event["case_id"]) if event.get("case_id") is not None else None,
         gate_name="deep",
         deep_score=score,
         threshold_value=threshold,
         score_ratio=ratio,
-        camera_id=int(event.get("camera_id")) if event.get("camera_id") is not None else None,
+        camera_id=int(event["camera_id"]) if event.get("camera_id") is not None else None,
         stream_key=event.get("stream_key"),
         camera_key=event.get("camera_key"),
-        tracker_track_id=int(event.get("tracker_track_id")) if event.get("tracker_track_id") is not None else None,
-        tubelet_id=int(event.get("tubelet_id")) if event.get("tubelet_id") is not None else None,
+        tracker_track_id=int(event["tracker_track_id"]) if event.get("tracker_track_id") is not None else None,
+        tubelet_id=int(event["tubelet_id"]) if event.get("tubelet_id") is not None else None,
         evidence_object_keys=image_object_keys,
         event_metadata=event,
         deep_gate_metadata=deep_gate,
         scene_context=bundle.get("scene_context") or {},
     )
+
+
 def _build_pose_context(bundle: dict[str, Any], image_object_keys: list[str]) -> PoseReasoningContext:
     event = bundle.get("event") or {}
     pose_gate = bundle.get("pose_gate") or {}
@@ -274,39 +283,52 @@ def _build_pose_context(bundle: dict[str, Any], image_object_keys: list[str]) ->
     if ratio is None and score is not None and threshold and threshold > 0:
         ratio = score / threshold
     return PoseReasoningContext(
-        event_id=int(event.get("gate_event_id")) if event.get("gate_event_id") is not None else None,
-        case_id=int(event.get("case_id")) if event.get("case_id") is not None else None,
+        event_id=int(event["gate_event_id"]) if event.get("gate_event_id") is not None else None,
+        case_id=int(event["case_id"]) if event.get("case_id") is not None else None,
         gate_name="pose",
         pose_score=score,
         threshold_value=threshold,
         score_ratio=ratio,
-        camera_id=int(event.get("camera_id")) if event.get("camera_id") is not None else None,
+        camera_id=int(event["camera_id"]) if event.get("camera_id") is not None else None,
         stream_key=event.get("stream_key"),
         camera_key=event.get("camera_key"),
-        tracker_track_id=int(event.get("tracker_track_id")) if event.get("tracker_track_id") is not None else None,
-        tubelet_id=int(event.get("tubelet_id")) if event.get("tubelet_id") is not None else None,
+        tracker_track_id=int(event["tracker_track_id"]) if event.get("tracker_track_id") is not None else None,
+        tubelet_id=int(event["tubelet_id"]) if event.get("tubelet_id") is not None else None,
         evidence_object_keys=image_object_keys,
         event_metadata=event,
         pose_gate_metadata=pose_gate,
         scene_context=bundle.get("scene_context") or {},
     )
 
-# Maximum age of a reasoning job to still be processed.  Jobs older than this
-# were queued when Ollama was down and the evidence images are no longer fresh.
-_MAX_JOB_AGE_SEC = 3 * 3600  # 3 hours
 
-# If the VLM returns NO with at least this confidence we trust it and skip
-# the LLM stage entirely to save compute.
-_VLM_NO_SKIP_LLM_CONFIDENCE = 0.95
+# ─────────────────────────────────────────────────────────────────────────────
+# Constants
+# ─────────────────────────────────────────────────────────────────────────────
 
+_MAX_JOB_AGE_SEC = 3 * 3600  # skip jobs older than 3 hours
+_VLM_NO_SKIP_LLM_CONFIDENCE = 0.95  # effectively disabled (> 1.0 would fully disable)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Worker
+# ─────────────────────────────────────────────────────────────────────────────
 
 class GateReasoningWorker:
     def __init__(self, cfg: VadConfig, db: VadDB) -> None:
         self.cfg = cfg
         self.db = db
         self.minio = VadMinioClient(cfg)
-        self.ollama = OllamaClient(base_url=cfg.ollama_base_url, timeout_sec=cfg.ollama_timeout_sec)
+        self.ollama = OllamaClient(
+            base_url=cfg.ollama_base_url,
+            timeout_sec=cfg.ollama_timeout_sec,
+        )
         self._stop = False
+
+        # Load CLIP selector once at startup.
+        self._clip_selector = _get_clip_selector()
+        if self._clip_selector is not None:
+            # Trigger lazy load now so the first job doesn't pay the load cost.
+            self._clip_selector._load()
 
     def stop(self, *_: Any) -> None:
         self._stop = True
@@ -331,10 +353,12 @@ class GateReasoningWorker:
                     )
                 if not job:
                     return False
+
         job_id = int(job["id"])
         case_id = int(job["case_id"])
         attempts = int(job.get("attempts") or 0)
         max_attempts = int(job.get("max_attempts") or self.cfg.deep_reasoning_max_attempts)
+
         try:
             result = self._process_claimed_job(job)
             s = result.structured
@@ -384,17 +408,21 @@ class GateReasoningWorker:
                         rules_version=s.get("rules_version") or RULES_VERSION,
                     )
                     self.db.mark_reasoning_job_succeeded(conn, job_id=job_id)
+
             log.info(
-                "Reasoning job %s succeeded: final_decision=%s severity=%s confidence=%s",
+                "Job %s done: decision=%s severity=%s confidence=%s",
                 job_id,
                 final.get("final_alert_decision"),
                 final.get("final_severity"),
                 final.get("final_confidence"),
             )
             return True
+
         except Exception as e:
             retry = attempts < max_attempts
-            log.exception("Reasoning job %s failed%s: %s", job_id, "; will retry" if retry else " permanently", e)
+            log.exception(
+                "Job %s failed%s: %s", job_id, "; will retry" if retry else " permanently", e
+            )
             with self.db.connect() as conn:
                 with conn.transaction():
                     self.db.mark_reasoning_job_failed(
@@ -414,7 +442,7 @@ class GateReasoningWorker:
         metadata = job.get("metadata_json") or {}
         source_gate = metadata.get("source_gate_name")
         if source_gate not in {"deep", "pose"}:
-            raise RuntimeError(f"Unsupported source_gate_name in reasoning job: {source_gate}")
+            raise RuntimeError(f"Unsupported source_gate_name: {source_gate}")
 
         bundle = job.get("input_bundle_json") or {}
         if not isinstance(bundle, dict):
@@ -424,58 +452,70 @@ class GateReasoningWorker:
         if scope not in {"deep_gate_only", "pose_gate_only"}:
             raise RuntimeError(f"Unsupported reasoning scope: {scope}")
 
-        object_keys = _select_evidence_object_keys(bundle, self.cfg)
+        # ── Step 1: Download + CLIP keyframe selection ────────────────────────
+        object_keys, image_bytes_map = _select_evidence_object_keys(
+            bundle, self.cfg, self.minio
+        )
         if not object_keys:
-            raise RuntimeError("No usable visual evidence object keys found in reasoning bundle")
-        images_b64 = _load_images_b64(self.minio, object_keys)
+            raise RuntimeError("No usable visual evidence keys found in bundle.")
 
+        images_b64 = _images_b64_from_map(object_keys, image_bytes_map)
+        if not images_b64:
+            raise RuntimeError("All frame downloads failed — no images to send to VLM.")
+
+        # ── Step 2: Build reasoning context ──────────────────────────────────
         if source_gate == "pose":
             ctx = _build_pose_context(bundle, object_keys)
         else:
             ctx = _build_context(bundle, object_keys)
 
-        # Load active rules from DB (falls back to built-ins on failure).
+        # ── Step 3: Load merged rules (vad_reasoning_rules + Anomaly_Rules) ──
         with self.db.connect() as _conn:
-            rules = load_active_vad_rules(self.db, _conn)
-        llm_rules = serialize_rules_for_llm(rules)
+            rules = _load_merged_rules(self.db, _conn)
 
-        # Stage 1: VLM grounded perception review.
-        # The VLM receives only perception-oriented observation hints derived from
-        # the active rule set. It must not apply rules or make the final anomaly
-        # decision; rule cognition remains in the LLM/Python layers.
-        visual_observation_hints = build_vlm_observation_hints(llm_rules)
+        # ── Step 4: VLM visual caption (Phase 2 — Perception) ────────────────
+        # No anomaly vocabulary. Action-grounded observation questions only.
+        # (ASK-Hint, arXiv:2510.02155)
+        visual_hints = build_vlm_observation_hints(rules)
+
         if source_gate == "pose":
-            vlm_prompt = build_pose_vlm_visual_prompt(ctx, visual_observation_hints=visual_observation_hints)
+            vlm_prompt = build_pose_vlm_visual_prompt(ctx, visual_observation_hints=visual_hints)
         else:
-            vlm_prompt = build_deep_vlm_visual_prompt(ctx, visual_observation_hints=visual_observation_hints)
-        raw_vlm = self.ollama.generate(model=self.cfg.ollama_vlm_model, prompt=vlm_prompt, images_b64=images_b64)
+            vlm_prompt = build_deep_vlm_visual_prompt(ctx, visual_observation_hints=visual_hints)
+
+        raw_vlm = self.ollama.generate(
+            model=self.cfg.ollama_vlm_model,
+            prompt=vlm_prompt,
+            images_b64=images_b64,
+        )
         vlm_review, vlm_parse_info = parse_vlm_visual_review(raw_vlm)
 
-        # Stage 2: LLM policy/rules review.
-        # Per the decoupled P2C architecture, this stage should normally run for
-        # every VLM perception result because active anomaly rules are injected here.
-        # The legacy skip path is effectively disabled by _VLM_NO_SKIP_LLM_CONFIDENCE > 1.0.
+        # ── Step 5: LLM rule-matching (Phase 3 — Cognition) ──────────────────
+        # Rules-constrained decision only. No open-set escape hatch.
+        # (AnomalyRuler, arXiv:2407.10299)
         raw_llm: str | None = None
         llm_parse_info: dict[str, Any]
+
         skip_llm = (
             vlm_review.visual_alert_decision == "NO"
             and vlm_review.visual_confidence >= _VLM_NO_SKIP_LLM_CONFIDENCE
             and not (vlm_parse_info or {}).get("parse_error")
         )
+
         if skip_llm:
             log.info(
-                "Skipping LLM stage for event_id=%s: VLM returned NO with confidence=%.2f",
+                "Skipping LLM for event_id=%s: VLM returned NO confidence=%.2f",
                 ctx.event_id, vlm_review.visual_confidence,
             )
             llm_review = LlmPolicyReview(
                 policy_alert_decision="NO",
                 policy_severity="NONE",
-                policy_confidence=min(1.0, max(0.0, float(vlm_review.visual_confidence))),
+                policy_confidence=min(1.0, float(vlm_review.visual_confidence)),
                 recommended_action="ignore",
                 score_assessment=ScoreAssessment(
                     score_ratio=ctx.score_ratio,
                     ratio_band=ctx.ratio_band(),
-                    score_reasoning="LLM stage skipped because the VLM produced a high-confidence visual NO; score is not used to override visible normality.",
+                    score_reasoning="LLM skipped — high-confidence visual NO.",
                 ),
                 evidence_assessment=EvidenceAssessment(
                     uses_only_vlm_evidence=True,
@@ -485,33 +525,39 @@ class GateReasoningWorker:
                 ),
                 matched_trigger_rules=[],
                 matched_suppress_rules=[],
-                rule_reasoning=["LLM stage skipped after high-confidence VLM NO to save compute."],
+                rule_reasoning=["LLM stage skipped after high-confidence VLM NO."],
                 decision_reason=(
-                    f"The VLM returned a high-confidence NO (confidence={vlm_review.visual_confidence:.2f}). "
-                    "The policy layer preserves that conservative NO instead of converting it to UNCERTAIN."
+                    f"VLM returned high-confidence NO (confidence={vlm_review.visual_confidence:.2f}). "
+                    "Conservative NO preserved."
                 ),
-                limitations=["No separate LLM cognition call was made for this high-confidence visual NO."],
+                limitations=["No separate LLM call made for this high-confidence visual NO."],
             )
             llm_parse_info = {"parse_error": None, "skipped": True, "reason": "vlm_high_confidence_no"}
         else:
-            # LLM is part of the architecture; if it fails, record an explicit UNCERTAIN
-            # fallback rather than silently skipping it.
             try:
-                llm_prompt = build_llm_policy_prompt(ctx=ctx, vlm_review=vlm_review, active_rules=llm_rules)
-                raw_llm = self.ollama.generate(model=self.cfg.ollama_llm_model, prompt=llm_prompt)
-                llm_review, llm_parse_info = parse_llm_policy_review(raw_llm, ctx=ctx, vlm=vlm_review)
+                llm_prompt = build_llm_policy_prompt(
+                    ctx=ctx,
+                    vlm_review=vlm_review,
+                    active_rules=rules,
+                )
+                raw_llm = self.ollama.generate(
+                    model=self.cfg.ollama_llm_model,
+                    prompt=llm_prompt,
+                )
+                llm_review, llm_parse_info = parse_llm_policy_review(
+                    raw_llm, ctx=ctx, vlm=vlm_review
+                )
             except Exception as e:
                 log.exception(
-                    "LLM policy review failed for event_id=%s; using explicit UNCERTAIN fallback: %s",
-                    ctx.event_id, e,
+                    "LLM policy review failed for event_id=%s: %s", ctx.event_id, e
                 )
                 raw_llm = None
                 llm_review = fallback_llm_uncertain(
-                    f"LLM policy review failed or timed out: {e}", ctx=ctx, vlm=vlm_review
+                    f"LLM failed: {e}", ctx=ctx, vlm=vlm_review
                 )
                 llm_parse_info = {"parse_error": "llm_call_failed", "error": str(e)}
 
-        # Stage 3: Python deterministic final guardrails.
+        # ── Step 6: Python guardrails (Phase 4 — Deterministic validation) ───
         final_result, rules_result = apply_python_final_guardrails(
             ctx=ctx,
             vlm=vlm_review,
@@ -542,7 +588,8 @@ class GateReasoningWorker:
 
     def run_forever(self) -> None:
         log.info(
-            "Starting Deep + Pose VAD reasoning worker provider=%s vlm=%s llm=%s poll=%.2fs batch=%s policy=%s rules=%s",
+            "VAD reasoning worker started  provider=%s vlm=%s llm=%s "
+            "poll=%.2fs batch=%s policy=%s rules=%s",
             self.cfg.reasoning_provider,
             self.cfg.ollama_vlm_model,
             self.cfg.ollama_llm_model,
@@ -552,7 +599,8 @@ class GateReasoningWorker:
             RULES_VERSION,
         )
         if not self.cfg.reasoning_worker_enabled:
-            log.warning("VAD_REASONING_WORKER_ENABLED=0; worker will idle")
+            log.warning("VAD_REASONING_WORKER_ENABLED=0; worker idling.")
+
         while not self._stop:
             processed_any = False
             if self.cfg.reasoning_worker_enabled:

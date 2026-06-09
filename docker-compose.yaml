@@ -338,7 +338,7 @@ services:
       VAD_MINIO_BUCKET: vad-evidence
       VAD_EVIDENCE_PREFIX: vad
       VAD_SAVE_EVIDENCE_ON_GATE_EVENT: "1"
-      VAD_SAVE_EVIDENCE_ON_PERSISTENT_HIT: "0"  
+      VAD_SAVE_EVIDENCE_ON_PERSISTENT_HIT: "0"
 
       # ------------------------------------------------------------------
       # VLM/LLM reasoning queue
@@ -406,7 +406,7 @@ services:
       VAD_DEEP_REASONING_MAX_ATTEMPTS: "3"
 
       VAD_REASONING_IMAGE_ROLES: "tubelet_frame"
-      VAD_REASONING_MAX_IMAGES: "24"
+      VAD_REASONING_MAX_IMAGES: "8"
 
       VAD_MINIO_ENDPOINT: minio:9000
       VAD_MINIO_ACCESS_KEY: minioadmin
@@ -422,6 +422,7 @@ services:
       VAD_OLLAMA_TIMEOUT_SEC: "300"
     volumes:
       - ./backend/services/vad_service:/app
+      - ./backend/models/clip:/models/vad/clip
 
     depends_on:
       postgres-db:
@@ -432,7 +433,7 @@ services:
         condition: service_started
 
     networks:
-      - data-platform-net      
+      - data-platform-net
   anomaly-service:
     build:
       context: ./backend/services/anomaly_service
@@ -443,7 +444,7 @@ services:
       - ./datasets:/datasets
       - ./backend/services/anomaly_service/models:/app/models
       - ./backend/services/anomaly_service/models/distribution_artifacts:/models/distribution_artifacts:ro
-  
+
     environment:
       DB_DSN: postgresql://lina:123@postgres-db:5432/lina
       DATABASE_URL: postgresql://lina:123@postgres-db:5432/lina
