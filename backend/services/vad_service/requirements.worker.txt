@@ -4,8 +4,11 @@ requests==2.32.3
 Pillow==10.4.0
 numpy==2.1.3
 pydantic==2.10.3
-transformers==4.44.2
-tokenizers==0.19.1
-ftfy
-regex
-tqdm
+opencv-python-headless==4.10.0.84
+ultralytics==8.3.40
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.7.0+cu128
+torchvision==0.22.0+cu128
+transformers==4.46.3
+scikit-learn==1.5.2
+joblib==1.4.2

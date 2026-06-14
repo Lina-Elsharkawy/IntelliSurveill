@@ -1,9 +1,8 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { RefreshCw, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
 export interface ReasoningFilterState {
   status: string;
@@ -19,14 +18,12 @@ export interface ReasoningFilterState {
 interface ReasoningFiltersProps {
   filters: ReasoningFilterState;
   setFilters: (f: ReasoningFilterState) => void;
-  onRefresh: () => void;
-  isLoading: boolean;
 }
 
-export function ReasoningFilters({ filters, setFilters, onRefresh, isLoading }: ReasoningFiltersProps) {
+export function ReasoningFilters({ filters, setFilters }: ReasoningFiltersProps) {
   return (
-    <div className="flex flex-col gap-4 mb-6 bg-zinc-950/50 p-4 rounded-xl border border-zinc-800/50">
-      <div className="flex flex-wrap items-end gap-4 w-full">
+    <div className="flex flex-col gap-2 mb-2 bg-zinc-950/50 p-2 rounded-lg border border-zinc-800/50">
+      <div className="flex flex-wrap items-end gap-2 w-full">
         
         <div className="flex flex-col gap-1.5">
           <label className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold px-1">Gate</label>
@@ -34,7 +31,7 @@ export function ReasoningFilters({ filters, setFilters, onRefresh, isLoading }: 
             value={filters.gate} 
             onValueChange={(v) => setFilters({ ...filters, gate: v })}
           >
-            <SelectTrigger className="w-[120px] h-9 bg-zinc-900 border-zinc-800">
+            <SelectTrigger className="w-[100px] h-8 bg-zinc-900 border-zinc-800 text-xs">
               <SelectValue placeholder="All Gates" />
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 border-zinc-800">
@@ -51,7 +48,7 @@ export function ReasoningFilters({ filters, setFilters, onRefresh, isLoading }: 
             value={filters.decision} 
             onValueChange={(v) => setFilters({ ...filters, decision: v })}
           >
-            <SelectTrigger className="w-[120px] h-9 bg-zinc-900 border-zinc-800">
+            <SelectTrigger className="w-[100px] h-8 bg-zinc-900 border-zinc-800 text-xs">
               <SelectValue placeholder="All Decisions" />
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 border-zinc-800">
@@ -69,7 +66,7 @@ export function ReasoningFilters({ filters, setFilters, onRefresh, isLoading }: 
             value={filters.status} 
             onValueChange={(v) => setFilters({ ...filters, status: v })}
           >
-            <SelectTrigger className="w-[120px] h-9 bg-zinc-900 border-zinc-800">
+            <SelectTrigger className="w-[100px] h-8 bg-zinc-900 border-zinc-800 text-xs">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 border-zinc-800">
@@ -88,7 +85,7 @@ export function ReasoningFilters({ filters, setFilters, onRefresh, isLoading }: 
             value={filters.severity} 
             onValueChange={(v) => setFilters({ ...filters, severity: v })}
           >
-            <SelectTrigger className="w-[120px] h-9 bg-zinc-900 border-zinc-800">
+            <SelectTrigger className="w-[100px] h-8 bg-zinc-900 border-zinc-800 text-xs">
               <SelectValue placeholder="All Severity" />
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 border-zinc-800">
@@ -108,29 +105,15 @@ export function ReasoningFilters({ filters, setFilters, onRefresh, isLoading }: 
               <Input 
                 type="text"
                 placeholder="Case/Event ID"
-                className="w-[130px] h-9 pl-9 bg-zinc-900 border-zinc-800 font-mono text-sm"
+                className="w-[110px] h-8 pl-9 bg-zinc-900 border-zinc-800 font-mono text-[10px]"
                 value={filters.caseId}
                 onChange={(e) => setFilters({ ...filters, caseId: e.target.value })}
               />
             </div>
-            <Input 
-              type="text"
-              placeholder="Session ID"
-              className="w-[100px] h-9 bg-zinc-900 border-zinc-800 font-mono text-sm"
-              value={filters.sessionId}
-              onChange={(e) => setFilters({ ...filters, sessionId: e.target.value })}
-            />
-            <Input 
-              type="text"
-              placeholder="Track ID"
-              className="w-[100px] h-9 bg-zinc-900 border-zinc-800 font-mono text-sm"
-              value={filters.trackId}
-              onChange={(e) => setFilters({ ...filters, trackId: e.target.value })}
-            />
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 bg-zinc-900 border border-zinc-800 h-9 px-3 rounded-md ml-auto">
+        <div className="flex items-center space-x-2 bg-zinc-900 border border-zinc-800 h-8 px-2 rounded-md ml-auto shrink-0">
           <Switch 
             id="evidence-only" 
             checked={filters.evidenceOnly}
@@ -139,16 +122,7 @@ export function ReasoningFilters({ filters, setFilters, onRefresh, isLoading }: 
           <Label htmlFor="evidence-only" className="text-xs text-slate-300 font-semibold cursor-pointer">Has Evidence</Label>
         </div>
 
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={onRefresh}
-          disabled={isLoading}
-          className="h-9 bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+
       </div>
     </div>
   );

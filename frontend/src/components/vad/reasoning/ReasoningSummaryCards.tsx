@@ -5,22 +5,15 @@ export function ReasoningSummaryCards({ summary }: { summary: VadReasoningSummar
   if (!summary) return null;
   
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-9 gap-2 mb-2">
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 mb-2">
       <SummaryCard title="Total Jobs" value={summary.total} icon={<Network size={14} />} color="slate" />
       <SummaryCard title="Queued" value={summary.queued} icon={<CircleDashed size={14} />} color="slate" />
       <SummaryCard title="Running" value={summary.running} icon={<Activity size={14} />} color="blue" />
       <SummaryCard title="Succeeded" value={summary.succeeded} icon={<CheckCircle2 size={14} />} color="emerald" />
       <SummaryCard title="Failed" value={summary.failed} icon={<XCircle size={14} />} color="red" />
-      
-      <div className="col-span-2 md:col-span-5 lg:col-span-4 grid grid-cols-3 gap-2 bg-zinc-900/50 border border-zinc-800 rounded-lg p-1.5">
-        <div className="col-span-3 flex items-center gap-1.5 mb-1 px-1">
-          <ShieldCheck size={12} className="text-slate-400" />
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Final Guardrail Outcomes</span>
-        </div>
-        <OutcomeStat label="YES" value={summary.final_yes} color="text-red-400" />
-        <OutcomeStat label="NO" value={summary.final_no} color="text-emerald-400" />
-        <OutcomeStat label="UNCERTAIN" value={summary.final_uncertain} color="text-amber-400" />
-      </div>
+      <SummaryCard title="YES" value={summary.final_yes} icon={<ShieldAlert size={14} />} color="red" />
+      <SummaryCard title="NO" value={summary.final_no} icon={<ShieldCheck size={14} />} color="emerald" />
+      <SummaryCard title="UNCERTAIN" value={summary.final_uncertain} icon={<AlertTriangle size={14} />} color="blue" />
     </div>
   );
 }
@@ -53,11 +46,4 @@ function SummaryCard({ title, value, icon, color }: { title: string, value: numb
   );
 }
 
-function OutcomeStat({ label, value, color }: { label: string, value: number, color: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center p-1 rounded bg-black/20 border border-white/5">
-      <span className={`text-base font-bold font-mono leading-none ${color}`}>{value.toLocaleString()}</span>
-      <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-widest mt-0.5">{label}</span>
-    </div>
-  );
-}
+

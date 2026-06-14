@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 import signal
 import time
 from dataclasses import dataclass
@@ -12,6 +11,7 @@ from .config import VadConfig, load_vad_config
 from .db import VadDB
 from .json_utils import sanitize_json
 from .minio_client import VadMinioClient
+from .reasoning_evidence import images_b64_from_map, select_evidence_object_keys
 from .reasoning.reasoning_client import OllamaClient
 from .reasoning.reasoning_policy import (
     POLICY_VERSION,
@@ -77,167 +77,6 @@ def _final_event_type_from_rules(final: dict[str, Any], rules_json: dict[str, An
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CLIP keyframe selector singleton
-# Loaded once at worker startup, reused across all jobs.
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _get_clip_selector():
-    """Return the module-level CLIP keyframe selector singleton."""
-    try:
-        from .keyframe_selector import get_selector
-        return get_selector()
-    except ImportError:
-        log.warning("keyframe_selector module not found — will use even-spacing fallback.")
-        return None
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Frame key helpers
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _frame_index_from_key(key: str) -> int:
-    match = re.search(r"(?:^|/)frames/frame_(\d+)\.(?:jpg|jpeg|png|webp)$", key.lower())
-    if not match:
-        return 10**9
-    return int(match.group(1))
-
-
-def _infer_image_role_from_key(key: str) -> str:
-    lower = key.lower().strip().lstrip("/")
-    name = lower.rsplit("/", 1)[-1]
-    if name == "tubelet_montage.jpg":
-        return "tubelet_montage"
-    if name == "annotated_frame.jpg":
-        return "annotated_frame"
-    if re.search(r"(?:^|/)frames/frame_\d+\.(?:jpg|jpeg|png|webp)$", lower):
-        return "tubelet_frame"
-    return "image"
-
-
-def _even_sample(keys: list[str], limit: int) -> list[str]:
-    if limit <= 0:
-        return []
-    if len(keys) <= limit:
-        return list(keys)
-    last = len(keys) - 1
-    indexes = sorted({round(i * last / (limit - 1)) for i in range(limit)})
-    return [keys[i] for i in indexes[:limit]]
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Evidence key collection + CLIP keyframe selection
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _collect_frame_keys(bundle: dict[str, Any]) -> list[str]:
-    """Collect all tubelet_frame keys from the reasoning bundle in chronological order."""
-    visual = bundle.get("visual_evidence") or {}
-    seen: set[str] = set()
-    frames: list[str] = []
-
-    def _add(key: Any, role: str | None = None) -> None:
-        if not isinstance(key, str):
-            return
-        clean = key.strip().lstrip("/")
-        if not clean or clean in seen:
-            return
-        if not clean.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
-            return
-        inferred = role or _infer_image_role_from_key(clean)
-        if inferred == "tubelet_frame":
-            seen.add(clean)
-            frames.append(clean)
-
-    for key in visual.get("object_keys") or []:
-        _add(key)
-    for obj in (visual.get("objects") or []) + (visual.get("evidence_objects") or []):
-        if isinstance(obj, dict):
-            _add(
-                obj.get("object_key"),
-                role=(obj.get("role") or obj.get("media_role") or "").strip() or None,
-            )
-
-    frames.sort(key=_frame_index_from_key)
-    return frames
-
-
-def _select_evidence_object_keys(
-    bundle: dict[str, Any],
-    cfg: VadConfig,
-    minio: VadMinioClient,
-) -> tuple[list[str], dict[str, bytes]]:
-    """
-    Download all tubelet frames then apply CLIP keyframe selection.
-
-    Returns
-    -------
-    selected_keys : list[str]
-        Up to VAD_REASONING_MAX_IMAGES frame keys in chronological order.
-    image_bytes_map : dict[str, bytes]
-        Raw JPEG bytes for every selected key (needed by _load_images_b64).
-    """
-    max_images = max(1, int(cfg.reasoning_max_images or 8))
-    frame_keys = _collect_frame_keys(bundle)
-
-    if not frame_keys:
-        # No tubelet frames — fall back to montage/annotated.
-        visual = bundle.get("visual_evidence") or {}
-        fallback: list[str] = []
-        for key in visual.get("object_keys") or []:
-            if isinstance(key, str) and key.strip().lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
-                fallback.append(key.strip().lstrip("/"))
-        fallback = fallback[:max_images]
-        bytes_map = {}
-        for k in fallback:
-            try:
-                bytes_map[k] = minio.download_bytes(k)
-            except Exception as e:
-                log.warning("Could not download fallback frame %s: %s", k, e)
-        return fallback, bytes_map
-
-    # Download all frames first (needed for CLIP).
-    all_bytes: dict[str, bytes] = {}
-    for key in frame_keys:
-        try:
-            all_bytes[key] = minio.download_bytes(key)
-        except Exception as e:
-            log.warning("Could not download frame %s: %s", key, e)
-
-    # Apply CLIP keyframe selection.
-    selector = _get_clip_selector()
-    if selector is not None and len(frame_keys) > max_images:
-        selected = selector.select(
-            frame_keys=frame_keys,
-            image_bytes_map=all_bytes,
-            budget=max_images,
-        )
-    else:
-        selected = _even_sample(frame_keys, max_images)
-
-    # Keep only bytes for selected keys.
-    selected_bytes = {k: all_bytes[k] for k in selected if k in all_bytes}
-
-    log.info(
-        "Frame selection: total_frames=%d selected=%d max_images=%d",
-        len(frame_keys), len(selected), max_images,
-    )
-    return selected, selected_bytes
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Load images as base64 from already-downloaded bytes
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _images_b64_from_map(object_keys: list[str], image_bytes_map: dict[str, bytes]) -> list[str]:
-    import base64
-    result = []
-    for key in object_keys:
-        data = image_bytes_map.get(key)
-        if data:
-            result.append(base64.b64encode(data).decode("ascii"))
-    return result
-
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Rule loading: Anomaly_Rules table only
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -267,26 +106,44 @@ def _safe_float(value: Any) -> float | None:
         return None
 
 
-def _build_context(bundle: dict[str, Any], image_object_keys: list[str]) -> DeepReasoningContext:
-    event = bundle.get("event") or {}
-    deep_gate = bundle.get("deep_gate") or {}
-    threshold = _safe_float(event.get("threshold_value"))
+def _safe_int(event: dict[str, Any], field: str) -> int | None:
+    """Return event[field] as int, or None if absent/null."""
+    v = event.get(field)
+    return int(v) if v is not None else None
+
+
+def _compute_score_ratio(
+    event: dict[str, Any],
+) -> tuple[float | None, float | None, float | None]:
+    """Extract score, threshold, and ratio from a bundle event dict.
+
+    Computes ratio from score/threshold when the bundle omits it.
+    Returns (score, threshold, ratio) — all may be None.
+    """
     score = _safe_float(event.get("peak_score"))
+    threshold = _safe_float(event.get("threshold_value"))
     ratio = _safe_float(event.get("ratio"))
     if ratio is None and score is not None and threshold and threshold > 0:
         ratio = score / threshold
+    return score, threshold, ratio
+
+
+def _build_context(bundle: dict[str, Any], image_object_keys: list[str]) -> DeepReasoningContext:
+    event = bundle.get("event") or {}
+    deep_gate = bundle.get("deep_gate") or {}
+    score, threshold, ratio = _compute_score_ratio(event)
     return DeepReasoningContext(
-        event_id=int(event["gate_event_id"]) if event.get("gate_event_id") is not None else None,
-        case_id=int(event["case_id"]) if event.get("case_id") is not None else None,
+        event_id=_safe_int(event, "gate_event_id"),
+        case_id=_safe_int(event, "case_id"),
         gate_name="deep",
         deep_score=score,
         threshold_value=threshold,
         score_ratio=ratio,
-        camera_id=int(event["camera_id"]) if event.get("camera_id") is not None else None,
+        camera_id=_safe_int(event, "camera_id"),
         stream_key=event.get("stream_key"),
         camera_key=event.get("camera_key"),
-        tracker_track_id=int(event["tracker_track_id"]) if event.get("tracker_track_id") is not None else None,
-        tubelet_id=int(event["tubelet_id"]) if event.get("tubelet_id") is not None else None,
+        tracker_track_id=_safe_int(event, "tracker_track_id"),
+        tubelet_id=_safe_int(event, "tubelet_id"),
         evidence_object_keys=image_object_keys,
         event_metadata=event,
         deep_gate_metadata=deep_gate,
@@ -297,23 +154,19 @@ def _build_context(bundle: dict[str, Any], image_object_keys: list[str]) -> Deep
 def _build_pose_context(bundle: dict[str, Any], image_object_keys: list[str]) -> PoseReasoningContext:
     event = bundle.get("event") or {}
     pose_gate = bundle.get("pose_gate") or {}
-    threshold = _safe_float(event.get("threshold_value"))
-    score = _safe_float(event.get("peak_score"))
-    ratio = _safe_float(event.get("ratio"))
-    if ratio is None and score is not None and threshold and threshold > 0:
-        ratio = score / threshold
+    score, threshold, ratio = _compute_score_ratio(event)
     return PoseReasoningContext(
-        event_id=int(event["gate_event_id"]) if event.get("gate_event_id") is not None else None,
-        case_id=int(event["case_id"]) if event.get("case_id") is not None else None,
+        event_id=_safe_int(event, "gate_event_id"),
+        case_id=_safe_int(event, "case_id"),
         gate_name="pose",
         pose_score=score,
         threshold_value=threshold,
         score_ratio=ratio,
-        camera_id=int(event["camera_id"]) if event.get("camera_id") is not None else None,
+        camera_id=_safe_int(event, "camera_id"),
         stream_key=event.get("stream_key"),
         camera_key=event.get("camera_key"),
-        tracker_track_id=int(event["tracker_track_id"]) if event.get("tracker_track_id") is not None else None,
-        tubelet_id=int(event["tubelet_id"]) if event.get("tubelet_id") is not None else None,
+        tracker_track_id=_safe_int(event, "tracker_track_id"),
+        tubelet_id=_safe_int(event, "tubelet_id"),
         evidence_object_keys=image_object_keys,
         event_metadata=event,
         pose_gate_metadata=pose_gate,
@@ -326,7 +179,11 @@ def _build_pose_context(bundle: dict[str, Any], image_object_keys: list[str]) ->
 # ─────────────────────────────────────────────────────────────────────────────
 
 _MAX_JOB_AGE_SEC = 3 * 3600  # skip jobs older than 3 hours
-_VLM_NO_SKIP_LLM_CONFIDENCE = 0.95  # effectively disabled (> 1.0 would fully disable)
+# Set to 2.0 so the LLM always runs (no model can return confidence >= 2.0).
+# AnomalyRuler closed-world policy: the LLM is the semantic decision layer and
+# must run for every job.  Raise to e.g. 0.97 only if you intentionally want to
+# skip the LLM on near-certain high-confidence VLM NO outputs.
+_VLM_NO_SKIP_LLM_CONFIDENCE = 2.0  # always run LLM
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -344,11 +201,8 @@ class GateReasoningWorker:
         )
         self._stop = False
 
-        # Load CLIP selector once at startup.
-        self._clip_selector = _get_clip_selector()
-        if self._clip_selector is not None:
-            # Trigger lazy load now so the first job doesn't pay the load cost.
-            self._clip_selector._load()
+        # Gate-aware selector models are loaded lazily on first use.
+        # This keeps the worker alive even if optional VideoMAE/YOLO artifacts are missing.
 
     def stop(self, *_: Any) -> None:
         self._stop = True
@@ -483,14 +337,14 @@ class GateReasoningWorker:
         if scope not in {"deep_gate_only", "pose_gate_only"}:
             raise RuntimeError(f"Unsupported reasoning scope: {scope}")
 
-        # ── Step 1: Download + CLIP keyframe selection ────────────────────────
-        object_keys, image_bytes_map = _select_evidence_object_keys(
+        # ── Step 1: Download + gate-aware frame selection ─────────────────────
+        object_keys, image_bytes_map, frame_selection_audit = select_evidence_object_keys(
             bundle, self.cfg, self.minio
         )
         if not object_keys:
             raise RuntimeError("No usable visual evidence keys found in bundle.")
 
-        images_b64 = _images_b64_from_map(object_keys, image_bytes_map)
+        images_b64 = images_b64_from_map(object_keys, image_bytes_map)
         if not images_b64:
             raise RuntimeError("All frame downloads failed — no images to send to VLM.")
 
@@ -610,6 +464,7 @@ class GateReasoningWorker:
             vlm_parse_info=vlm_parse_info,
             llm_parse_info=llm_parse_info,
         )
+        structured["frame_selection"] = sanitize_json(frame_selection_audit)
         return ReasoningCallResult(
             raw_vlm_output=raw_vlm,
             raw_llm_output=raw_llm,

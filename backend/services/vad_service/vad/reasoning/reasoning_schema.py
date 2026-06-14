@@ -147,10 +147,19 @@ class PoseReasoningContext(BaseModel):
         return "strong"
 
 class VlmVisualReview(BaseModel):
+    """Neutral VLM observation object.
+
+    The VLM is a visual witness only.  It must not decide YES/NO, severity, or
+    event_type.  The legacy decision-shaped fields are kept only so the existing
+    worker/frontend does not break while we migrate labels to "VLM Observation".
+    They are forcibly neutralized by the parser.
+    """
     schema_version: str = "1.0"
     review_type: Literal["vlm_visual_review"] = "vlm_visual_review"
+
+    # Legacy compatibility only. These are NOT alert decisions.
     visual_alert_decision: Literal["YES", "NO", "UNCERTAIN"] = "UNCERTAIN"
-    visual_severity: Literal["NONE", "LOW", "MEDIUM", "HIGH", "CRITICAL"] = "LOW"
+    visual_severity: Literal["NONE", "LOW", "MEDIUM", "HIGH", "CRITICAL"] = "NONE"
     event_type: Literal[
         "normal_activity",
         "benign_object_movement",
@@ -170,29 +179,58 @@ class VlmVisualReview(BaseModel):
         "person_on_floor",
         "possible_intrusion_or_security_event",
     ] = "unclear_visual_evidence"
+
+    # Observation reliability only, not anomaly confidence.
+    observation_status: Literal["OBSERVED", "NOT_OBSERVED", "UNCLEAR"] = "UNCLEAR"
+    observation_confidence: float = Field(default=0.3, ge=0.0, le=1.0)
+    observation_completeness: Literal["COMPLETE", "PARTIAL", "INSUFFICIENT"] = "PARTIAL"
+
+    # Backward-compatible aliases used by existing worker/frontend.
     visual_confidence: float = Field(default=0.3, ge=0.0, le=1.0)
     image_quality: Literal["GOOD", "FAIR", "POOR", "UNUSABLE"] = "FAIR"
     evidence_sufficiency: Literal["SUFFICIENT", "PARTIAL", "INSUFFICIENT"] = "PARTIAL"
+
+    # Neutral visual description.
     visible_scene: str
     person_observation: str
     motion_observation: str
+    object_interactions: str = "No specific object interaction is clearly described."
+    spatial_relationships: str = "Spatial relationships are not clearly described."
+    occlusions_or_uncertainties: str = "No additional visual uncertainty is described."
+    observation_summary: str = "The VLM provided a neutral visual observation."
+    observation_answers: dict[str, str] = Field(default_factory=dict)
+
+    # Legacy compatibility: internally this means rule-relevant visible facts,
+    # not model-decided anomaly evidence.
     anomaly_evidence: list[str] = Field(default_factory=list)
+    rule_relevant_visual_facts: list[str] = Field(default_factory=list)
     normality_evidence: list[str] = Field(default_factory=list)
     false_positive_risks: list[str] = Field(default_factory=list)
     visual_decision_reason: str
 
-    @field_validator("visible_scene", "person_observation", "motion_observation", "visual_decision_reason", mode="before")
+    @field_validator(
+        "visible_scene", "person_observation", "motion_observation",
+        "object_interactions", "spatial_relationships", "occlusions_or_uncertainties",
+        "observation_summary", "visual_decision_reason", mode="before"
+    )
     @classmethod
     def non_empty_text(cls, value: Any) -> str:
         value = _textify_vlm_field(value)
         if not value:
-            raise ValueError("field must not be empty")
+            return "Not clearly described."
         return value
 
-    @field_validator("anomaly_evidence", "normality_evidence", "false_positive_risks", mode="before")
+    @field_validator("anomaly_evidence", "rule_relevant_visual_facts", "normality_evidence", "false_positive_risks", mode="before")
     @classmethod
     def listify(cls, value: Any) -> list[str]:
         return _listify_vlm_field(value)
+
+    @field_validator("observation_answers", mode="before")
+    @classmethod
+    def dictify_answers(cls, value: Any) -> dict[str, str]:
+        if isinstance(value, dict):
+            return {str(k): _textify_vlm_field(v) for k, v in value.items() if _textify_vlm_field(v)}
+        return {}
 
 
 class RuleApplication(BaseModel):
@@ -308,18 +346,27 @@ def _confidence(value: Any, default: float = 0.3) -> float:
 
 
 def fallback_vlm_uncertain(reason: str) -> VlmVisualReview:
-    reason = str(reason or "VLM visual review unavailable").strip()
+    reason = str(reason or "VLM visual observation unavailable").strip()
     return VlmVisualReview(
         visual_alert_decision="UNCERTAIN",
         visual_severity="NONE",
         event_type="unclear_visual_evidence",
+        observation_status="UNCLEAR",
+        observation_confidence=0.25,
+        observation_completeness="INSUFFICIENT",
         visual_confidence=0.25,
         image_quality="FAIR",
         evidence_sufficiency="INSUFFICIENT",
         visible_scene="The visual scene could not be reliably structured by the VLM.",
         person_observation="The person observation is unavailable or incomplete.",
         motion_observation="The motion observation is unavailable or incomplete.",
+        object_interactions="Object interactions are unavailable or incomplete.",
+        spatial_relationships="Spatial relationships are unavailable or incomplete.",
+        occlusions_or_uncertainties=reason,
+        observation_summary=reason,
+        observation_answers={},
         anomaly_evidence=[],
+        rule_relevant_visual_facts=[],
         normality_evidence=[],
         false_positive_risks=[reason],
         visual_decision_reason=reason,
@@ -453,88 +500,113 @@ def _filter_vlm_score_only_evidence(raw: dict[str, Any]) -> None:
 
 
 def _normalize_vlm_json(raw: dict[str, Any]) -> dict[str, Any]:
-    """Make local VLM outputs robust without changing the P2C contract.
+    """Normalize VLM output as witness-only visual observation.
 
-    Local multimodal models often return semantically correct JSON with slightly different
-    key names, or omit the explanatory `visual_decision_reason` while still providing scene,
-    person, and motion fields.  The previous parser threw away the whole perception payload
-    in those cases, causing the dashboard to show the generic UNCERTAIN fallback for many
-    events.  This normalizer preserves usable perception text and synthesizes only the missing
-    explanation field when needed.
+    The VLM is never allowed to provide a usable alert decision, severity, or
+    policy event_type.  Any such fields are ignored/neutralized.  The parser
+    preserves useful perception text and maps new neutral fields to the old
+    names required by current worker/frontend code.
     """
     if not isinstance(raw, dict):
         return {}
 
-    # Witness-only VLM aliases. The VLM is asked for neutral visual facts only.
-    # It must not provide policy decisions (YES/NO alerts), severity, or event_type.
-    # Internally we keep old field names only for DB/dashboard compatibility.
-    if "anomaly_evidence" not in raw and "rule_relevant_visual_facts" in raw:
-        raw["anomaly_evidence"] = raw.get("rule_relevant_visual_facts")
-    if "anomaly_evidence" not in raw and "visual_facts_relevant_to_rules" in raw:
-        raw["anomaly_evidence"] = raw.get("visual_facts_relevant_to_rules")
-
-    # Preserve old/third-party status wording as metadata, but never treat it as an alert decision.
-    raw["observation_status"] = _upper_allowed(
-        raw.get("observation_status", raw.get("visual_review_flag", raw.get("visual_alert_decision"))),
-        {"OBSERVED", "NOT_OBSERVED", "UNCLEAR"},
-        "UNCLEAR",
-    )
-    raw["visual_alert_decision"] = "UNCERTAIN"
-    raw["visual_severity"] = "NONE"
-
-    # The VLM is not allowed to set policy event types such as physical_altercation.
-    # The LLM/Python rule layers derive final event type from matched Anomaly_Rules.
-    raw["event_type"] = "unclear_visual_evidence"
-
-    # Common naming variants produced by MiniCPM/LLaVA/Qwen-VL-like local models.
+    # New neutral aliases → current internal names.
+    raw.setdefault("person_observation", _first_non_empty(
+        raw.get("person_observation"), raw.get("people"), raw.get("people_observation"),
+        raw.get("subject_observation"), raw.get("local_perception"), raw.get("person_description"),
+        raw.get("subjects"), raw.get("human_observation"),
+    ))
     raw.setdefault("visible_scene", _first_non_empty(
         raw.get("visible_scene"), raw.get("scene"), raw.get("scene_description"),
         raw.get("global_perception"), raw.get("environment"), raw.get("visible_environment"),
-    ))
-    raw.setdefault("person_observation", _first_non_empty(
-        raw.get("person_observation"), raw.get("people_observation"), raw.get("subject_observation"),
-        raw.get("local_perception"), raw.get("person_description"), raw.get("people"),
-        raw.get("subjects"), raw.get("human_observation"),
     ))
     raw.setdefault("motion_observation", _first_non_empty(
         raw.get("motion_observation"), raw.get("motion_description"), raw.get("action_observation"),
         raw.get("kinetic_description"), raw.get("temporal_description"), raw.get("movement"),
         raw.get("actions"), raw.get("activity"),
     ))
-    raw.setdefault("visual_decision_reason", _first_non_empty(
-        raw.get("visual_decision_reason"), raw.get("observation_summary"), raw.get("summary"),
-        raw.get("decision_reason"), raw.get("reason"), raw.get("rationale"),
-        raw.get("explanation"), raw.get("visual_reason"), raw.get("why"), raw.get("assessment"),
+    raw.setdefault("object_interactions", _first_non_empty(
+        raw.get("object_interactions"), raw.get("object_interaction"), raw.get("objects"),
+        raw.get("equipment_interaction"), "No specific object interaction is clearly described.",
     ))
+    raw.setdefault("spatial_relationships", _first_non_empty(
+        raw.get("spatial_relationships"), raw.get("spatial_relationship"), raw.get("proximity"),
+        raw.get("locations"), "Spatial relationships are not clearly described.",
+    ))
+    raw.setdefault("occlusions_or_uncertainties", _first_non_empty(
+        raw.get("occlusions_or_uncertainties"), raw.get("uncertainties"), raw.get("occlusions"),
+        raw.get("limitations"), raw.get("false_positive_risks"), "No additional visual uncertainty is described.",
+    ))
+    raw.setdefault("observation_summary", _first_non_empty(
+        raw.get("observation_summary"), raw.get("summary"), raw.get("visual_decision_reason"),
+        raw.get("reason"), raw.get("rationale"), raw.get("explanation"), raw.get("assessment"),
+    ))
+    raw.setdefault("visual_decision_reason", raw.get("observation_summary"))
 
-    # MiniCPM often returns these as nested dict/list objects even when prompted
-    # for strings. Preserve the visual information by normalizing to text before
-    # Pydantic validation, rather than falling back to an unusable UNCERTAIN parse.
-    for _field in ("visible_scene", "person_observation", "motion_observation", "visual_decision_reason"):
-        if _field in raw:
-            raw[_field] = _textify_vlm_field(raw.get(_field))
-    for _field in ("anomaly_evidence", "rule_relevant_visual_facts", "visual_facts_relevant_to_rules", "normality_evidence", "false_positive_risks"):
+    # Rule-relevant facts are still stored in anomaly_evidence for compatibility.
+    if "rule_relevant_visual_facts" not in raw and "visual_facts_relevant_to_rules" in raw:
+        raw["rule_relevant_visual_facts"] = raw.get("visual_facts_relevant_to_rules")
+    if "rule_relevant_visual_facts" not in raw and "anomaly_evidence" in raw:
+        raw["rule_relevant_visual_facts"] = raw.get("anomaly_evidence")
+    if "anomaly_evidence" not in raw and "rule_relevant_visual_facts" in raw:
+        raw["anomaly_evidence"] = raw.get("rule_relevant_visual_facts")
+
+    # Normalize text/list/dict fields.
+    for _field in (
+        "visible_scene", "person_observation", "motion_observation", "object_interactions",
+        "spatial_relationships", "occlusions_or_uncertainties", "observation_summary",
+        "visual_decision_reason",
+    ):
+        raw[_field] = _textify_vlm_field(raw.get(_field))
+    for _field in (
+        "anomaly_evidence", "rule_relevant_visual_facts", "visual_facts_relevant_to_rules",
+        "normality_evidence", "false_positive_risks",
+    ):
         if _field in raw:
             raw[_field] = _listify_vlm_field(raw.get(_field))
 
-    # Enforce the P2C boundary before validation: VLM evidence must be visual,
-    # not based on gate scores/thresholds/ratios.
+    # Observation status/completeness/confidence are reliability metadata only.
+    raw["observation_status"] = _upper_allowed(
+        raw.get("observation_status", raw.get("visual_review_flag", raw.get("visual_alert_decision"))),
+        {"OBSERVED", "NOT_OBSERVED", "UNCLEAR"},
+        "UNCLEAR",
+    )
+    raw["observation_completeness"] = _upper_allowed(
+        raw.get("observation_completeness", raw.get("evidence_sufficiency")),
+        {"COMPLETE", "PARTIAL", "INSUFFICIENT"},
+        "PARTIAL",
+    )
+    # Current frontend still reads evidence_sufficiency.
+    raw["evidence_sufficiency"] = {
+        "COMPLETE": "SUFFICIENT",
+        "PARTIAL": "PARTIAL",
+        "INSUFFICIENT": "INSUFFICIENT",
+    }.get(raw["observation_completeness"], "PARTIAL")
+
+    raw["observation_confidence"] = _confidence(
+        raw.get("observation_confidence", raw.get("visual_confidence", raw.get("confidence"))),
+        0.3,
+    )
+    # Current frontend still reads visual_confidence.
+    raw["visual_confidence"] = raw["observation_confidence"]
+    raw["image_quality"] = _upper_allowed(raw.get("image_quality"), IMAGE_QUALITIES, "FAIR")
+
+    # Enforce the perception/cognition boundary: remove score-only pseudo-evidence.
     _filter_vlm_score_only_evidence(raw)
-    # Hard P2C boundary: VLM never emits a usable alert decision.
-    # Concrete visual facts remain available in anomaly_evidence for rule matching.
+    raw["rule_relevant_visual_facts"] = _listify_vlm_field(raw.get("anomaly_evidence"))
+
+    # Hard neutralization: VLM cannot create policy decisions.
     raw["visual_alert_decision"] = "UNCERTAIN"
     raw["visual_severity"] = "NONE"
     raw["event_type"] = "unclear_visual_evidence"
 
-    # If the VLM gave the three perception fields but forgot the reason, keep the useful
-    # perception and synthesize a neutral reason instead of discarding everything.
-    if not str(raw.get("visual_decision_reason", "")).strip():
-        if raw.get("anomaly_evidence") or raw.get("normality_evidence"):
-            raw["visual_decision_reason"] = "The VLM provided neutral visual facts; final rule cognition remains with the LLM and Python guardrails."
-        elif str(raw.get("motion_observation", "")).strip() or str(raw.get("person_observation", "")).strip():
-            raw["visual_decision_reason"] = "The VLM provided perception details but omitted an observation summary; the parser preserved the perception text and marked the summary as synthesized."
+    if not raw.get("visual_decision_reason"):
+        raw["visual_decision_reason"] = raw.get("observation_summary") or "The VLM provided neutral visual observations; final rule cognition remains with the LLM."
+    if not raw.get("observation_summary"):
+        raw["observation_summary"] = raw["visual_decision_reason"]
 
     return raw
+
 
 def parse_vlm_visual_review(raw_text: str) -> tuple[VlmVisualReview, dict[str, Any]]:
     raw = extract_json_object(raw_text)
@@ -548,16 +620,16 @@ def parse_vlm_visual_review(raw_text: str) -> tuple[VlmVisualReview, dict[str, A
     # The VLM is only a witness; LLM/Python are the only decision layers.
     raw["visual_alert_decision"] = "UNCERTAIN"
     raw["visual_severity"] = "NONE"
-    if "visual_confidence" not in raw and "confidence" in raw:
-        raw["visual_confidence"] = _confidence(raw.get("confidence"), 0.3)
     raw["review_type"] = "vlm_visual_review"
     raw["schema_version"] = str(raw.get("schema_version") or "1.0")
     raw["visual_alert_decision"] = "UNCERTAIN"
     raw["visual_severity"] = "NONE"
     raw["event_type"] = "unclear_visual_evidence"
     raw["image_quality"] = _upper_allowed(raw.get("image_quality"), IMAGE_QUALITIES, "FAIR")
-    raw["evidence_sufficiency"] = _upper_allowed(raw.get("evidence_sufficiency"), EVIDENCE_SUFFICIENCIES, "PARTIAL")
-    raw["visual_confidence"] = _confidence(raw.get("visual_confidence"), 0.3)
+    raw["observation_completeness"] = _upper_allowed(raw.get("observation_completeness"), {"COMPLETE", "PARTIAL", "INSUFFICIENT"}, "PARTIAL")
+    raw["evidence_sufficiency"] = {"COMPLETE": "SUFFICIENT", "PARTIAL": "PARTIAL", "INSUFFICIENT": "INSUFFICIENT"}.get(raw["observation_completeness"], "PARTIAL")
+    raw["observation_confidence"] = _confidence(raw.get("observation_confidence", raw.get("visual_confidence")), 0.3)
+    raw["visual_confidence"] = raw["observation_confidence"]
 
     # Preserve partially useful VLM perception when possible.  Only fall back to the generic
     # UNCERTAIN object when core perception fields are absent; a missing reason is synthesized

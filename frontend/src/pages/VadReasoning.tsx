@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { vadApi, VadReasoningListItem, VadReasoningSummary } from "@/services/vad_api";
 import { useToast } from "@/components/ui/use-toast";
-import { Network, ShieldAlert } from "lucide-react";
+import { Network, ShieldAlert, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import { ReasoningSummaryCards } from "@/components/vad/reasoning/ReasoningSummaryCards";
 import { ReasoningFilters, ReasoningFilterState } from "@/components/vad/reasoning/ReasoningFilters";
@@ -12,7 +13,7 @@ import { ReasoningDetailPanel } from "@/components/vad/reasoning/ReasoningDetail
 export default function VadReasoning() {
   const { toast } = useToast();
   
-  const [items, setItems] = useState<VadReasoningListItem[]>([]);
+  const [rawItems, setRawItems] = useState<VadReasoningListItem[]>([]);
   const [summary, setSummary] = useState<VadReasoningSummary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -40,53 +41,8 @@ export default function VadReasoning() {
         limit: 100
       });
       
-      let fetchedItems = res.items || [];
-      
-      if (filters.gate && filters.gate !== 'all') {
-        fetchedItems = fetchedItems.filter(i => {
-          const gateName = i.job?.metadata_json?.source_gate_name ?? i.case?.primary_gate_name ?? "deep";
-          return gateName === filters.gate;
-        });
-      }
-      
-      if (filters.severity && filters.severity !== 'all') {
-        fetchedItems = fetchedItems.filter(i => {
-          const sev = i.result?.python_final_result_json?.final_severity || i.result?.alert_severity || 'LOW';
-          return sev.toUpperCase() === filters.severity.toUpperCase();
-        });
-      }
-
-      if (filters.sessionId) {
-        fetchedItems = fetchedItems.filter(i => {
-          const sid = String(i.case?.session_id || "");
-          return sid.includes(filters.sessionId);
-        });
-      }
-
-      if (filters.trackId) {
-        fetchedItems = fetchedItems.filter(i => {
-          const tid = String(i.case?.track_id || "");
-          return tid.includes(filters.trackId);
-        });
-      }
-
-      if (filters.evidenceOnly) {
-        fetchedItems = fetchedItems.filter(i => {
-          const evidenceKeys = i.job?.input_bundle_json?.visual_evidence?.object_keys || 
-                               i.case?.evidence_bundle_json?.object_keys || 
-                               (Array.isArray(i.case?.evidence_bundle_json) ? i.case?.evidence_bundle_json.map((e: any) => e.object_key) : []);
-          return evidenceKeys && evidenceKeys.length > 0;
-        });
-      }
-      
-      setItems(fetchedItems);
+      setRawItems(res.items || []);
       setSummary(res.summary);
-      
-      // Select latest succeeded job if available, otherwise latest job
-      if (!selectedJobId && fetchedItems.length > 0) {
-        const succeeded = fetchedItems.find(i => i.job.status === 'succeeded' || i.job.status === 'completed');
-        setSelectedJobId(succeeded ? succeeded.job.id : fetchedItems[0].job.id);
-      }
     } catch (err: any) {
       setApiError(err.message || "Failed to load reasoning jobs.");
       console.error("Reasoning fetch error:", err);
@@ -96,15 +52,20 @@ export default function VadReasoning() {
     } finally {
       if (!silent) setIsLoading(false);
     }
-  }, [filters, selectedJobId, toast]);
+  }, [filters.status, filters.decision, filters.caseId, toast]);
 
   useEffect(() => {
     fetchData();
-  }, [filters.status, filters.decision, filters.gate]); // intentionally not including caseId to allow typing without fetching per keystroke
+  }, [filters.status, filters.decision]); // keep caseId manual-refresh friendly; local filters still update immediately
+
+  const filteredItems = useMemo(
+    () => applyClientFilters(rawItems, filters),
+    [rawItems, filters],
+  );
 
   // Auto-refresh every 30 seconds if there are active jobs
   useEffect(() => {
-    const hasActiveJobs = items.some(i => i.job.status === 'queued' || i.job.status === 'running');
+    const hasActiveJobs = filteredItems.some(i => i.job.status === 'queued' || i.job.status === 'running');
     if (!hasActiveJobs) return;
 
     const timer = setInterval(() => {
@@ -112,60 +73,77 @@ export default function VadReasoning() {
     }, 30000);
 
     return () => clearInterval(timer);
-  }, [items, fetchData]);
+  }, [filteredItems, fetchData]);
 
   const handleRefresh = () => {
     fetchData();
   };
 
-  const selectedItem = items.find(i => i.job.id === selectedJobId) || null;
+  useEffect(() => {
+    if (filteredItems.length === 0) {
+      setSelectedJobId(null);
+      return;
+    }
+    if (selectedJobId && filteredItems.some(i => i.job.id === selectedJobId)) return;
+    const succeeded = filteredItems.find(i => i.job.status === 'succeeded' || i.job.status === 'completed');
+    setSelectedJobId(succeeded ? succeeded.job.id : filteredItems[0].job.id);
+  }, [filteredItems, selectedJobId]);
+
+  const selectedItem = filteredItems.find(i => i.job.id === selectedJobId) || null;
 
   return (
     <DashboardLayout>
-      <div className="h-[calc(100vh-120px)] overflow-hidden flex flex-col w-full max-w-[1800px] mx-auto animate-in fade-in duration-500">
+      <div className="anomaly-rules-page page-bg-grid h-[calc(100vh-120px)] overflow-hidden flex flex-col w-full max-w-[1800px] mx-auto animate-in fade-in duration-500 !p-4 !border-none !rounded-none">
+        <div className="co tl"></div><div className="co tr"></div>
+        <div className="co bl"></div><div className="co br"></div>
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-border pb-2 mb-2 shrink-0">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-zinc-800/50 pb-2 mb-2 z-10 shrink-0 relative">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-gradient-to-br from-indigo-500/20 to-indigo-500/5 rounded-lg border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.15)]">
               <Network className="h-5 w-5 text-indigo-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-white font-['Space_Grotesk'] flex items-center gap-2">
-                VAD Reasoning
+              <h1 className="welcome-heading !text-3xl !mb-0 flex items-center gap-2">
+                VAD <span>Reasoning</span>
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5">Multi-gate visual reasoning, LLM policy review, and Python final guardrails.</p>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
-            <Badge label="Indoor Lab" />
-            <Badge label="P2C Pipeline" />
-            <Badge label="Live Monitoring" icon={<span className="relative flex h-2 w-2 mr-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span>} />
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="h-8 bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20 shrink-0"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
           </div>
         </div>
 
-        <div className="shrink-0">
+        <div className="shrink-0 relative z-10">
           {summary && <ReasoningSummaryCards summary={summary} />}
         </div>
         
-        <div className="shrink-0 mb-3">
-          <ReasoningFilters 
-            filters={filters} 
-            setFilters={setFilters} 
-            onRefresh={handleRefresh} 
-            isLoading={isLoading} 
-          />
-        </div>
 
-        <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-12 gap-6 overflow-hidden">
+
+        <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-12 gap-6 overflow-hidden relative z-10">
           
           {/* Left Pane: Job List */}
           <div className="xl:col-span-6 h-full min-h-0 flex flex-col">
             <div className="bg-zinc-950/50 rounded-xl border border-zinc-800 p-4 h-full flex flex-col shadow-xl overflow-hidden">
-              <div className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-3">
+              <div className="flex items-center justify-between mb-2 border-b border-zinc-800 pb-2">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">Reasoning Jobs</h2>
-                <span className="text-xs text-slate-500 font-mono">{items.length} items</span>
+                <span className="text-xs text-slate-500 font-mono">{filteredItems.length} items</span>
+              </div>
+              <div className="shrink-0 mb-2">
+                <ReasoningFilters 
+                  filters={filters} 
+                  setFilters={setFilters} 
+                />
               </div>
               
               {apiError ? (
@@ -176,7 +154,7 @@ export default function VadReasoning() {
                 </div>
               ) : (
                 <ReasoningJobTable 
-                  items={items} 
+                  items={filteredItems} 
                   selectedId={selectedJobId} 
                   onSelect={(item) => setSelectedJobId(item.job.id)} 
                 />
@@ -197,11 +175,63 @@ export default function VadReasoning() {
   );
 }
 
-function Badge({ label, icon }: { label: string, icon?: React.ReactNode }) {
-  return (
-    <div className="px-2.5 py-1 bg-zinc-900 border border-zinc-800 rounded-full text-[10px] uppercase tracking-widest text-slate-400 font-semibold flex items-center">
-      {icon}
-      {label}
-    </div>
-  );
+// Applies client-side filters to a list of reasoning items after the API fetch.
+// Gate, severity, sessionId, trackId, and evidenceOnly are not sent to the API;
+// they are applied locally so the API call stays simple and stable.
+function applyClientFilters(
+  items: VadReasoningListItem[],
+  filters: ReasoningFilterState,
+): VadReasoningListItem[] {
+  let result = items;
+
+  if (filters.gate && filters.gate !== 'all') {
+    result = result.filter(i => {
+      const gateName = i.job?.metadata_json?.source_gate_name ?? i.case?.primary_gate_name ?? "deep";
+      return gateName === filters.gate;
+    });
+  }
+
+  if (filters.severity && filters.severity !== 'all') {
+    result = result.filter(i => {
+      const sev = i.result?.python_final_result_json?.final_severity || i.result?.severity || 'LOW';
+      return sev.toUpperCase() === filters.severity.toUpperCase();
+    });
+  }
+
+  if (filters.caseId) {
+    result = result.filter(i => {
+      const ids = [i.case?.id, i.case?.event_id, i.job?.case_id, i.job?.id]
+        .filter(v => v !== undefined && v !== null)
+        .map(String);
+      return ids.some(id => id.includes(filters.caseId));
+    });
+  }
+
+  if (filters.sessionId) {
+    result = result.filter(i => {
+      const sid = String(i.case?.session_id || "");
+      return sid.includes(filters.sessionId);
+    });
+  }
+
+  if (filters.trackId) {
+    result = result.filter(i => {
+      const tid = String(i.case?.track_id || "");
+      return tid.includes(filters.trackId);
+    });
+  }
+
+  if (filters.evidenceOnly) {
+    result = result.filter(i => {
+      const evidenceKeys =
+        i.job?.input_bundle_json?.visual_evidence?.object_keys ||
+        i.case?.evidence_bundle_json?.object_keys ||
+        (Array.isArray(i.case?.evidence_bundle_json)
+          ? i.case?.evidence_bundle_json.map((e: any) => e.object_key)
+          : []);
+      return evidenceKeys && evidenceKeys.length > 0;
+    });
+  }
+
+  return result;
 }

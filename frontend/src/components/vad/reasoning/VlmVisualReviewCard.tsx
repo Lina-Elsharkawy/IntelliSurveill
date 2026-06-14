@@ -10,7 +10,7 @@ export function VlmVisualReviewCard({ item }: { item: VadReasoningListItem }) {
       <div className="bg-zinc-950 rounded-xl border border-zinc-800 p-5 mb-4 opacity-50">
         <div className="flex items-center gap-2 mb-2">
           <Eye className="text-slate-500" size={18} />
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-200">VLM Visual Review</h3>
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-200">VLM Visual Observation</h3>
         </div>
         <div className="text-xs text-slate-500">Not available for this job. Job might be queued, running, or failed.</div>
       </div>
@@ -22,35 +22,26 @@ export function VlmVisualReviewCard({ item }: { item: VadReasoningListItem }) {
       <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
         <div className="flex items-center gap-2">
           <Eye className="text-indigo-400" size={16} />
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-200">VLM Visual Perception</h3>
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-200">VLM Visual Observation</h3>
         </div>
       </div>
       
       <div className="p-3 bg-indigo-950/20 border border-indigo-900/40 rounded-lg flex gap-3 items-start text-xs text-indigo-200/70">
         <Info size={16} className="text-indigo-400 shrink-0 mt-0.5" />
-        <span>VLM role: objective visual observer. It describes what is visible; it is not the final authority.</span>
+        <span>VLM describes visible facts only.</span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 p-3 bg-zinc-900/50 rounded-lg border border-zinc-800/50">
-        <Metric label="Visual Decision" value={vlm.visual_alert_decision} colorClass={vlm.visual_alert_decision === 'YES' ? 'text-red-400' : vlm.visual_alert_decision === 'NO' ? 'text-emerald-400' : 'text-amber-400'} />
-        <Metric label="Severity" value={vlm.visual_severity || "-"} colorClass={vlm.visual_severity === 'HIGH' ? 'text-red-400' : 'text-slate-300'} />
-        <Metric label="Confidence" value={vlm.visual_confidence?.toFixed(2) || "-"} />
-        <Metric label="Sufficiency" value={vlm.evidence_sufficiency || "-"} />
-        <Metric label="Image Quality" value={vlm.image_quality || "-"} />
-        <Metric label="Event Type" value={vlm.event_type?.replace(/_/g, ' ') || "-"} className="capitalize" />
-      </div>
 
       <div className="flex flex-col gap-3">
         <TextField label="Visible Scene" text={vlm.visible_scene} />
         <TextField label="Person Observation" text={vlm.person_observation} />
         <TextField label="Motion Observation" text={vlm.motion_observation} />
-        <TextField label="Decision Reason" text={vlm.visual_decision_reason} />
+        <TextField label="Observation Summary" text={vlm.observation_summary || vlm.visual_decision_reason} />
       </div>
 
       <div className="flex flex-col gap-3">
-        <ListSection title="Anomaly Evidence" items={vlm.anomaly_evidence} icon={<AlertTriangle size={12} className="text-red-400" />} />
-        <ListSection title="Normality Evidence" items={vlm.normality_evidence} icon={<Check size={12} className="text-emerald-400" />} />
-        <ListSection title="False Positive Risks" items={vlm.false_positive_risks} icon={<Info size={12} className="text-amber-400" />} />
+
+        <ListSection title="Visual Limitations / False Positive Risks" items={vlm.false_positive_risks} icon={<Info size={12} className="text-blue-400" />} />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { VadReasoningListItem, vadApi } from "@/services/vad_api";
 import { getEvidenceKeys, getGateName } from "./reasoningUtils";
+import { getEvidenceDisplayName, groupEvidenceKeys } from "@/components/vad/evidenceUtils";
 import { Image as ImageIcon, FileJson, Info, Play, Pause, SkipBack, SkipForward, Maximize2, Copy, AlertTriangle, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -22,11 +23,7 @@ export function EvidenceViewer({ item }: { item: VadReasoningListItem }) {
   
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Group evidence
-  const annotatedKey = evidenceKeys.find(k => k.includes("annotated_frame"));
-  const montageKey = evidenceKeys.find(k => k.includes("tubelet_montage"));
-  const frameKeys = evidenceKeys.filter(k => k.includes("frame_") && !k.includes("annotated")).sort();
-  const otherKeys = evidenceKeys.filter(k => k !== annotatedKey && k !== montageKey && !frameKeys.includes(k));
+  const { annotatedKey, montageKey, frameKeys, otherKeys } = groupEvidenceKeys(evidenceKeys);
 
   const fetchUrls = async () => {
     if (evidenceKeys.length === 0) return;
@@ -242,7 +239,7 @@ export function EvidenceViewer({ item }: { item: VadReasoningListItem }) {
                   >
                     {isJson ? <FileJson size={14} className="shrink-0" /> : <ImageIcon size={14} className="shrink-0" />}
                     <div className="flex flex-col min-w-0">
-                      <span className="text-[11px] font-mono truncate">{key.split('/').pop() || key}</span>
+                      <span className="text-[11px] font-mono truncate">{getEvidenceDisplayName(key)}</span>
                     </div>
                   </button>
                 )

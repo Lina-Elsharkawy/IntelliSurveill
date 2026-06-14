@@ -88,6 +88,10 @@ export interface VadReasoningCase {
   start_ts: string;
   peak_ts: string;
   peak_score: number;
+  event_id?: number | null;
+  session_id?: number | null;
+  track_id?: number | null;
+  primary_track_id?: number | null;
   score_summary_json: any;
   evidence_bundle_json: any;
 }
@@ -236,11 +240,7 @@ export const vadApi = {
     if (!res.ok) throw new Error(`Failed to fetch VAD reasoning jobs: ${res.status} ${res.statusText}`);
     
     const data = await res.json();
-    console.log("Reasoning API raw response:", data);
-    
     const items = normalizeReasoningResponse(data);
-    console.log("Reasoning items after normalization:", items);
-    
     return {
       items,
       summary: data.summary || {
@@ -299,6 +299,11 @@ export function normalizeReasoningResponse(data: unknown): VadReasoningListItem[
         status: row.case_status,
         start_ts: row.start_ts,
         peak_ts: row.peak_ts,
+        peak_score: row.peak_score,
+        event_id: row.event_id ?? row.gate_event_id ?? null,
+        session_id: row.session_id ?? null,
+        track_id: row.track_id ?? row.tracker_track_id ?? null,
+        primary_track_id: row.primary_track_id ?? row.tracker_track_id ?? null,
         evidence_bundle_json: row.evidence_bundle_json,
         score_summary_json: row.score_summary_json,
       } : null,

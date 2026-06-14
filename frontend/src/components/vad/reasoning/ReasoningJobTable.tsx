@@ -31,7 +31,6 @@ export function ReasoningJobTable({
             <th className="px-3 py-3">Gate</th>
             <th className="px-3 py-3">Decision</th>
             <th className="px-3 py-3">Sev</th>
-            <th className="px-3 py-3">Score / Ratio</th>
             <th className="px-3 py-3">Time</th>
             <th className="px-3 py-3">Evi</th>
           </tr>
@@ -46,8 +45,6 @@ export function ReasoningJobTable({
             const gateDisplayName = getGateDisplayName(item);
             const evidenceKeys = getEvidenceKeys(item);
             const evidenceCount = evidenceKeys.length;
-            const score = item.job.input_bundle_json?.peak_score?.toFixed(1) || "-";
-            const ratio = item.job.input_bundle_json?.score_ratio?.toFixed(1) || "-";
             const status = item.job.status;
 
             // Row styling based on state
@@ -67,8 +64,8 @@ export function ReasoningJobTable({
               rowBorderClass = "border-emerald-900/30 bg-emerald-950/5";
               decisionColor = "text-emerald-500";
             } else if (finalDecision === "UNCERTAIN") {
-              rowBorderClass = "border-amber-900/30 bg-amber-950/5";
-              decisionColor = "text-amber-500 font-bold";
+              rowBorderClass = "border-blue-900/30 bg-blue-950/5";
+              decisionColor = "text-blue-500 font-bold";
             }
 
             const activeClass = isSelected ? "bg-zinc-800/50 outline outline-1 outline-indigo-500/50" : "hover:bg-zinc-800/30 cursor-pointer";
@@ -80,15 +77,13 @@ export function ReasoningJobTable({
                 className={`transition-colors border-l-[3px] ${rowBorderClass} ${activeClass}`}
               >
                 <td className="px-3 py-3 align-top whitespace-nowrap">
-                  <div className="flex flex-col">
+                  <div className="flex flex-col justify-center h-full">
                     <span className="font-mono text-xs font-semibold text-slate-200">#{item.case?.id || "-"}</span>
-                    <span className="font-mono text-[10px] text-slate-500">Evt: {item.case?.event_id || "-"}</span>
                   </div>
                 </td>
                 <td className="px-3 py-3 align-top">
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-indigo-300">{gateDisplayName}</span>
-                    <span className="text-[10px] text-slate-500 font-mono" title="Track ID">Trk: {item.case?.track_id || "-"}</span>
+                  <div className="flex flex-col justify-center h-full">
+                    <span className="font-semibold text-white">{gateDisplayName}</span>
                   </div>
                 </td>
                 <td className="px-3 py-3 align-top">
@@ -108,15 +103,9 @@ export function ReasoningJobTable({
                   )}
                 </td>
                 <td className="px-3 py-3 align-top font-semibold">
-                   <span className={`${severity === 'HIGH' ? 'text-red-400' : severity === 'MEDIUM' ? 'text-amber-400' : 'text-slate-400'}`}>
+                   <span className={`${severity === 'HIGH' || severity === 'CRITICAL' ? 'text-red-400' : severity === 'MEDIUM' ? 'text-blue-400' : severity === 'LOW' ? 'text-emerald-400' : 'text-slate-400'}`}>
                      {severity || "-"}
                    </span>
-                </td>
-                <td className="px-3 py-3 align-top">
-                  <div className="flex flex-col font-mono text-[10px]">
-                    <span className="text-slate-300">S: {score}</span>
-                    <span className={Number(ratio) > 1.5 ? "text-red-300 font-bold" : "text-slate-400"}>R: {ratio}</span>
-                  </div>
                 </td>
                 <td className="px-3 py-3 align-top text-slate-400 whitespace-nowrap">
                   {timeAgo}

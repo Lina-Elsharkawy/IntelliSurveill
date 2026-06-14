@@ -4,7 +4,7 @@ import { Brain, Gavel, Scale, FileText } from "lucide-react";
 
 export function LlmPolicyReviewCard({ item }: { item: VadReasoningListItem }) {
   const llm = getLlmReview(item);
-  
+
   if (!llm) {
     return (
       <div className="bg-zinc-950 rounded-xl border border-zinc-800 p-5 mb-4 opacity-50">
@@ -45,7 +45,7 @@ export function LlmPolicyReviewCard({ item }: { item: VadReasoningListItem }) {
           <RuleList rules={llm.matched_suppress_rules} isTrigger={false} />
         </div>
       </div>
-      
+
       {llm.limitations && llm.limitations.length > 0 && (
         <div className="flex flex-col gap-2">
           <SectionTitle>Limitations / Uncertainty</SectionTitle>

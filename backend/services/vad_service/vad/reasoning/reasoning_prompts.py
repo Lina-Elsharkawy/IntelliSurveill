@@ -28,8 +28,8 @@ Key design changes (paper-backed):
     content weakly related to true anomalies and increases false positives.
 
 [4] FRAME BUDGET  (Holmes-VAD, ReCoVAD, AnyAnomaly)
-    6–8 keyframes is the recommended budget. The keyframe_selector module
-    handles the 24→8 reduction using sparse CLIP/diversity selection.
+    6–8 keyframes is the recommended budget. The gate-aware keyframe_selector module
+    handles Deep 16→8 and Pose 24→8 selection using gate-specific evidence logic.
     The VLM prompt explicitly states the frame count and their role.
 ────────────────────────────────────────────────────────────────────────────────
 """
@@ -199,8 +199,8 @@ def build_deep_vlm_visual_prompt(
 
 IMPORTANT RULES:
 - Describe only what you can directly observe. Do not guess, infer intent, or make judgements.
-- You are a witness, not a judge: do NOT decide whether the event is an alert, anomaly, threat, fight, or suspicious activity.
-- Do NOT output alert_decision, visual_decision, severity, event_type, or final_action. Those fields belong only to the LLM/Python rule stages.
+- You are a witness, not a judge: do NOT decide whether any rule is satisfied or whether any follow-up action is needed.
+- Do NOT output policy_decision, visual_decision, severity, event_type, or final_action. Those fields belong only to the LLM/Python rule stages.
 - Describe body posture, limb positions, movement direction, speed, proximity, and physical contact in concrete terms.
 - Compare early frames (first third) to middle frames to late frames (last third) to describe how the scene changes.
 
@@ -227,9 +227,11 @@ Return ONLY valid JSON matching this exact structure. No markdown. No null value
   "schema_version": "1.0",
   "review_type": "vlm_visual_review",
   "observation_status": "OBSERVED | NOT_OBSERVED | UNCLEAR",
-  "dominant_visible_activity": "Neutral short label such as walking, standing, sitting, lying_on_floor, object_interaction, person_contact, unclear_view. Do not use anomaly labels.",
+  "dominant_visible_activity": "Neutral short label such as walking, standing, sitting, lying_on_floor, object_interaction, person_contact, unclear_view. Do not use policy labels.",
+  "observation_confidence": 0.0,
   "visual_confidence": 0.0,
   "image_quality": "GOOD | FAIR | POOR | UNUSABLE",
+  "observation_completeness": "COMPLETE | PARTIAL | INSUFFICIENT",
   "evidence_sufficiency": "SUFFICIENT | PARTIAL | INSUFFICIENT",
   "visible_scene": "One sentence describing the room, setting, and fixed objects visible.",
   "person_observation": "Describe each visible person: their location in frame, posture, what body parts are doing, and distance to other people. Use only observable facts.",
@@ -247,15 +249,17 @@ Return ONLY valid JSON matching this exact structure. No markdown. No null value
   "false_positive_risks": [
     "List visual limitations: occlusion, motion blur, camera angle, partial body visible, low resolution."
   ],
-  "observation_summary": "State in one sentence what the dominant visible activity is, using only observable facts. Do not judge whether it is normal, abnormal, suspicious, or dangerous."
+  "observation_summary": "State in one sentence what the dominant visible activity is, using only observable facts. Do not make any policy judgement."
 }}
 
 Output rules:
 - observation_status OBSERVED: you can clearly describe at least one concrete visual fact in rule_relevant_visual_facts or normality_evidence.
 - observation_status NOT_OBSERVED: the requested observation questions are clearly not visible.
 - observation_status UNCLEAR: image quality, occlusion, distance, or ambiguity prevents a reliable description.
-- visual_confidence: your confidence in the accuracy of your visual description (0.0–1.0), not in any rule judgement.
-- dominant_visible_activity must be a neutral activity label only. Do not output policy labels such as physical altercation, anomaly, suspicious, threat, alert, severity, or decision.
+- observation_confidence: your confidence in the accuracy of your visual description (0.0–1.0), not in any rule judgement.
+- visual_confidence: backward-compatible alias of observation_confidence. Use the same numeric value.
+- observation_completeness/evidence_sufficiency describe how complete the visible evidence is; they are not policy decisions.
+- dominant_visible_activity must be a neutral activity label only. Do not output policy labels, severity, or decision.
 - Do NOT use gate names, model names, or score values as evidence.
 """.strip()
 
@@ -289,8 +293,8 @@ def build_pose_vlm_visual_prompt(
 
 IMPORTANT RULES:
 - Describe only what you can directly observe. Do not guess, infer intent, or make judgements.
-- You are a witness, not a judge: do NOT decide whether the event is an alert, anomaly, threat, fight, or suspicious activity.
-- Do NOT output alert_decision, visual_decision, severity, event_type, or final_action. Those fields belong only to the LLM/Python rule stages.
+- You are a witness, not a judge: do NOT decide whether any rule is satisfied or whether any follow-up action is needed.
+- Do NOT output policy_decision, visual_decision, severity, event_type, or final_action. Those fields belong only to the LLM/Python rule stages.
 - Focus specifically on: joint positions (shoulders, elbows, wrists, hips, knees, ankles), torso angle, bilateral symmetry, speed of limb movement, and contact with other people or objects.
 - Compare early frames (first third) to middle frames to late frames (last third) to describe how posture changes.
 
@@ -317,9 +321,11 @@ Return ONLY valid JSON matching this exact structure. No markdown. No null value
   "schema_version": "1.0",
   "review_type": "vlm_visual_review",
   "observation_status": "OBSERVED | NOT_OBSERVED | UNCLEAR",
-  "dominant_visible_activity": "Neutral short label such as walking, standing, sitting, lying_on_floor, object_interaction, person_contact, unclear_view. Do not use anomaly labels.",
+  "dominant_visible_activity": "Neutral short label such as walking, standing, sitting, lying_on_floor, object_interaction, person_contact, unclear_view. Do not use policy labels.",
+  "observation_confidence": 0.0,
   "visual_confidence": 0.0,
   "image_quality": "GOOD | FAIR | POOR | UNUSABLE",
+  "observation_completeness": "COMPLETE | PARTIAL | INSUFFICIENT",
   "evidence_sufficiency": "SUFFICIENT | PARTIAL | INSUFFICIENT",
   "visible_scene": "One sentence describing the room and setting.",
   "person_observation": "Describe each visible person: torso angle, arm positions, leg positions, whether they are upright or not, and whether they are in contact with another person or object.",
@@ -337,15 +343,17 @@ Return ONLY valid JSON matching this exact structure. No markdown. No null value
   "false_positive_risks": [
     "List visual limitations: partial occlusion, body part cut off by frame edge, low keypoint visibility, perspective distortion."
   ],
-  "observation_summary": "State in one sentence what the dominant visible body activity is, using only observable facts. Do not judge whether it is normal, abnormal, suspicious, or dangerous."
+  "observation_summary": "State in one sentence what the dominant visible body activity is, using only observable facts. Do not make any policy judgement."
 }}
 
 Output rules:
 - observation_status OBSERVED: you can clearly describe at least one concrete posture/movement fact in rule_relevant_visual_facts or normality_evidence.
 - observation_status NOT_OBSERVED: the requested posture/movement observations are clearly not visible.
 - observation_status UNCLEAR: image quality, occlusion, distance, or ambiguity prevents a reliable posture description.
-- visual_confidence: your confidence in the accuracy of your posture description (0.0–1.0), not in any rule judgement.
-- dominant_visible_activity must be a neutral activity label only. Do not output policy labels such as physical altercation, anomaly, suspicious, threat, alert, severity, or decision.
+- observation_confidence: your confidence in the accuracy of your posture description (0.0–1.0), not in any rule judgement.
+- visual_confidence: backward-compatible alias of observation_confidence. Use the same numeric value.
+- observation_completeness/evidence_sufficiency describe how complete the visible evidence is; they are not policy decisions.
+- dominant_visible_activity must be a neutral activity label only. Do not output policy labels, severity, or decision.
 - Do NOT use pose score, threshold, GMM distance, or statistical values as evidence.
 """.strip()
 
@@ -414,7 +422,7 @@ def build_llm_policy_prompt(
 
     return f"""You are a surveillance rule-matching engine. A video captioning model has described what it observed in a video clip. Your task is to decide whether those observations match any active surveillance rules.
 
-You did NOT see the video. You must work ONLY from the caption below. Do not invent new visual facts.
+You did NOT see the video. You must work ONLY from the caption below and the active rules. Do not invent new visual facts, rule IDs, criminal intent, or event categories not present in the active rules.
 
 ─── GATE CONTEXT ────────────────────────────────────────────────────────────
 {_json(gate_context, 1200)}
@@ -422,7 +430,8 @@ You did NOT see the video. You must work ONLY from the caption below. Do not inv
 Score ratio guidance:
 - score_ratio < 1.15 (weak): require strong, unambiguous rule match before YES.
 - score_ratio 1.15–1.50 (moderate): standard rule matching applies.
-- score_ratio > 1.50 (strong): rule match with partial caption evidence may be sufficient.
+- score_ratio > 1.50 (strong): it may increase confidence only when a trigger rule already matches visible caption evidence.
+- Score ratio alone is never sufficient for YES.
 
 ─── VLM VISUAL CAPTION ──────────────────────────────────────────────────────
 {_json(model_to_dict(vlm_review), 5000)}
@@ -460,11 +469,14 @@ Step 4 — Final decision:
   - YES: at least one trigger rule matched with concrete caption evidence, AND
     no suppress rule clearly overrides it.
   - NO: no trigger rule matched, OR a suppress rule clearly overrides all triggers.
-  - UNCERTAIN: caption is ambiguous, image quality is poor, or evidence is
-    insufficient to confirm or deny a trigger rule match.
-  
-  NOTE: The VLM is only a neutral visual witness. It does not make an alert decision.
-  Do not treat any VLM observation_status as a policy decision. Score ratio alone is never sufficient for YES.
+  - UNCERTAIN: caption is ambiguous, image quality is poor, evidence is
+    insufficient, or a potentially relevant trigger rule cannot be confirmed.
+
+  Mandatory closed-world rules:
+  - The VLM is only a neutral visual witness. It does not make an alert decision.
+  - Do not treat observation_status, observation_confidence, or score_ratio as a policy decision.
+  - Score ratio alone is never sufficient for YES.
+  - If no trigger rule is matched and there is no clear missing-rule concern, return NO.
 
 ─── OUTPUT FORMAT ────────────────────────────────────────────────────────────
 Return ONLY valid JSON. No markdown. No explanation outside the JSON.
@@ -513,8 +525,8 @@ Return ONLY valid JSON. No markdown. No explanation outside the JSON.
   }},
   "decision_reason": "One paragraph: state which rule was matched (or not matched), which caption evidence supports it, and why that leads to the final decision.",
   "limitations": [
-    "List any ambiguity, occlusion, weak score ratio, or evidence gaps."
-  ]
+    "List any ambiguity, occlusion, weak score ratio, evidence gaps."
+  ],
 }}
 
 Constraints:
@@ -522,5 +534,6 @@ Constraints:
 - If policy_alert_decision is YES, matched_trigger_rules must contain at least one entry with applied=true.
 - If no trigger rule is matched, policy_alert_decision must be NO or UNCERTAIN.
 - Do not create new rule_ids. Only reference rule_ids from the lists above.
+- Do not use legal conclusions such as murder, thief, or criminal unless those exact labels appear in an active rule; prefer observable actions from the caption.
 - Output JSON only.
 """.strip()

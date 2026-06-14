@@ -299,6 +299,18 @@ class EvidenceWriter:
                     "captured_at": s.captured_at.isoformat(),
                     "bbox_xyxy": [float(v) for v in s.bbox_xyxy],
                     "confidence": float(s.confidence) if s.confidence is not None else None,
+                    # Pose frame selector uses keypoints_xy / keypoints_conf to compute
+                    # body-motion energy scores (pose_energy_from_keypoints).  Without
+                    # these fields the selector falls back to YOLO reinference on saved
+                    # JPEGs, which is slower and requires a GPU-capable reasoning worker.
+                    "keypoints_xy": (
+                        [[float(x), float(y)] for x, y in s.keypoints_xy]
+                        if s.keypoints_xy else None
+                    ),
+                    "keypoints_conf": (
+                        [float(c) for c in s.keypoints_conf]
+                        if s.keypoints_conf else None
+                    ),
                 }
                 for s in tubelet_samples
             ],

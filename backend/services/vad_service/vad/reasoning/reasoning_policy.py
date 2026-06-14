@@ -16,8 +16,9 @@ from ..vad_anomaly_rules import deterministic_rule_matches, RULES_VERSION
 # - AnomalyRuler (ECCV 2024): LLM conclusions must be checked against explicit rules.
 # - Holmes-VAD / ReCoVAD: expensive multimodal reasoning is only a candidate verifier;
 #   the final system decision remains a controlled downstream step.
-# - This file deliberately implements a closed-world policy: only active Anomaly_Rules
-#   can confirm a YES. The LLM may propose; Python verifies deterministically.
+# - This file now implements validation-only finalization: the LLM policy layer
+#   decides YES/NO/UNCERTAIN from Anomaly_Rules; Python validates consistency and
+#   may downgrade unsafe/inconsistent outputs, but it never upgrades to YES.
 POLICY_VERSION = "vad_reasoning_policy_v4_anomaly_rules_closed_world"
 
 SEVERITY_RANK = {"NONE": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
@@ -102,6 +103,29 @@ def _has_strong_normality(vlm: VlmVisualReview) -> bool:
     ]))
 
 
+
+def _applied_rules(rules: list[Any]) -> list[Any]:
+    """Return LLM RuleApplication objects/dicts marked as applied."""
+    out: list[Any] = []
+    for rule in rules or []:
+        applied = False
+        if hasattr(rule, "applied"):
+            applied = bool(getattr(rule, "applied"))
+        elif isinstance(rule, dict):
+            applied = bool(rule.get("applied"))
+        if applied:
+            out.append(rule)
+    return out
+
+
+def _rule_id(rule: Any) -> str:
+    if hasattr(rule, "rule_id"):
+        return str(getattr(rule, "rule_id"))
+    if isinstance(rule, dict):
+        return str(rule.get("rule_id") or rule.get("id") or "")
+    return ""
+
+
 def apply_python_final_guardrails(
     *,
     ctx: DeepReasoningContext | PoseReasoningContext,
@@ -111,84 +135,84 @@ def apply_python_final_guardrails(
     vlm_parse_info: dict[str, Any] | None = None,
     llm_parse_info: dict[str, Any] | None = None,
 ) -> tuple[PythonFinalResult, dict[str, Any]]:
+    """Validation-only final layer.
+
+    The VLM describes only. The LLM policy layer is the semantic decision-maker.
+    Python validation cannot invent or upgrade a YES decision. It can only:
+    - force UNCERTAIN on parse/schema failures,
+    - downgrade inconsistent YES decisions,
+    - normalize severity/action consistency,
+    - report deterministic rule diagnostics for audit.
+    """
     actions: list[dict[str, Any]] = []
 
-    decision = str(llm.policy_alert_decision or "UNCERTAIN")
-    severity = str(llm.policy_severity or "LOW")
+    decision = str(llm.policy_alert_decision or "UNCERTAIN").upper()
+    severity = str(llm.policy_severity or "LOW").upper()
     confidence = max(0.0, min(1.0, float(llm.policy_confidence or 0.3)))
     recommended_action = str(llm.recommended_action or "review_only")
 
-    # 1) Parser failures are never allowed to become alerts.
     vlm_parse_error = (vlm_parse_info or {}).get("parse_error")
     llm_parse_error = (llm_parse_info or {}).get("parse_error")
+
+    # Diagnostic only: deterministic matching is useful for audit, but it no longer
+    # upgrades NO/UNCERTAIN to YES. The LLM is the only rule-decision layer.
+    deterministic_rules = deterministic_rule_matches(ctx=ctx, vlm=vlm, rules=rules)
+    deterministic_triggers = deterministic_rules.get("matched_trigger_rules", [])
+    deterministic_suppress = deterministic_rules.get("matched_suppress_rules", [])
+
+    llm_trigger_rules = _applied_rules(llm.matched_trigger_rules)
+    llm_suppress_rules = _applied_rules(llm.matched_suppress_rules)
+    concrete_visual = _has_concrete_visual_evidence(vlm)
+    image_usable = vlm.image_quality not in {"UNUSABLE"}
+
+    # 1) Parser failures are never allowed to become final alerts.
     if vlm_parse_error:
         decision, severity, recommended_action = "UNCERTAIN", "LOW", "review_only"
         confidence = min(confidence, 0.30)
-        actions.append({"rule_id": "VLM_PARSE_FALLBACK", "effect": "forced UNCERTAIN", "reason": str(vlm_parse_error)})
+        actions.append({
+            "rule_id": "VLM_PARSE_FALLBACK",
+            "effect": "forced UNCERTAIN",
+            "reason": str(vlm_parse_error),
+        })
     if llm_parse_error:
         decision, severity, recommended_action = "UNCERTAIN", "LOW", "review_only"
         confidence = min(confidence, 0.30)
-        actions.append({"rule_id": "LLM_PARSE_FALLBACK", "effect": "forced UNCERTAIN", "reason": str(llm_parse_error)})
+        actions.append({
+            "rule_id": "LLM_PARSE_FALLBACK",
+            "effect": "forced UNCERTAIN",
+            "reason": str(llm_parse_error),
+        })
 
-    # 2) Closed-world rule matching from the single source of truth: Anomaly_Rules.
-    deterministic_rules = deterministic_rule_matches(ctx=ctx, vlm=vlm, rules=rules)
-    matched_triggers = deterministic_rules.get("matched_trigger_rules", [])
-    matched_suppress = deterministic_rules.get("matched_suppress_rules", [])
-
-    concrete_visual = _has_concrete_visual_evidence(vlm)
-    image_usable = vlm.image_quality not in {"UNUSABLE"}
-    strong_normality = _has_strong_normality(vlm)
-    ratio = ctx.score_ratio
-
-    # 3) LLM must not invent visual facts beyond VLM caption.
+    # 2) The LLM must base its decision only on VLM-visible evidence.
     if not llm.evidence_assessment.uses_only_vlm_evidence:
         decision, severity, recommended_action = "UNCERTAIN", "LOW", "review_only"
         confidence = min(confidence, 0.40)
         actions.append({
             "rule_id": "LLM_USED_NON_VLM_FACTS",
             "effect": "downgraded to UNCERTAIN",
-            "reason": "The LLM admitted it used information beyond VLM-visible evidence.",
+            "reason": "The LLM indicated that it used information beyond the VLM visual observation.",
         })
 
-    # 4) Suppress rules can force NO, unless there is a concrete trigger match.
-    #    Important: do not apply suppress rules to parser-fallback/unclear evidence
-    #    merely because a broad admin rule uses event_type='other'. Suppression must
-    #    be grounded in concrete normality or concrete visual facts.
-    suppress_grounded = (not vlm_parse_error) and (strong_normality or concrete_visual or bool(vlm.normality_evidence))
-    if matched_suppress and suppress_grounded and not (matched_triggers and concrete_visual):
-        decision, severity, recommended_action = "NO", "NONE", "ignore"
-        confidence = min(max(confidence, 0.60), 0.85)
-        for rule in matched_suppress:
-            actions.append({
-                "rule_id": rule.get("rule_id"),
-                "effect": "applied suppress rule",
-                "reason": rule.get("reason") or "Active Anomaly_Rules suppress rule matched grounded normal/benign VLM caption.",
-            })
-    elif matched_suppress and not suppress_grounded:
-        actions.append({
-            "rule_id": "SUPPRESS_NOT_APPLIED_WITHOUT_GROUNDING",
-            "effect": "ignored ungrounded suppress match",
-            "reason": "A suppress rule matched broad metadata/event_type, but VLM perception was parse-fallback or lacked concrete normality/visual grounding.",
-        })
-
-    # 5) Hard closed-world guardrail: YES is only possible with an active trigger rule
-    #    AND concrete visual evidence. Score ratio alone cannot create YES.
-    if decision == "YES" and not matched_triggers:
+    # 3) Validation-only closed-world rule: final YES requires the LLM to cite at
+    # least one applied trigger rule. Python no longer creates YES by itself.
+    if decision == "YES" and not llm_trigger_rules:
         decision, severity, recommended_action = "UNCERTAIN", "LOW", "review_only"
         confidence = min(confidence, 0.45)
         actions.append({
-            "rule_id": "YES_WITHOUT_ANOMALY_RULE_TRIGGER",
+            "rule_id": "YES_WITHOUT_LLM_TRIGGER_RULE",
             "effect": "downgraded YES to UNCERTAIN",
-            "reason": "Closed-world policy: no active Anomaly_Rules trigger matched the VLM-visible facts.",
+            "reason": "Validation-only policy: final YES requires at least one LLM matched_trigger_rules entry with applied=true.",
         })
 
+    # 4) Final YES also requires concrete visible facts and usable images. This is a
+    # consistency check, not an independent anomaly judgement.
     if decision == "YES" and not concrete_visual:
         decision, severity, recommended_action = "UNCERTAIN", "LOW", "review_only"
         confidence = min(confidence, 0.45)
         actions.append({
             "rule_id": "YES_WITHOUT_CONCRETE_VISUAL_FACTS",
             "effect": "downgraded YES to UNCERTAIN",
-            "reason": "A final YES requires concrete visible posture, motion, object, or interaction evidence, not scores or generic labels.",
+            "reason": "A final YES requires concrete visible posture, motion, object, or interaction facts from the VLM observation.",
         })
 
     if decision == "YES" and not image_usable:
@@ -197,60 +221,32 @@ def apply_python_final_guardrails(
         actions.append({
             "rule_id": "YES_WITH_UNUSABLE_IMAGE_QUALITY",
             "effect": "downgraded YES to UNCERTAIN",
-            "reason": f"image_quality={vlm.image_quality}; visual evidence is not usable enough for a final alert.",
+            "reason": f"image_quality={vlm.image_quality}; visual evidence is not usable enough for final alert confirmation.",
         })
 
-    # 6) Conservative score-ratio guardrail. Weak ratios do not block explicit high-risk
-    #    admin rules, but they reduce confidence and force review unless the rule minimum
-    #    severity is HIGH/CRITICAL or the VLM evidence is very concrete.
+    # 5) Suppress rules are interpreted by the LLM. If the LLM explicitly matched a
+    # suppress rule but still outputs YES, the safest validation result is UNCERTAIN.
+    if decision == "YES" and llm_suppress_rules:
+        decision, severity, recommended_action = "UNCERTAIN", "LOW", "review_only"
+        confidence = min(confidence, 0.50)
+        actions.append({
+            "rule_id": "YES_WITH_LLM_SUPPRESS_RULE",
+            "effect": "downgraded YES to UNCERTAIN",
+            "reason": "The LLM matched a suppress rule while also returning YES; validation requires human review instead of direct alert.",
+        })
+
+    # 6) Score ratio is context only. It can cap confidence for weak evidence but
+    # cannot create a YES and should not override a valid LLM NO.
+    ratio = ctx.score_ratio
     if decision == "YES" and ratio is not None and ratio < 1.15:
-        high_risk_rule = any(
-            SEVERITY_RANK.get(str((r.get("effect") or {}).get("minimum_severity") or "MEDIUM"), 2) >= SEVERITY_RANK["HIGH"]
-            for r in matched_triggers
-        )
-        if not high_risk_rule:
-            decision, severity, recommended_action = "UNCERTAIN", "LOW", "review_only"
-            confidence = min(confidence, 0.50)
-            actions.append({
-                "rule_id": "WEAK_RATIO_REQUIRES_HIGH_RISK_RULE",
-                "effect": "downgraded YES to UNCERTAIN",
-                "reason": f"score_ratio={ratio:.4f} is weak and no HIGH/CRITICAL active Anomaly_Rules trigger matched.",
-            })
-        else:
-            confidence = min(confidence, 0.70)
-            actions.append({
-                "rule_id": "WEAK_RATIO_HIGH_RISK_REVIEW",
-                "effect": "kept YES with capped confidence",
-                "reason": f"score_ratio={ratio:.4f} is weak, but a HIGH/CRITICAL active rule matched concrete visual evidence.",
-            })
-
-    # 7) If Python finds a trigger and VLM visual facts are concrete, it can upgrade an
-    #    LLM UNCERTAIN/NO to YES. This is the deterministic rule layer doing its job.
-    if decision != "YES" and matched_triggers and concrete_visual and image_usable and not strong_normality:
-        for rule in matched_triggers:
-            effect = rule.get("effect") or {}
-            min_sev = str(effect.get("minimum_severity") or "MEDIUM")
-            decision = "YES"
-            severity = _min_severity(severity, min_sev)
-            recommended_action = str(effect.get("recommended_action") or _action_for(decision, severity))
-            confidence = max(confidence, min(0.85, float(vlm.visual_confidence or 0.5)))
-            actions.append({
-                "rule_id": rule.get("rule_id"),
-                "effect": "upgraded to YES by deterministic rule",
-                "reason": rule.get("reason") or "Active Anomaly_Rules trigger matched concrete VLM-visible facts.",
-            })
-
-    # 8) Strong normality evidence prevents accidental escalation unless an explicit trigger
-    #    rule has already survived all checks above.
-    if decision == "YES" and strong_normality and not matched_triggers:
-        decision, severity, recommended_action = "NO", "NONE", "ignore"
         confidence = min(confidence, 0.70)
         actions.append({
-            "rule_id": "NORMALITY_WITHOUT_TRIGGER",
-            "effect": "forced NO",
-            "reason": "VLM described ordinary activity and no explicit trigger rule matched.",
+            "rule_id": "WEAK_RATIO_CONFIDENCE_CAP",
+            "effect": "kept LLM YES but capped confidence",
+            "reason": f"score_ratio={ratio:.4f} is weak; score ratio is context only and cannot strengthen the decision.",
         })
 
+    # 7) Severity/action normalization only.
     severity = _cap_severity_for_decision(decision, severity)
     normalized_action = _action_for(decision, severity)
     if not (decision in {"NO", "UNCERTAIN"} and recommended_action == "save_for_dataset"):
@@ -262,9 +258,9 @@ def apply_python_final_guardrails(
             })
         recommended_action = normalized_action
 
-    base_reason = (llm.decision_reason or vlm.visual_decision_reason or "Final decision produced by deterministic guardrails.").strip()
+    base_reason = (llm.decision_reason or vlm.visual_decision_reason or "Final decision produced by LLM policy and validated by Python consistency checks.").strip()
     if actions:
-        base_reason += " Python guardrails enforced closed-world Anomaly_Rules matching, concrete VLM-visible facts, score-ratio checks, and suppress-rule precedence."
+        base_reason += " Python validation checked parse status, LLM rule references, visual grounding, image usability, suppress-rule consistency, and action/severity consistency."
 
     final = PythonFinalResult(
         final_alert_decision=decision,
@@ -278,11 +274,14 @@ def apply_python_final_guardrails(
     rules_result = {
         "rules_version": RULES_VERSION,
         "rule_source": "Anomaly_Rules",
+        "decision_authority": "llm_policy_review",
+        "python_role": "validation_only_no_yes_upgrade",
         "llm_matched_trigger_rules": [r.model_dump(mode="json") for r in llm.matched_trigger_rules],
         "llm_matched_suppress_rules": [r.model_dump(mode="json") for r in llm.matched_suppress_rules],
-        "deterministic_matched_trigger_rules": matched_triggers,
-        "deterministic_matched_suppress_rules": matched_suppress,
+        "deterministic_matched_trigger_rules_diagnostic": deterministic_triggers,
+        "deterministic_matched_suppress_rules_diagnostic": deterministic_suppress,
         "rule_reasoning": llm.rule_reasoning,
+        "validation_notes": [a for a in actions],
     }
     return final, rules_result
 
@@ -314,7 +313,8 @@ def build_structured_result(
         },
         "vlm_visual_review": model_to_dict(vlm),
         "llm_policy_review": model_to_dict(llm),
-        "python_final_guardrails": model_to_dict(final),
+        "python_final_guardrails": model_to_dict(final),  # backward-compatible key
+        "python_validation_result": model_to_dict(final),
         "rule_evaluation": rules_result,
         "image_object_keys": image_object_keys,
         "raw_model_outputs": {

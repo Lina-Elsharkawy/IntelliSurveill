@@ -75,9 +75,8 @@ export function getConfidence(item: VadReasoningListItem): number {
 
 export function getShortReason(item: VadReasoningListItem): string {
   const pfr = getPythonFinal(item);
-  if (pfr?.final_reason) return pfr.final_reason;
-  if (pfr?.downgrades && pfr.downgrades.length > 0) return pfr.downgrades[0];
-  
+  if (pfr?.final_decision_reason) return pfr.final_decision_reason;
+
   const llm = getLlmReview(item);
   if (llm?.decision_reason) return llm.decision_reason;
 

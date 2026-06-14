@@ -1,5 +1,7 @@
 import { VadReasoningListItem } from "@/services/vad_api";
-import { getFinalDecision, getSeverity, getConfidence, getFinalRecommendedAction, getShortReason, getDeepScore, getThresholdValue, getScoreRatio, getRatioBand, getGateDisplayName } from "./reasoningUtils";
+import { getFinalDecision, getSeverity, getConfidence, getFinalRecommendedAction, getShortReason, getGateDisplayName } from "./reasoningUtils";
+import { StatusBadge } from "./ReasoningBadges";
+import { formatDistanceToNow } from "date-fns";
 import { AlertTriangle, ShieldAlert, ShieldCheck, HelpCircle, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,10 +28,7 @@ export function FinalDecisionHeroCard({ item }: { item: VadReasoningListItem }) 
   const reason = getShortReason(item);
   const gateDisplayName = getGateDisplayName(item);
   
-  const score = getDeepScore(item);
-  const threshold = getThresholdValue(item);
-  const ratio = getScoreRatio(item);
-  const ratioBand = getRatioBand(ratio);
+
   
   const pfr = item.job.python_final_result_json || {};
   const vlm = item.job.vlm_result_json || {};
@@ -52,24 +51,24 @@ export function FinalDecisionHeroCard({ item }: { item: VadReasoningListItem }) 
     badgeColor = "text-emerald-500";
     icon = <ShieldCheck size={16} />;
   } else if (decision === "UNCERTAIN") {
-    colorClasses = "bg-amber-950/20 border-amber-900/50";
-    titleColor = "text-amber-500/70";
-    badgeColor = "text-amber-500";
+    colorClasses = "bg-blue-950/20 border-blue-900/50";
+    titleColor = "text-blue-500/70";
+    badgeColor = "text-blue-500";
     icon = <AlertTriangle size={16} />;
   }
 
   return (
-    <div className={`border rounded-xl p-4 mb-4 ${colorClasses}`}>
-      <div className="flex items-center justify-between mb-3 border-b border-zinc-800/50 pb-3">
-        <h2 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${titleColor}`}>
+    <div className={`border rounded-xl p-6 flex flex-col flex-1 min-h-[400px] ${colorClasses}`}>
+      <div className="flex items-center justify-between mb-6 border-b border-zinc-800/50 pb-4">
+        <h2 className={`text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${titleColor}`}>
           {icon} Final Reasoning Outcome
         </h2>
-        <div className="text-[9px] uppercase tracking-widest font-bold text-slate-500 border border-slate-700/50 px-2 py-0.5 rounded-full bg-black/20">
-          Authority: Python Guardrails
+        <div className="text-[10px] uppercase tracking-widest font-bold text-slate-500 border border-slate-700/50 px-3 py-1 rounded-full bg-black/20">
+          Authority: Python Validation
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
         {/* Left side: Primary Decision */}
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-baseline gap-4">
@@ -77,7 +76,7 @@ export function FinalDecisionHeroCard({ item }: { item: VadReasoningListItem }) 
             <div className="flex items-center gap-3">
               <div className="flex flex-col items-start gap-1">
                 <span className="text-[10px] text-slate-500 uppercase font-bold">Severity</span>
-                <Badge variant="outline" className={`bg-zinc-900 ${severity === 'CRITICAL' ? 'text-red-500 border-red-500/50' : severity === 'HIGH' ? 'text-orange-500 border-orange-500/50' : severity === 'MEDIUM' ? 'text-amber-500 border-amber-500/50' : severity === 'LOW' ? 'text-blue-500 border-blue-500/50' : 'text-slate-400 border-slate-500/50'}`}>{severity}</Badge>
+                <Badge variant="outline" className={`bg-zinc-900 ${severity === 'CRITICAL' ? 'text-red-500 border-red-500/50' : severity === 'HIGH' ? 'text-red-500 border-red-500/50' : severity === 'MEDIUM' ? 'text-blue-500 border-blue-500/50' : severity === 'LOW' ? 'text-emerald-500 border-emerald-500/50' : 'text-slate-400 border-slate-500/50'}`}>{severity}</Badge>
               </div>
               <div className="h-8 w-px bg-zinc-800"></div>
               <div className="flex flex-col">
@@ -100,9 +99,9 @@ export function FinalDecisionHeroCard({ item }: { item: VadReasoningListItem }) 
           </div>
           
           {needsHumanReview && (
-            <div className="bg-amber-950/30 border border-amber-900/50 rounded p-2 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
-              <span className="text-xs font-semibold text-amber-400">Human Review Recommended</span>
+            <div className="bg-blue-950/30 border border-blue-900/50 rounded p-2 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-blue-500" />
+              <span className="text-xs font-semibold text-blue-400">Human Review Recommended</span>
             </div>
           )}
         </div>
@@ -126,27 +125,17 @@ export function FinalDecisionHeroCard({ item }: { item: VadReasoningListItem }) 
               <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Event ID</span>
               <span className="text-xs font-mono text-slate-300">#{item.case?.event_id || "N/A"}</span>
             </div>
-          </div>
-          
-          <div className="bg-zinc-950/50 rounded-lg p-3 border border-zinc-800/50">
-            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2 block">Score Context</span>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="flex flex-col">
-                <span className="text-[9px] text-slate-500 uppercase font-bold">Peak / Threshold</span>
-                <span className="text-xs font-mono text-slate-300">{score ? score.toFixed(2) : "-"} / {threshold ? threshold.toFixed(2) : "-"}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[9px] text-slate-500 uppercase font-bold">Score Ratio</span>
-                <span className="text-xs font-mono text-slate-300">{ratio ? ratio.toFixed(2) : "-"}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[9px] text-slate-500 uppercase font-bold">Ratio Band</span>
-                <span className={`text-xs font-bold uppercase ${ratioBand === 'strong' ? 'text-red-400' : ratioBand === 'moderate' ? 'text-blue-400' : ratioBand === 'weak' ? 'text-amber-400' : 'text-slate-400'}`}>
-                  {ratioBand || "-"}
-                </span>
-              </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Status</span>
+              <StatusBadge status={item.job.status} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Queued</span>
+              <span className="text-xs font-semibold text-slate-300">{item.job.queued_at ? formatDistanceToNow(new Date(item.job.queued_at), { addSuffix: true }) : "-"}</span>
             </div>
           </div>
+          
+
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ import psycopg
 
 from .config import VadConfig
 from .db import VadDB
+from .evidence_keys import infer_evidence_role
 
 log = logging.getLogger("vad.reasoning_jobs")
 
@@ -32,16 +33,7 @@ def _ratio(score: Any, threshold: Any) -> float | None:
 
 
 def _role_from_object_key(object_key: str) -> str:
-    name = object_key.rsplit("/", 1)[-1]
-    if name == "annotated_frame.jpg":
-        return "annotated_frame"
-    if name == "tubelet_montage.jpg":
-        return "tubelet_montage"
-    if name == "event_metadata.json":
-        return "event_metadata"
-    if name.startswith("frames/") or "/frames/" in object_key:
-        return "tubelet_frame"
-    return "other"
+    return infer_evidence_role(object_key)
 
 
 def build_deep_reasoning_bundle(
@@ -506,6 +498,13 @@ def queue_pose_reasoning_job(
         event_policy=event_policy,
         evidence_result=evidence_result,
     )
+    # Pose reasoning currently shares Deep reasoning config (priority, prompt version,
+    # max attempts).  Both gates are controlled by the same env vars:
+    #   VAD_DEEP_REASONING_PRIORITY, VAD_DEEP_REASONING_PROMPT_VERSION,
+    #   VAD_DEEP_REASONING_MAX_ATTEMPTS.
+    # To tune Pose independently, add VAD_POSE_REASONING_PRIORITY etc. to config.py
+    # and introduce pose_reasoning_priority / pose_reasoning_prompt_version /
+    # pose_reasoning_max_attempts alias properties on VadConfig.
     job_id = db.insert_reasoning_job(
         conn,
         case_id=int(case_id),

@@ -15,6 +15,7 @@ import { PipelineTelemetry } from "@/components/vad/PipelineTelemetry";
 import { ConsoleLogs, LogEntry } from "@/components/vad/ConsoleLogs";
 import { EventToolbar, EventFilters } from "@/components/vad/EventToolbar";
 import { EmptyState } from "@/components/vad/EmptyState";
+import { filterAndSortVadEvents, isStreamOffline as getIsStreamOffline } from "@/components/vad/vadLabUtils";
 
 export const VadLab = () => {
   const { toast } = useToast();
@@ -141,24 +142,15 @@ export const VadLab = () => {
     }
   };
 
-  const filteredEvents = events.filter(e => {
-    if (filters.gate !== 'all' && e.gate_name !== filters.gate) return false;
-    return true;
-  }).sort((a, b) => {
-    if (filters.sortBy === 'newest') return new Date(b.start_ts).getTime() - new Date(a.start_ts).getTime();
-    if (filters.sortBy === 'highest_score') return b.peak_score - a.peak_score;
-    if (filters.sortBy === 'highest_ratio') {
-      const ratioA = a.threshold_value > 0 ? a.peak_score / a.threshold_value : 0;
-      const ratioB = b.threshold_value > 0 ? b.peak_score / b.threshold_value : 0;
-      return ratioB - ratioA;
-    }
-    return 0;
-  });
+  // Only gate-name filtering is applied at the page level.
+  // The status and evidence filters are intentionally delegated to the
+  // EventGrid/EventTable components, which receive the full paginatedEvents slice.
+  const filteredEvents = filterAndSortVadEvents(events, filters);
 
   const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
   const paginatedEvents = filteredEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const isStreamOffline = status?.running && (!status?.actual_sample_fps || status.actual_sample_fps === 0);
+  const isStreamOffline = getIsStreamOffline(status);
 
   return (
     <DashboardLayout>

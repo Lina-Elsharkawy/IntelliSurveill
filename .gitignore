@@ -31,6 +31,11 @@ target/
 *.class
 *.jar
 
-# Backend
+# Backend — Python compiled/cache artifacts
 __pycache__/
 *.pyc
+*.pyo
+
+# Backend — runtime files that must not be committed
+*.db
+debug_vad/
