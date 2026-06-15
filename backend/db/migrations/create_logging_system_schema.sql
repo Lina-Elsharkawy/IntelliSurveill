@@ -1,23 +1,26 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- ============================================
--- 1. Departments
+-- Clean Logging System Schema
+-- Legacy VAD/anomaly-learning tables removed.
+--
+-- Removed legacy tables:
+-- departments, labs, anomalies, department_lab_access,
+-- employee_lab_access, anomalies_logs, normal_behavior_models,
+-- normal_behavior_model_artifacts, anomaly_gate_configs,
+-- anomaly_thresholds, scene_window_embeddings,
+-- anomaly_candidates, candidate_gate_decisions,
+-- reasoning_jobs, ollama_jobs,
+-- anomaly_candidate_review, anomaly_candidate_feedback.
+--
+-- NOTE:
+-- employees.department_id and cameras.lab_id are kept as plain BIGINT
+-- columns for application compatibility, but their foreign keys were removed
+-- because departments/labs are no longer part of this schema.
 -- ============================================
-CREATE TABLE IF NOT EXISTS departments (
-    id   BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    name TEXT NOT NULL
-);
 
 -- ============================================
--- 2. Labs
--- ============================================
-CREATE TABLE IF NOT EXISTS labs (
-    id   BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    name TEXT NOT NULL
-);
-
--- ============================================
--- 3. Schedules
+-- 1. Schedules
 -- ============================================
 CREATE TABLE IF NOT EXISTS schedules (
     id                   BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -30,16 +33,7 @@ CREATE TABLE IF NOT EXISTS schedules (
 );
 
 -- ============================================
--- 4. Anomaly Definitions
--- ============================================
-CREATE TABLE IF NOT EXISTS anomalies (
-    id             BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    description    TEXT,
-    severity_level TEXT
-);
-
--- ============================================
--- 5. Visitors
+-- 2. Visitors
 -- ============================================
 CREATE TABLE IF NOT EXISTS visitors (
     id           BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -50,26 +44,26 @@ CREATE TABLE IF NOT EXISTS visitors (
 );
 
 -- ============================================
--- 6. Employees
+-- 3. Employees
 -- ============================================
 CREATE TABLE IF NOT EXISTS employees (
     id            BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     name          TEXT NOT NULL,
-    department_id BIGINT REFERENCES departments(id)
+    department_id BIGINT NULL
 );
 
 -- ============================================
--- 7. Cameras
+-- 4. Cameras
 -- ============================================
 CREATE TABLE IF NOT EXISTS cameras (
     id       BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     name     TEXT,
     location TEXT,
-    lab_id   BIGINT REFERENCES labs(id)
+    lab_id   BIGINT NULL
 );
 
 -- ============================================
--- 8. Detected People
+-- 5. Detected People
 -- ============================================
 CREATE TABLE IF NOT EXISTS detected_people (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -81,27 +75,7 @@ CREATE TABLE IF NOT EXISTS detected_people (
 );
 
 -- ============================================
--- 9. Department Lab Access
--- ============================================
-CREATE TABLE IF NOT EXISTS department_lab_access (
-    id            BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    department_id BIGINT REFERENCES departments(id),
-    lab_id        BIGINT REFERENCES labs(id),
-    schedule_id   BIGINT REFERENCES schedules(id)
-);
-
--- ============================================
--- 10. Employee Lab Access
--- ============================================
-CREATE TABLE IF NOT EXISTS employee_lab_access (
-    id          BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    employee_id BIGINT REFERENCES employees(id),
-    lab_id      BIGINT REFERENCES labs(id),
-    schedule_id BIGINT REFERENCES schedules(id)
-);
-
--- ============================================
--- 11. Entry Logs
+-- 6. Entry Logs
 -- ============================================
 CREATE TABLE IF NOT EXISTS entry_logs (
     id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -118,29 +92,7 @@ CREATE TABLE IF NOT EXISTS entry_logs (
 );
 
 -- ============================================
--- 12. Anomalies Logs
--- ============================================
-CREATE TABLE IF NOT EXISTS anomalies_logs (
-    id          BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    "timestamp" TIMESTAMPTZ DEFAULT now(),
-    detected_id BIGINT REFERENCES detected_people(id),
-    camera_id   BIGINT REFERENCES cameras(id),
-    anomaly_id  BIGINT REFERENCES anomalies(id)
-);
-
-CREATE OR REPLACE VIEW anomalies_logs_view AS
-SELECT
-    al.id,
-    al."timestamp",
-    al.detected_id,
-    al.camera_id,
-    a.description,
-    a.severity_level
-FROM anomalies_logs al
-JOIN anomalies a ON al.anomaly_id = a.id;
-
--- ============================================
--- 13. Face Embeddings
+-- 7. Face Embeddings
 -- ============================================
 CREATE TABLE IF NOT EXISTS face_embeddings (
     id               BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -173,7 +125,7 @@ ON face_embeddings (detected_id, created_at)
 WHERE notes = 'auto_learned';
 
 -- ============================================
--- 14. Unknown Face Events
+-- 8. Unknown Face Events
 -- ============================================
 CREATE TABLE IF NOT EXISTS unknown_face_events (
     id                   BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -194,7 +146,7 @@ CREATE INDEX IF NOT EXISTS unknown_face_events_embedding_hnsw_cosine
 ON unknown_face_events USING hnsw (embedding vector_cosine_ops);
 
 -- ============================================
--- 15. Edge Device Registry
+-- 9. Edge Device Registry
 -- ============================================
 CREATE TABLE IF NOT EXISTS edge_devices (
     id         BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -208,290 +160,83 @@ CREATE INDEX IF NOT EXISTS edge_devices_device_key_idx
 ON edge_devices (device_key);
 
 -- ============================================
--- 16. Normal Behavior Model Registry
+-- 10. Anomaly Rules
+-- Current rule-management table retained.
 -- ============================================
-CREATE TABLE IF NOT EXISTS normal_behavior_models (
-    id             BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    name           TEXT NOT NULL DEFAULT 'videomae_student_v3',
-    version        TEXT NOT NULL,
-    teacher_model  TEXT NOT NULL DEFAULT 'MCG-NJU/videomae-base',
-    extract_layers TEXT NOT NULL DEFAULT '4,8,12',
-    student_model  TEXT NOT NULL DEFAULT 'student-v3-multiscale',
-    embedding_dim  INT  NOT NULL DEFAULT 2304,
-    num_frames     INT  NOT NULL DEFAULT 16,
-    window_stride  INT  NOT NULL DEFAULT 8,
-    image_size     INT  NOT NULL DEFAULT 224,
-    artifact_uri   TEXT NULL,
-    is_active      BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
-    notes          TEXT NULL,
-    CONSTRAINT normal_behavior_models_embedding_dim_chk CHECK (embedding_dim > 0),
-    CONSTRAINT normal_behavior_models_name_version_uniq UNIQUE (name, version)
-);
-
--- Only one active model at a time
-CREATE UNIQUE INDEX IF NOT EXISTS normal_behavior_models_one_active_idx
-ON normal_behavior_models (is_active)
-WHERE is_active = TRUE;
-
--- ============================================
--- 17. Anomaly Thresholds
---     p95 thresholds from offline val set scoring.
---     Stored here so the backend service can read
---     them without hardcoding.
--- ============================================
-CREATE TABLE IF NOT EXISTS anomaly_thresholds (
-    id                BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    model_id          BIGINT NOT NULL REFERENCES normal_behavior_models(id) ON DELETE CASCADE,
-    l2_p95            REAL NOT NULL,
-    mse_p95           REAL NOT NULL,
-    cos_p95           REAL NOT NULL,
-    val_samples       INT  NOT NULL DEFAULT 0,
-    min_metrics_agree INT  NOT NULL DEFAULT 2,
-    min_consecutive   INT  NOT NULL DEFAULT 2,
-    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-    notes             TEXT NULL,
-    CONSTRAINT anomaly_thresholds_model_uniq UNIQUE (model_id)
-);
-
--- ============================================
--- 18. Scene Window Embeddings
---     One row per tubelet received from edge.
--- ============================================
-CREATE TABLE IF NOT EXISTS scene_window_embeddings (
-    id        BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    model_id  BIGINT NOT NULL REFERENCES normal_behavior_models(id) ON DELETE RESTRICT,
-    device_id BIGINT NULL     REFERENCES edge_devices(id)            ON DELETE SET NULL,
-    camera_id BIGINT NULL     REFERENCES cameras(id)                 ON DELETE SET NULL,
-    track_id  INT NULL,
-    window_start_ts   TIMESTAMPTZ NOT NULL,
-    window_end_ts     TIMESTAMPTZ NULL,
-    event_key         TEXT NULL,
-    student_embedding vector(2304) NOT NULL,
-    teacher_embedding vector(2304) NULL,
-    frames            TEXT[] NULL,
-    l2_score          REAL NULL,
-    mse_score         REAL NULL,
-    cosine_distance   REAL NULL,
-    l2_flag           BOOLEAN NULL,
-    mse_flag          BOOLEAN NULL,
-    cos_flag          BOOLEAN NULL,
-    metrics_agreed    INT NULL,
-    is_anomalous      BOOLEAN NULL,
-    embedding_model   TEXT NOT NULL DEFAULT 'student-v3-multiscale',
-    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT scene_window_embeddings_time_chk
-        CHECK (window_end_ts IS NULL OR window_end_ts >= window_start_ts),
-    CONSTRAINT scene_window_embeddings_scores_chk
-        CHECK (
-            (l2_score        IS NULL OR l2_score        >= 0) AND
-            (mse_score       IS NULL OR mse_score        >= 0) AND
-            (cosine_distance IS NULL OR cosine_distance  >= 0)
+CREATE TABLE IF NOT EXISTS anomaly_rules (
+    id          BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    rule_text   TEXT NOT NULL,
+    rule_type   VARCHAR(20) NOT NULL CHECK (rule_type IN ('trigger','suppress')),
+    event_type  VARCHAR(50) NOT NULL CHECK (
+        event_type IN (
+            'intrusion',
+            'loitering',
+            'after_hours',
+            'fall_detected',
+            'fight_detection',
+            'camera_tamper',
+            'sudden_movement',
+            'smoke_fire',
+            'crowd_detection',
+            'other'
         )
+    ),
+    conditions  JSONB NOT NULL,
+    source      VARCHAR(50) NOT NULL CHECK (source IN ('Admin','Learned')),
+    active      BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
-CREATE UNIQUE INDEX IF NOT EXISTS scene_window_embeddings_event_key_uniq
-ON scene_window_embeddings (event_key)
-WHERE event_key IS NOT NULL;
-
-CREATE INDEX IF NOT EXISTS scene_window_embeddings_ts_idx
-ON scene_window_embeddings (window_start_ts);
-
-CREATE INDEX IF NOT EXISTS scene_window_embeddings_model_idx
-ON scene_window_embeddings (model_id);
-
-CREATE INDEX IF NOT EXISTS scene_window_embeddings_camera_track_ts_idx
-ON scene_window_embeddings (camera_id, track_id, window_start_ts);
-
-CREATE INDEX IF NOT EXISTS scene_window_embeddings_anomalous_idx
-ON scene_window_embeddings (camera_id, track_id, window_start_ts)
-WHERE is_anomalous = TRUE;
-
--- ============================================
--- 19. Anomaly Candidates
---     Created when a window passes all filtering
---     stages and is sent to Ollama for reasoning.
--- ============================================
-CREATE TABLE IF NOT EXISTS anomaly_candidates (
-    id                        BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    scene_window_embedding_id BIGINT NOT NULL
-        REFERENCES scene_window_embeddings(id) ON DELETE CASCADE,
-    reason     TEXT NOT NULL DEFAULT 'student_teacher_l2_distance',
-    status     TEXT NOT NULL DEFAULT 'pending'
-                 CHECK (status IN ('pending','sent_to_llm','resolved','discarded','failed')),
-    image_ref  TEXT NULL,
-    video_ref  TEXT NULL,
-    run_id     TEXT NULL,
-    l2_score   REAL NULL,
-    alert_decision TEXT NULL CHECK (alert_decision IN ('YES','NO')),
-    severity   TEXT NULL CHECK (severity IN ('LOW','MEDIUM','HIGH')),
-    decision_reason TEXT NULL,
-    resolved_at TIMESTAMPTZ NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS anomaly_candidates_status_idx
-ON anomaly_candidates (status);
-
-CREATE INDEX IF NOT EXISTS anomaly_candidates_pending_idx
-ON anomaly_candidates (created_at)
-WHERE status = 'pending';
-
-CREATE OR REPLACE FUNCTION anomaly_candidates_set_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = now();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_anomaly_candidates_updated ON anomaly_candidates;
-CREATE TRIGGER trg_anomaly_candidates_updated
-BEFORE UPDATE ON anomaly_candidates
-FOR EACH ROW EXECUTE FUNCTION anomaly_candidates_set_updated_at();
-
--- ============================================
--- 20. Anomaly Rules
---     Natural language rules written by admins
---     during candidate review or proactively.
---     Injected into the LLM reasoning prompt so
---     the model evaluates future candidates
---     against admin-defined expectations.
---
---     anomaly_candidates must exist before this
---     table so source_candidate_id FK is valid.
--- ============================================
--- CREATE TABLE IF NOT EXISTS anomaly_rules (
---     id          BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-
---     -- The rule itself — natural language
---     rule_text   TEXT NOT NULL,
-
---     -- Who wrote it and why (traceability)
---     reviewer    TEXT NULL,
---     source_candidate_id BIGINT NULL
---         REFERENCES anomaly_candidates(id) ON DELETE SET NULL,
-
---     -- Scope — NULL means global (applies everywhere)
---     camera_id   BIGINT NULL REFERENCES cameras(id) ON DELETE SET NULL,
---     lab_id      BIGINT NULL REFERENCES labs(id)    ON DELETE SET NULL,
-
---     -- Whether this rule describes anomalous OR normal behavior:
---     --   'anomalous' -> LLM should alert if this is seen
---     --   'normal'    -> LLM should NOT alert if this is seen
---     rule_type   TEXT NOT NULL DEFAULT 'anomalous'
---                   CHECK (rule_type IN ('anomalous', 'normal')),
-
---     is_active   BOOLEAN NOT NULL DEFAULT TRUE,
---     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
--- );
 
 CREATE INDEX IF NOT EXISTS anomaly_rules_active_idx
-ON anomaly_rules (is_active, camera_id);
+ON anomaly_rules (active);
 
-CREATE INDEX IF NOT EXISTS anomaly_rules_camera_idx
-ON anomaly_rules (camera_id)
-WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS anomaly_rules_event_type_idx
+ON anomaly_rules (event_type);
 
--- ============================================
--- 21. Anomaly Candidate Review
---     Admin review of a specific candidate.
---     Admin confirms/dismisses AND optionally
---     writes a rule that guides future LLM
---     reasoning for similar events.
--- ============================================
-CREATE TABLE IF NOT EXISTS anomaly_candidate_review (
-    id                   BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    anomaly_candidate_id BIGINT NOT NULL
-        REFERENCES anomaly_candidates(id) ON DELETE CASCADE,
-
-    -- Admin decision on this specific candidate
-    decision    TEXT NOT NULL
-                  CHECK (decision IN ('confirmed','dismissed','uncertain')),
-
-    -- Optional rule text + FK to the rule row that was created
-    rule_text        TEXT NULL,
-    created_rule_id  BIGINT NULL
-        REFERENCES anomaly_rules(id) ON DELETE SET NULL,
-
-    reviewer    TEXT NULL,
-    notes       TEXT NULL,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS anomaly_candidate_review_candidate_idx
-ON anomaly_candidate_review (anomaly_candidate_id);
-
-CREATE INDEX IF NOT EXISTS anomaly_candidate_review_decision_idx
-ON anomaly_candidate_review (decision, created_at);
+CREATE INDEX IF NOT EXISTS anomaly_rules_created_idx
+ON anomaly_rules (created_at DESC);
 
 -- ============================================
--- 22. Ollama Jobs
+-- 11. Rule Conflicts
 -- ============================================
-CREATE TABLE IF NOT EXISTS ollama_jobs (
-    id                   BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    anomaly_candidate_id BIGINT NOT NULL
-        REFERENCES anomaly_candidates(id) ON DELETE CASCADE,
-    model_name           TEXT NOT NULL DEFAULT 'llama3.2:1b',
-    prompt               TEXT NOT NULL,
-    request_json         JSONB NULL,
-    status               TEXT NOT NULL DEFAULT 'queued'
-        CHECK (status IN ('queued','running','succeeded','failed')),
-    response_text        TEXT NULL,
-    response_json        JSONB NULL,
-    error                TEXT NULL,
-    created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
-    started_at           TIMESTAMPTZ NULL,
-    finished_at          TIMESTAMPTZ NULL
-);
-
--- ============================================
--- 23. Anomaly Rules
--- ============================================
-CREATE TABLE IF NOT EXISTS Anomaly_Rules (
-    id                   BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    rule_text            TEXT NOT NULL,
-    rule_type            VARCHAR(20) NOT NULL CHECK (rule_type IN ('trigger','suppress')),
-    event_type           VARCHAR(50) NOT NULL CHECK (event_type IN ('intrusion', 'loitering', 'after_hours', 'fall_detected', 'fight_detection', 'camera_tamper', 'sudden_movement', 'smoke_fire', 'crowd_detection','other')),
-    conditions           JSONB NOT NULL,
-    source               VARCHAR(50) NOT NULL CHECK (source IN ('Admin','Learned')),
-    active               BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at           TIMESTAMPTZ NOT NULL DEFAULT now()
-);
--- ============================================
--- 24. Rule Conflicts
--- ============================================
-CREATE TABLE rule_conflicts (
-    id SERIAL PRIMARY KEY,
-    rule_id_1 VARCHAR,
-    rule_id_2 VARCHAR,
+CREATE TABLE IF NOT EXISTS rule_conflicts (
+    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    rule_id_1       VARCHAR,
+    rule_id_2       VARCHAR,
     conflict_reason TEXT,
-    status VARCHAR DEFAULT 'pending', -- pending, resolved, ignored
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    status          VARCHAR DEFAULT 'pending', -- pending, resolved, ignored
+    created_at      TIMESTAMPTZ DEFAULT now()
 );
+
+CREATE INDEX IF NOT EXISTS rule_conflicts_status_idx
+ON rule_conflicts (status);
+
+CREATE INDEX IF NOT EXISTS rule_conflicts_created_idx
+ON rule_conflicts (created_at DESC);
+
 -- ============================================
--- Audit Logs Table
--- Tracks all user-driven actions in the system
+-- 12. Audit Logs
+-- Tracks all user-driven actions in the system.
 -- ============================================
 CREATE TABLE IF NOT EXISTS audit_logs (
     id           BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     user_email   TEXT NOT NULL,
     action       TEXT NOT NULL,        -- e.g. 'CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT'
-    resource     TEXT,                 -- e.g. 'camera', 'employee', 'anomaly_candidate', 'rule'
-    resource_id  TEXT,                 -- stringified ID of the affected entity (nullable for login/logout)
+    resource     TEXT,                 -- e.g. 'camera', 'employee', 'rule'
+    resource_id  TEXT,                 -- stringified ID of the affected entity, nullable for login/logout
     details      JSONB,                -- arbitrary context: old/new values, extra info
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS audit_logs_user_idx     ON audit_logs (user_email);
-CREATE INDEX IF NOT EXISTS audit_logs_action_idx   ON audit_logs (action);
-CREATE INDEX IF NOT EXISTS audit_logs_resource_idx ON audit_logs (resource);
-CREATE INDEX IF NOT EXISTS audit_logs_created_idx  ON audit_logs (created_at DESC);
+CREATE INDEX IF NOT EXISTS audit_logs_user_idx
+ON audit_logs (user_email);
 
-CREATE INDEX IF NOT EXISTS ollama_jobs_status_idx
-ON ollama_jobs (status);
+CREATE INDEX IF NOT EXISTS audit_logs_action_idx
+ON audit_logs (action);
 
-CREATE INDEX IF NOT EXISTS ollama_jobs_queue_idx
-ON ollama_jobs (status, created_at);
+CREATE INDEX IF NOT EXISTS audit_logs_resource_idx
+ON audit_logs (resource);
+
+CREATE INDEX IF NOT EXISTS audit_logs_created_idx
+ON audit_logs (created_at DESC);
