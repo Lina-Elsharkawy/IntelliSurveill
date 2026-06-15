@@ -47,9 +47,4 @@ export async function getLogsByLocation(location: string): Promise<Log[]> {
     return apiGet<Log[]>(`/api/logs/location/${encodeURIComponent(location)}`);
 }
 
-/**
- * Get logs by anomaly ID.
- */
-export async function getLogsByAnomaly(anomalyId: number): Promise<Log[]> {
-    return apiGet<Log[]>(`/api/logs/anomaly/${anomalyId}`);
-}
+

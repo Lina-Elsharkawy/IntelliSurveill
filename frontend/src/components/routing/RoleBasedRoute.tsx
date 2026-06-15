@@ -13,7 +13,7 @@ const RoleBasedRoute = ({ element, allowedRoles }: Props) => {
 
     const hasAccess = roles ? roles.some(role => allowedRoles.includes(role)) : false;
 
-    return hasAccess ? element : <Navigate to="/dashboard" replace />;
+    return hasAccess ? element : <Navigate to="/analytics" replace />;
 };
 
 export default RoleBasedRoute;

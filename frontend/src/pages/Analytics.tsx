@@ -1,14 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-// Assuming you have a Select component in your ui folder
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Activity, Users, Clock, ScanFace, Camera } from "lucide-react";
 import { VolumeChart, RatioDonut, CameraDistribution, MarginRiskAnalysis, QualityTrendChart } from "../components/AnalyticsCharts";
 import { analyticsService, EntryLog, AnalyticsMetrics } from "../services/analyticsService";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AnomalyAnalyticsTab } from "../components/AnomalyAnalyticsTab";
 
 type TimeRange = "today" | "7days" | "30days";
 
@@ -46,46 +42,38 @@ export default function AnalyticsPage() {
     analyticsService.calculateMetrics(filteredLogs), 
   [filteredLogs]);
 
-
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div className="mb-2">
           <h1 className="text-3xl font-bold text-foreground mb-1">Analytics Dashboard</h1>
-          <p className="text-muted-foreground text-sm">Operational overview of face recognition and anomaly detection</p>
+          <p className="text-muted-foreground text-sm">Operational overview of face recognition activity</p>
         </div>
 
-        <Tabs defaultValue="face" className="w-full">
-          <TabsList className="bg-zinc-950/80 border border-zinc-800 p-1 rounded-xl shadow-inner shadow-black/50 mb-4">
-            <TabsTrigger value="face" className="rounded-lg data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-400 data-[state=active]:shadow-sm transition-all duration-300">Face Analytics</TabsTrigger>
-            <TabsTrigger value="anomaly" className="rounded-lg data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-400 data-[state=active]:shadow-sm transition-all duration-300">Anomaly Analytics</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="face" className="space-y-6">
-            <div className="flex justify-end gap-4 items-center">
-               <Select value={timeRange} onValueChange={(val) => setTimeRange(val as TimeRange)}>
-                  <SelectTrigger className="w-[150px] bg-zinc-950/60 border-zinc-800 hover:border-emerald-500/40 focus:border-emerald-500/50 transition-colors text-sm">
-                    <SelectValue placeholder="Select Time" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-950 border-zinc-800">
-                    <SelectItem value="today">Today</SelectItem>
-                    <SelectItem value="7days">Last 7 Days</SelectItem>
-                    <SelectItem value="30days">Last 30 Days</SelectItem>
-                  </SelectContent>
-                </Select>
-            </div>
+        {/* Time range filter */}
+        <div className="flex justify-end gap-4 items-center">
+          <Select value={timeRange} onValueChange={(val) => setTimeRange(val as TimeRange)}>
+            <SelectTrigger className="w-[150px] bg-zinc-950/60 border-zinc-800 hover:border-emerald-500/40 focus:border-emerald-500/50 transition-colors text-sm">
+              <SelectValue placeholder="Select Time" />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-950 border-zinc-800">
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="7days">Last 7 Days</SelectItem>
+              <SelectItem value="30days">Last 30 Days</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-            {loading ? (
-               <div className="flex flex-col items-center justify-center gap-3 py-20 text-zinc-500">
-                 <div className="flex gap-1.5">
-                   {[0,1,2].map(i => (
-                     <span key={i} className="w-2 h-2 rounded-full bg-emerald-500/50 animate-bounce" style={{ animationDelay: `${i * 120}ms` }} />
-                   ))}
-                 </div>
-                 <p className="text-sm tracking-wide">Processing telemetry…</p>
-               </div>
-            ) : (
+        {loading ? (
+           <div className="flex flex-col items-center justify-center gap-3 py-20 text-zinc-500">
+             <div className="flex gap-1.5">
+               {[0,1,2].map(i => (
+                 <span key={i} className="w-2 h-2 rounded-full bg-emerald-500/50 animate-bounce" style={{ animationDelay: `${i * 120}ms` }} />
+               ))}
+             </div>
+             <p className="text-sm tracking-wide">Processing telemetry…</p>
+           </div>
+        ) : (
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <StatCard title="Total Detections" value={metrics.total} icon={<ScanFace className="w-5 h-5 text-blue-500" />} />
@@ -112,12 +100,6 @@ export default function AnalyticsPage() {
             </div>
           </>
         )}
-          </TabsContent>
-          
-          <TabsContent value="anomaly">
-            <AnomalyAnalyticsTab />
-          </TabsContent>
-        </Tabs>
       </div>
     </DashboardLayout>
   );

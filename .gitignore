@@ -39,3 +39,31 @@ __pycache__/
 # Backend — runtime files that must not be committed
 *.db
 debug_vad/
+
+# Local downloaded CLIP / Hugging Face model caches
+backend/models/clip/
+backend/models/clip/**
+
+
+# Hugging Face / transformer caches if created locally
+**/.cache/
+**/huggingface/
+**/models--*/
+
+# Large/generated AI artifacts
+*.onnx
+*.engine
+*.trt
+*.pt
+*.pth
+*.safetensors
+*.joblib
+*.npy
+*.npz
+
+# Local VAD/runtime evidence/artifacts
+vad_evidence/
+evidence/
+minio_data/
+postgres_data/
+pgdata/

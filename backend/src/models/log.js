@@ -2,8 +2,6 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../db/connection');
 const DetectedPerson = require('./detected_person');
 const Camera = require('./camera');
-const Anomaly = require('./anomaly');
-
 const Log = sequelize.define('Log', {
   id: { type: DataTypes.BIGINT, primaryKey: true, autoIncrement: true },
   timestamp: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
@@ -22,6 +20,5 @@ const Log = sequelize.define('Log', {
 
 Log.belongsTo(DetectedPerson, { foreignKey: 'detected_id' });
 Log.belongsTo(Camera, { foreignKey: 'camera_id' });
-Log.belongsTo(Anomaly, { foreignKey: 'anomaly_id' });
 
 module.exports = Log;

@@ -10,7 +10,6 @@ import {
     getLogsByEventType,
     getLogsByAuthorization,
     getLogsByLocation,
-    getLogsByAnomaly,
 } from '@/services/logs';
 import { mockFetch } from '../mocks/api';
 import type { Log } from '@/types/types';
@@ -95,14 +94,5 @@ describe('Logs Service', () => {
             expect(result).toEqual([mockLog]);
         });
     });
-
-    describe('getLogsByAnomaly', () => {
-        it('should fetch logs by anomaly ID', async () => {
-            mockFetch([mockLog]);
-
-            const result = await getLogsByAnomaly(1);
-
-            expect(result).toEqual([mockLog]);
-        });
-    });
 });
+

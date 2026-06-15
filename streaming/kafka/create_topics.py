@@ -2,8 +2,11 @@
 """
 Kafka Topic Management Script
 
-Creates required Kafka topics for the streaming pipeline.
+Creates required Kafka topics for the active streaming pipeline.
 Idempotent: safe to run multiple times.
+
+Legacy anomaly-service topics were intentionally removed because the current VAD
+pipeline runs backend-direct and no longer consumes edge anomaly events.
 """
 
 import argparse
@@ -15,7 +18,6 @@ import time
 from kafka.admin import KafkaAdminClient, NewTopic
 from kafka.errors import TopicAlreadyExistsError, NoBrokersAvailable
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -24,15 +26,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_TOPICS = [
     {"name": "face_events", "partitions": 3, "replication_factor": 1},
-    {"name": "anomaly_events", "partitions": 3, "replication_factor": 1},
-    {"name": "logs", "partitions": 3, "replication_factor": 1},
-    {"name": "anomalies", "partitions": 3, "replication_factor": 1},
-    {"name": "frequency_alerts", "partitions": 3, "replication_factor": 1},
-    {"name": "anomaly-config", "partitions": 1, "replication_factor": 1},
-    # New VAD pipeline: Jetson uploads frames to MinIO, then Kafka carries only frame refs.
-    {"name": "vad.frames.uploaded", "partitions": 3, "replication_factor": 1},
 ]
-
 
 
 def create_admin_client(bootstrap_servers: str, max_retries: int = 10, retry_delay: int = 5) -> KafkaAdminClient:

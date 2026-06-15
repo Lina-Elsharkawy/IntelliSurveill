@@ -3,8 +3,6 @@ import os
 import time
 import hashlib
 import mimetypes
-import re
-from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
@@ -64,28 +62,6 @@ def _ensure_bucket(client: Minio, bucket: str) -> None:
 
 
 
-def _safe_path_part(value: Optional[str], fallback: str = "unknown") -> str:
-    """Return a filesystem/S3-key safe path segment."""
-    text = (value or fallback).strip()
-    text = re.sub(r"[^A-Za-z0-9_.-]+", "_", text)
-    return text.strip("._") or fallback
-
-
-def _parse_capture_dt(captured_at: Optional[str]) -> datetime:
-    """Parse ISO timestamp, falling back to current UTC for object-key partitioning."""
-    if captured_at:
-        try:
-            raw = captured_at.strip()
-            if raw.endswith("Z"):
-                raw = raw[:-1] + "+00:00"
-            dt = datetime.fromisoformat(raw)
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
-            return dt.astimezone(timezone.utc)
-        except Exception:
-            pass
-    return datetime.now(timezone.utc)
-
 def _build_object_key(
     kind: str,
     camera_id: int,
@@ -96,76 +72,22 @@ def _build_object_key(
     camera_key: Optional[str] = None,
     captured_at: Optional[str] = None,
 ) -> str:
+    """Compute the object key for active evidence uploads.
+
+    Active supported kind:
+      * face – single face image per event
+
+    The legacy edge anomaly/VAD upload kinds were removed because the current
+    VAD pipeline is backend-direct and writes its own VAD evidence.
     """
-    Compute the object key for a given upload type.
-
-    Supported kinds:
-
-      * face   – single face JPEG per event
-      * raw_frame – raw sampled VAD frame uploaded by the edge/Jetson
-      * anomaly – person‐crop frames from the deprecated student pipeline
-      * person_clip – MP4 clip of the tracked person (requires track_id)
-      * context_clip – MP4 clip of the scene around the person (requires track_id)
-      * representative_frame – single representative JPEG for the tubelet (requires track_id)
-      * metadata – JSON metadata for the tubelet (requires track_id)
-      * misc – fallback for unknown kinds
-
-    For the new tubelet types, the key structure is:
-
-      tubelets/cam_{camera_id}/track_{track_id}/{event_id}/<file>
-
-    where <file> is one of person.mp4, context.mp4, representative.jpg or metadata.json.
-    """
-    # Normalize extension: default to jpg for images, mp4 for clips, json for metadata.
     ext = (ext or "").lstrip(".").lower()
 
-    # Legacy face upload: one image per event
     if kind == "face":
         use_ext = ext or "jpg"
         return f"faces/cam_{camera_id}/{event_id}.{use_ext}"
 
-    # New VAD raw-frame upload: Jetson sends sampled frames only; backend does all AI.
-    if kind == "raw_frame":
-        use_ext = ext or "jpg"
-        cam_part = _safe_path_part(camera_key, f"cam_{camera_id}")
-        dt = _parse_capture_dt(captured_at)
-        if frame_index is not None:
-            filename = f"frame_{frame_index:012d}.{use_ext}"
-        else:
-            filename = f"{_safe_path_part(event_id)}.{use_ext}"
-        return (
-            f"frames/{cam_part}/{dt.year:04d}/{dt.month:02d}/{dt.day:02d}/"
-            f"{dt.hour:02d}/{filename}"
-        )
+    raise ValueError(f"Unsupported evidence kind={kind!r}; only 'face' is supported by this gateway.")
 
-    # Legacy anomaly upload: frames from the old pipeline
-    if kind == "anomaly":
-        use_ext = ext or "jpg"
-        if frame_index is not None:
-            return f"anomalies/cam_{camera_id}/{event_id}/frame_{frame_index:06d}.{use_ext}"
-        return f"anomalies/cam_{camera_id}/{event_id}/{event_id}.{use_ext}"
-
-    # New dual‐stream upload types
-    if kind in ("person_clip", "context_clip", "representative_frame", "metadata"):
-        if track_id is None:
-            raise ValueError(f"track_id is required for kind={kind}")
-        base_path = f"tubelets/cam_{camera_id}/track_{track_id}/{event_id}"
-        if kind == "person_clip":
-            use_ext = ext or "mp4"
-            return f"{base_path}/person.{use_ext}"
-        if kind == "context_clip":
-            use_ext = ext or "mp4"
-            return f"{base_path}/context.{use_ext}"
-        if kind == "representative_frame":
-            use_ext = ext or "jpg"
-            return f"{base_path}/representative.{use_ext}"
-        if kind == "metadata":
-            use_ext = ext or "json"
-            return f"{base_path}/metadata.{use_ext}"
-
-    # Default fallback: store in misc
-    use_ext = ext or "jpg"
-    return f"misc/cam_{camera_id}/{event_id}.{use_ext}"
 def _parse_s3_ref(ref: str) -> tuple[str, str]:
     """
     Parse s3://bucket/object/key.jpg into (bucket, object_key).
@@ -198,7 +120,7 @@ def _build_minio_client() -> Minio:
 # App
 # ---------------------------------------------------------------------------
 
-app = FastAPI(title=APP_NAME, version="2.0.0")
+app = FastAPI(title=APP_NAME, version="2.1.0")
 
 # Single shared Minio client — avoids reconnecting on every request
 _minio: Optional[Minio] = None
@@ -247,29 +169,17 @@ async def upload_evidence(
     """
     Upload a piece of evidence to MinIO.
 
-    ``kind`` determines how the object key is constructed.  Supported values are:
+    ``kind`` determines how the object key is constructed.
+
+    Active supported value:
 
       * ``face`` – single face image per event
-      * ``raw_frame`` – raw 5 fps VAD frame uploaded by the Jetson/edge node
-      * ``anomaly`` – deprecated anomaly frame uploads
-      * ``person_clip`` – MP4 clip of a person tubelet (requires ``track_id``)
-      * ``context_clip`` – MP4 clip of the scene around the person (requires ``track_id``)
-      * ``representative_frame`` – JPEG snapshot for the tubelet (requires ``track_id``)
-      * ``metadata`` – JSON metadata for the tubelet (requires ``track_id``)
 
-    If an unknown ``kind`` is supplied, the object will be stored in the
-    ``misc`` folder.
+    Legacy edge anomaly/VAD upload kinds were removed because the current VAD
+    service is backend-direct and stores VAD evidence itself.
     """
     kind = (kind or "").strip().lower()
-    allowed_kinds = {
-        "face",
-        "raw_frame",
-        "anomaly",
-        "person_clip",
-        "context_clip",
-        "representative_frame",
-        "metadata",
-    }
+    allowed_kinds = {"face"}
     if kind not in allowed_kinds:
         raise HTTPException(
             status_code=400,

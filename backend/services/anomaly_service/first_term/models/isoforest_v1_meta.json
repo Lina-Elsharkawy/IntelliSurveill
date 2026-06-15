@@ -1,5 +1,0 @@
-{
-  "dim": 128,
-  "threshold_p5": 1.3877787807814457e-17,
-  "method": "IsolationForest"
-}

@@ -21,16 +21,6 @@ export interface HealthResponse {
 }
 
 // ========================
-// Anomaly Types
-// ========================
-
-export interface Anomaly {
-    id: number;
-    description: string;
-    severity_level: string;
-}
-
-// ========================
 // Camera Types
 // ========================
 
@@ -48,19 +38,6 @@ export interface CameraInput {
 }
 
 // ========================
-// Department Types
-// ========================
-
-export interface Department {
-    id: number;
-    name: string;
-}
-
-export interface DepartmentInput {
-    name: string;
-}
-
-// ========================
 // Employee Types
 // ========================
 
@@ -73,19 +50,6 @@ export interface Employee {
 export interface EmployeeInput {
     name: string;
     department_id?: number;
-}
-
-// ========================
-// Lab Types
-// ========================
-
-export interface Lab {
-    id: number;
-    name: string;
-}
-
-export interface LabInput {
-    name: string;
 }
 
 // ========================
@@ -206,74 +170,6 @@ export interface Notification {
     is_read: boolean;
     created_at: string;
 }
-
-// ========================
-// Candidates Types
-// ========================
-
-export type AnomalyCandidate = {
-    id: number;
-    scene_window_embedding_id: number;
-    reason?: string;
-    status?: string;
-    image_ref?: string;
-    video_ref?: string;
-    created_at?: string;
-    updated_at?: string;
-    jobs?: OllamaJob[];      // optional array of jobs
-    feedback?: Feedback[];   // optional array of feedback
-};
-
-export type AnomalyCandidateInput = {
-    scene_window_embedding_id: number;
-    reason?: string;
-    status?: string;
-    image_ref?: string;
-    video_ref?: string;
-};
-
-/* ----------------- Feedback ----------------- */
-export type Feedback = {
-    id: number;
-    anomaly_candidate_id: number;
-    label?: string;
-    reviewer?: string;
-    notes?: string;
-    system_decision?: any;
-    created_at?: string;
-    used_for_retrain?: boolean;
-};
-
-export type FeedbackInput = {
-    anomaly_candidate_id: number;
-    label?: string;
-    reviewer?: string;
-    notes?: string;
-    system_decision?: any;
-};
-
-/* ----------------- Jobs ----------------- */
-export type OllamaJob = {
-    id: number;
-    anomaly_candidate_id: number;
-    model_name?: string;
-    prompt?: string;
-    request_json?: any;
-    status?: string;
-    response_text?: string;
-    response_json?: any;
-    error?: string;
-    created_at?: string;
-    started_at?: string;
-    finished_at?: string;
-};
-
-export type OllamaJobInput = {
-    anomaly_candidate_id: number;
-    model_name?: string;
-    prompt?: string;
-    request_json?: any;
-};
 
 // ========================
 // Cloud Backup Types

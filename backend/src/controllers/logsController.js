@@ -73,16 +73,3 @@ exports.getLogsByLocation = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
-
-// Get logs by anomaly ID
-exports.getLogsByAnomaly = async (req, res) => {
-    try {
-        const { anomaly_id } = req.params;
-        const logs = await Log.findAll({
-            where: { anomaly_id }
-        });
-        res.status(200).json(logs);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};

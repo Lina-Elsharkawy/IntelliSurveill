@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 console.error("Error decoding id_token during login", e);
             }
         }
-        navigate("/dashboard");
+        navigate("/analytics");
     };
 
     const logout = () => {

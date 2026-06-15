@@ -54,9 +54,6 @@ const RESOURCE_LABELS = {
     cameras: 'Camera',
     employees: 'Employee',
     'anomaly-rules': 'Rule',
-    'anomaly-candidates': 'Anomaly',
-    departments: 'Department',
-    labs: 'Lab',
 };
 
 const resourceFromPath = (url) => {

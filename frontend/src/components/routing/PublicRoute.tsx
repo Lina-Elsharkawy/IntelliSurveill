@@ -12,7 +12,7 @@ const PublicRoute = ({ element }: PublicRouteProps) => {
         if (roles.includes('admin')) {
             return <Navigate to="/admin-users" replace />;
         }
-        return <Navigate to="/dashboard" replace />;
+        return <Navigate to="/analytics" replace />;
     }
 
     return element;

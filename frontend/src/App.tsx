@@ -5,9 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
-import Index from "./pages/Index";
 import Cameras from "./pages/Cameras";
-import Anomaly from "./pages/Anomaly";
 import VadLab from "./pages/VadLab";
 import VadReasoning from "./pages/VadReasoning";
 import AnomalyRules from "./pages/AnomalyRules";
@@ -21,8 +19,6 @@ import ActivityLog from "./pages/ActivityLog";
 import PrivateRoute from "@/components/routing/PrivateRoute";
 import PublicRoute from "@/components/routing/PublicRoute";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import Departments from "./pages/Departments";
-import Labs from "./pages/Labs";
 import AdminUsers from "./pages/AdminUsers";
 import RoleBasedRoute from "@/components/routing/RoleBasedRoute";
 
@@ -34,7 +30,7 @@ const AppRoutes = () => {
 
   const getHomeElement = () => {
     if (!isAuthenticated) return <Navigate to="/login" replace />;
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/analytics" replace />;
   };
 
   return (
@@ -42,10 +38,13 @@ const AppRoutes = () => {
       <Route path="/" element={getHomeElement()} />
       <Route path="/login" element={<PublicRoute element={<Login />} />} />
 
-      {/* Dashboard main */}
-      <Route path="/dashboard" element={<PrivateRoute element={<Index />} />} />
+      {/* Removed pages — redirect to analytics to avoid 404 crashes */}
+      <Route path="/dashboard" element={<Navigate to="/analytics" replace />} />
+      <Route path="/anomaly" element={<Navigate to="/analytics" replace />} />
+      <Route path="/departments" element={<Navigate to="/analytics" replace />} />
+      <Route path="/labs" element={<Navigate to="/analytics" replace />} />
+
       <Route path="/cameras" element={<PrivateRoute element={<Cameras />} />} />
-      <Route path="/anomaly" element={<PrivateRoute element={<Anomaly />} />} />
       <Route path="/vad-lab" element={<PrivateRoute element={<VadLab />} />} />
       <Route path="/reasoning" element={<PrivateRoute element={<VadReasoning />} />} />
       <Route path="/anomaly-rules" element={<PrivateRoute element={<AnomalyRules />} />} />
@@ -53,8 +52,6 @@ const AppRoutes = () => {
       <Route path="/settings" element={<PrivateRoute element={<Settings />} />} />
       <Route path="/activity-log" element={<PrivateRoute element={<ActivityLog />} />} />
       <Route path="/admin" element={<RoleBasedRoute element={<Admin />} allowedRoles={['admin', 'user']} />} />
-      <Route path="/departments" element={<PrivateRoute element={<Departments />} />} />
-      <Route path="/labs" element={<PrivateRoute element={<Labs />} />} />
       <Route path="/admin-users" element={<RoleBasedRoute element={<AdminUsers />} allowedRoles={['admin']} />} />
 
       <Route path="*" element={<NotFound />} />
