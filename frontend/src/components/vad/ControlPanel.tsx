@@ -52,16 +52,17 @@ export const ControlPanel = ({
 
   return (
     <div className="hover:-translate-y-1 hover:shadow-[0_4px_20px_-4px_rgba(46,213,115,0.15)] hover:border-[rgba(46,213,115,0.3)] transition-all duration-300 bg-zinc-950/50 backdrop-blur-sm border border-zinc-800 rounded-xl overflow-hidden shadow-xl flex flex-col">
-      <div className="bg-black/40 px-4 py-3 border-b border-white/5 flex justify-between items-center">
-        <h3 className="font-semibold text-white text-sm flex items-center font-['Montserrat'] tracking-wide">
+      <div className="bg-black/40 px-3 py-2 border-b border-white/5 flex justify-between items-center">
+        <h3 className="font-semibold text-white text-base flex items-center font-['Montserrat'] tracking-wide">
           <Activity className="w-4 h-4 mr-2 text-[rgb(46,213,115)]" />
           Pipeline Controls
         </h3>
       </div>
-      <div className="p-4 space-y-4">
+      <div className="p-3 space-y-3">
         <div className="grid grid-cols-2 gap-2">
           <Button 
-            className={`text-black font-semibold transition-all ${status?.running ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-[rgb(46,213,115)] hover:bg-[rgb(36,193,95)] hover:shadow-[0_0_15px_rgba(46,213,115,0.4)]'}`}
+            size="sm"
+            className={`h-8 text-xs text-black font-semibold transition-all ${status?.running ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-[rgb(46,213,115)] hover:bg-[rgb(36,193,95)] hover:shadow-[0_0_15px_rgba(46,213,115,0.4)]'}`}
             onClick={onStart}
             disabled={status?.running || isAnyActionRunning}
           >
@@ -69,8 +70,9 @@ export const ControlPanel = ({
             {isStarting ? "Starting..." : "Start"}
           </Button>
           <Button 
+            size="sm"
             variant="destructive" 
-            className={`transition-all font-semibold ${!status?.running ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
+            className={`h-8 text-xs transition-all font-semibold ${!status?.running ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
             onClick={onStop}
             disabled={!status?.running || isAnyActionRunning}
           >
@@ -79,28 +81,26 @@ export const ControlPanel = ({
           </Button>
         </div>
         
-        <div className="grid grid-cols-1">
+        <div className="grid grid-cols-2 gap-2">
            <Button 
              variant="outline" 
-             className="w-full border-white/10 bg-white/5 hover:bg-white/10 text-xs text-slate-300" 
+             size="sm"
+             className="w-full h-8 border-white/10 bg-white/5 hover:bg-white/10 text-xs text-slate-300" 
              onClick={onRestart}
              disabled={isAnyActionRunning}
            >
-             {isRestarting ? <RefreshCw className="w-3.5 h-3.5 mr-2 animate-spin" /> : <Power className="w-3.5 h-3.5 mr-2" />} 
-             {isRestarting ? "Restarting..." : "Restart"}
+             {isRestarting ? <RefreshCw className="w-3 h-3 mr-1.5 animate-spin" /> : <Power className="w-3 h-3 mr-1.5" />} 
+             Restart
            </Button>
-        </div>
-        
-        <div className="grid grid-cols-1">
-          <Button variant="outline" className="border-white/10 bg-white/5 hover:bg-white/10 text-xs text-slate-300" onClick={() => fetchData()} disabled={isLoading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+          <Button variant="outline" size="sm" className="w-full h-8 border-white/10 bg-white/5 hover:bg-white/10 text-xs text-slate-300" onClick={() => fetchData()} disabled={isLoading}>
+            <RefreshCw className={`w-3 h-3 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
           </Button>
         </div>
 
-        <div className="flex flex-col gap-2 pt-3 border-t border-white/5">
+        <div className="flex flex-col gap-1 pt-2 border-t border-white/5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="auto-refresh" className="text-slate-400 text-xs cursor-pointer">Auto-refresh (2s)</Label>
-            <Switch id="auto-refresh" checked={autoRefresh} onCheckedChange={setAutoRefresh} />
+            <Label htmlFor="auto-refresh" className="text-slate-400 text-[10px] uppercase tracking-wider cursor-pointer font-semibold">Auto-refresh (2s)</Label>
+            <Switch id="auto-refresh" checked={autoRefresh} onCheckedChange={setAutoRefresh} className="scale-75" />
           </div>
 
           {lastRefreshed && (

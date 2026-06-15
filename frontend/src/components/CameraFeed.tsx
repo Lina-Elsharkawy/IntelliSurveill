@@ -176,13 +176,11 @@ export function CameraCard({ cam, onPlay, onClick, isActive = false, width = 680
               </div>
               <h2 style={{ fontSize: 32, fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, color: "#fff", textTransform: "uppercase", letterSpacing: "-0.01em", lineHeight: 1 }}>{cam.name}</h2>
               <div style={{ display: "flex", gap: 24, marginTop: 8 }}>
-                <div style={{ fontSize: 13, opacity: 0.6, fontFamily: "'Manrope', sans-serif", letterSpacing: 1 }}>Loc: <span style={{ color: "#fff", fontWeight: 600 }}>{cam.location}</span></div>
                 <div style={{ fontSize: 13, opacity: 0.6, fontFamily: "'Manrope', sans-serif", letterSpacing: 1 }}>Lab ID: <span style={{ color: "#fff", fontWeight: 600 }}>{cam.lab_id}</span></div>
               </div>
             </div>
             <div style={{ textAlign: "right", fontFamily: "'Space Grotesk', sans-serif" }}>
               <div style={{ fontSize: 20, color: "rgba(46,213,115,0.9)", fontWeight: 700 }}>{cam.id}</div>
-              <div style={{ fontSize: 9, opacity: 0.4, letterSpacing: 3, marginTop: 2, fontFamily: "'Outfit', sans-serif", fontWeight: 600 }}>SECURED NODE</div>
             </div>
           </div>
         </div>
@@ -391,10 +389,6 @@ export default function CameraFeed({ cameras: initialCameras }: CameraFeedProps)
           <div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 800, color: GA(0.6), letterSpacing: 5, textTransform: "uppercase", marginBottom: 4 }}>IntelliSurveil · Live</div>
             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 42, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1 }}>Camera Feeds</div>
-          </div>
-          <div style={{ marginLeft: 8, padding: "4px 14px", borderRadius: 100, border: `1px solid ${GA(0.2)}`, background: GA(0.06), display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: G }} />
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: GA(0.7), letterSpacing: 1, fontWeight: 600 }}>{cameras.filter(c => c.status === "active").length} active</span>
           </div>
         </div>
 

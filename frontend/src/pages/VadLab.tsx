@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { ShieldAlert, Activity, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
-import { GateCard } from "@/components/vad/GateCard";
 import { EventGrid } from "@/components/vad/EventGrid";
 import { EventTable } from "@/components/vad/EventTable";
 import { EvidenceModal } from "@/components/vad/EvidenceModal";
@@ -239,12 +238,7 @@ export const VadLab = () => {
           {/* Right Column: Gates & Evidence (Col Span 9) */}
           <div className="space-y-6 xl:col-span-9 flex flex-col">
             
-            {/* Gates Summary Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <GateCard name="pose" data={status?.online_gates?.pose} status={status} />
-              <GateCard name="deep" data={status?.online_gates?.deep} status={status} />
-              <GateCard name="homography_macro" data={status?.online_gates?.homography_macro} status={status} />
-            </div>
+
 
             {/* Visual Evidence Area */}
             <div className="hover:-translate-y-1 hover:shadow-[0_4px_20px_-4px_rgba(59,130,246,0.15)] hover:border-blue-500/30 transition-all duration-300 bg-zinc-950/50 backdrop-blur-sm border border-zinc-800 rounded-xl flex-1 flex flex-col overflow-hidden p-6 shadow-xl">
