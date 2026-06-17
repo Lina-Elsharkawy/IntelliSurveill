@@ -53,6 +53,9 @@ _UNDERSTANDING_SCHEMA = {
                 "vad_reasoning_jobs",
                 "vad_reasoning_results",
                 "vad_case_reviews",
+                "vad_case_gate_events",
+                "vad_case_evidence",
+                "vad_gate_scores",
                 "vad_streams",
                 "vad_stream_sessions",
 
@@ -63,7 +66,6 @@ _UNDERSTANDING_SCHEMA = {
                 "reasoning_rules",
                 "rule_conflicts",
                 "schedules",
-                "activity_logs",
                 "audit_logs",
 
                 # ── Meta ──────────────────────────────────────────────────
@@ -87,10 +89,12 @@ _UNDERSTANDING_SCHEMA = {
                 "status":      {"type": ["string", "null"]},
                 "severity":    {"type": ["string", "null"]},
                 "alert_decision": {"type": ["string", "null"]},
+                "decision":    {"type": ["string", "null"]},
                 "limit":       {"type": ["integer", "null"]},
                 "days_back":   {"type": ["integer", "null"]},
                 "hour":        {"type": ["integer", "null"]},
                 "rule_type":   {"type": ["string", "null"]},
+                "gate_name":   {"type": ["string", "null"]},
                 "is_active":   {"type": ["boolean", "null"]},
             },
             "additionalProperties": False,

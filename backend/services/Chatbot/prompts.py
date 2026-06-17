@@ -49,7 +49,7 @@ RULES:
 2. Use proper PostgreSQL syntax
 3. Include appropriate JOINs if multiple tables are needed
 4. Use LIMIT to restrict results when appropriate
-5. Think step-by-step. First, write your reasoning in SQL comments starting with `-- `. Then, write the final SQL query. Do not use markdown backticks.
+5. Return only the final SQL query. Do not include reasoning comments, markdown backticks, prose, or explanations.
 6. Do not use semicolons at the end
 7. Use double quotes for identifiers that need them (e.g. "timestamp")
 8. ONLY add `table_schema = 'public'` when querying `information_schema.tables` or `information_schema.columns`
@@ -65,7 +65,6 @@ TIME COLUMN RULES — do not guess, use exactly these:
   * vad_case_reviews         → created_at
   * vad_stream_sessions      → started_at
   * anomaly_rules            → created_at
-  * activity_logs            → "timestamp"
   * audit_logs               → created_at
   * face_embeddings          → created_at
 
@@ -216,6 +215,10 @@ def _pick_relevant_tables(question: str, schema: str) -> str:
         "vad_reasoning_jobs":      ["reasoning job", "llm job", "job queue", "reasoning queue"],
         "vad_reasoning_results":   ["reasoning result", "alert decision", "llm decision"],
         "vad_case_reviews":        ["case review", "human review", "reviewer"],
+        "vad_case_gate_events":    ["case gate", "linked gate", "gates for case"],
+        "vad_gate_scores":         ["gate score", "score", "ratio", "threshold", "persistent"],
+        "vad_evidence_items":      ["evidence item", "evidence", "case evidence"],
+        "vad_media_objects":       ["media object", "evidence media", "video clip", "image", "montage"],
         "vad_streams":             ["stream", "streams", "camera stream"],
         "vad_stream_sessions":     ["session", "sessions", "stream session"],
         "vad_reasoning_rules":     ["reasoning rule", "vad rule"],
@@ -230,8 +233,7 @@ def _pick_relevant_tables(question: str, schema: str) -> str:
         "anomaly_rules":           ["anomaly rule", "trigger rule", "suppress rule"],
         "rule_conflicts":          ["conflict", "conflicts", "contradict"],
         "schedules":               ["schedule", "schedules", "access schedule"],
-        "activity_logs":           ["activity log", "user action"],
-        "audit_logs":              ["audit log", "system audit"],
+        "audit_logs":              ["activity log", "user action", "audit log", "system audit"],
     }
 
     matched = set()

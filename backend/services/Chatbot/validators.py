@@ -96,29 +96,45 @@ _BLOCKED_PATTERNS = [
 def safety_gate(sql: str) -> tuple[bool, str]:
     """
     Final guard before SQL execution.
-    Returns (True, "") if the SQL is safe to run.
-    Returns (False, user_message) if it should be blocked.
 
-    Rules:
-      - Query must start with SELECT or WITH (CTEs are allowed).
-      - No dangerous write keywords may appear anywhere in the query.
+    The old guard used regex over the raw SQL string, which falsely blocked
+    safe read-only queries such as:
+        SELECT * FROM audit_logs WHERE action = 'CREATE'
+    because CREATE appeared inside a string literal. This version uses
+    sqlparse tokens and blocks only real SQL command tokens outside comments
+    and string literals.
     """
     if not sql or not sql.strip():
         return False, "No SQL was generated."
 
-    sql_stripped = sql.strip()
-    first_word = sql_stripped.split()[0].upper()
+    statements = [stmt for stmt in sqlparse.parse(sql) if stmt.tokens]
+    if len(statements) != 1:
+        return False, "Only one read-only SQL statement is allowed."
 
-    if first_word not in ("SELECT", "WITH"):
+    stmt = statements[0]
+    first_word = stmt.get_type().upper()
+
+    if first_word not in ("SELECT", "UNKNOWN"):
         return False, (
             "I can only run read-only queries. "
             f"The generated statement starts with `{first_word}` which is not allowed."
         )
 
-    for kw, pattern in zip(_BLOCKED_SQL_KEYWORDS, _BLOCKED_PATTERNS):
-        if pattern.search(sql_stripped):
+    stripped = sql.strip().lstrip("(").strip()
+    first_token = stripped.split()[0].upper() if stripped else ""
+    if first_token not in ("SELECT", "WITH"):
+        return False, (
+            "I can only run read-only queries. "
+            f"The generated statement starts with `{first_token}` which is not allowed."
+        )
+
+    blocked = set(_BLOCKED_SQL_KEYWORDS)
+    for token in stmt.flatten():
+        value = token.value.upper()
+        if value in blocked and token.ttype not in (sqlparse.tokens.Literal.String.Single,
+                                                    sqlparse.tokens.Literal.String.Symbol):
             return False, (
-                f"The generated query contains `{kw}` which is not allowed "
+                f"The generated query contains SQL command `{value}` which is not allowed "
                 "in read-only mode. Please rephrase your question."
             )
 

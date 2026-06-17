@@ -781,6 +781,9 @@ services:
       - DB_DSN=postgresql://lina:123@postgres-db:5432/lina
       - OLLAMA_BASE_URL=http://ollama-chatbot:11434
       - LLM_MODEL=qwen2.5-coder:7b
+      - CHATBOT_TIMEZONE=Africa/Cairo
+      - API_PORT=8000
+      - API_HOST=0.0.0.0
     depends_on:
       - postgres-db
       - ollama-chatbot

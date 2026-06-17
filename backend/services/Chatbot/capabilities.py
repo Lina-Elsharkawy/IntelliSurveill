@@ -1,248 +1,64 @@
 """
-Capability contract for the Surveillance Investigation Chatbot.
+Current deterministic chatbot tool capabilities.
 
-LangGraph should orchestrate these trusted capabilities first. Generic NL-to-SQL
-is kept only as a fallback for low-risk database exploration.
+This file is intentionally kept in sync with tools.TOOL_MAP and the real
+PostgreSQL schema used by current_schema(5).sql. It contains no legacy
+references to removed tables such as activity_logs, anomaly_candidates,
+ollama_jobs, labs, or departments.
 """
-from __future__ import annotations
 
-SUPPORTED_INTENTS: dict[str, dict] = {
-    # People / entry-log investigations
-    "person_last_seen": {
-        "tool": "person_last_seen",
-        "tool_type": "normal",
-        "required_params": ["name"],
-        "description": "Most recent detection of a named person.",
-    },
-    "person_first_seen": {
-        "tool": "person_first_seen",
-        "tool_type": "normal",
-        "required_params": ["name"],
-        "description": "Earliest detection of a named person.",
-    },
-    "person_timeline": {
-        "tool": "person_timeline",
-        "tool_type": "normal",
-        "required_params": ["name"],
-        "description": "Movement timeline for a named person on a date.",
-    },
-    "people_seen_on_date": {
-        "tool": "people_seen_on_date",
-        "tool_type": "normal",
-        "required_params": ["target_date"],
-        "description": "People detected on a specific date.",
-    },
+CURRENT_TOOL_CAPABILITIES = {
+    # Face / person tracking
+    "person_last_seen": {"required": ["name"], "optional": ["target_date"], "tables": ["entry_logs", "detected_people", "employees", "visitors", "cameras"]},
+    "person_first_seen": {"required": ["name"], "optional": ["target_date"], "tables": ["entry_logs", "detected_people", "employees", "visitors", "cameras"]},
+    "person_timeline": {"required": ["name"], "optional": ["target_date"], "tables": ["entry_logs", "detected_people", "employees", "visitors", "cameras"]},
+    "people_seen_on_date": {"required": [], "optional": ["target_date"], "tables": ["entry_logs", "detected_people", "employees", "visitors", "cameras"]},
+    "known_people": {"required": [], "optional": ["limit"], "tables": ["employees", "visitors", "detected_people"]},
 
-    # Unknown-face investigations
+    # Counts
+    "count_unknown_detections": {"required": [], "optional": ["target_date", "days_back", "hour"], "tables": ["unknown_face_events"]},
+    "count_known_detections": {"required": [], "optional": ["target_date", "days_back", "hour"], "tables": ["entry_logs", "detected_people"]},
+    "count_all_detections": {"required": [], "optional": ["target_date", "days_back", "hour"], "tables": ["entry_logs"]},
 
-    "unknown_detection_count": {
-        "tool": "unknown_detection_count",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Count unknown face detections/events for a date and optional hour.",
-    },
-    "known_face_detection_count": {
-        "tool": "known_face_detection_count",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Count known face detections for a date and optional hour.",
-    },
-    "face_detection_count": {
-        "tool": "face_detection_count",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Count all face/person detections for a date and optional hour.",
-    },
+    # Unknown face investigation
+    "unknown_face_events": {"required": [], "optional": ["status", "target_date", "days_back", "hour", "limit"], "tables": ["unknown_face_events", "entry_logs", "cameras"]},
+    "unknown_face_details": {"required": ["event_id"], "optional": [], "tables": ["unknown_face_events", "entry_logs", "cameras"]},
+    "similar_unknown_faces": {"required": ["event_id"], "optional": ["threshold", "limit"], "tables": ["unknown_face_events", "entry_logs", "cameras"]},
+    "possible_identity_match": {"required": ["event_id"], "optional": ["threshold", "limit"], "tables": ["unknown_face_events", "face_embeddings", "detected_people", "employees", "visitors"]},
+    "investigate_unknown_face": {"required": ["event_id"], "optional": [], "tables": ["unknown_face_events", "face_embeddings", "entry_logs", "detected_people", "employees", "visitors", "cameras"]},
 
-    "latest_unknown_face_events": {
-        "tool": "latest_unknown_face_events",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Latest rows from unknown_face_events.",
-    },
-    "unknown_face_event_details": {
-        "tool": "unknown_face_event_details",
-        "tool_type": "normal",
-        "required_params": ["event_id"],
-        "description": "Details for one unknown face event.",
-    },
-    "repeated_unknown_faces": {
-        "tool": "repeated_unknown_faces",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Repeated unknown visitors using existing event/log data.",
-    },
+    # VAD pipeline
+    "vad_cases": {"required": [], "optional": ["status", "severity", "days_back", "camera_id", "limit"], "tables": ["vad_anomaly_cases", "cameras"]},
+    "vad_case_details": {"required": ["case_id"], "optional": [], "tables": ["vad_anomaly_cases", "vad_reasoning_results", "cameras"]},
+    "vad_gate_events": {"required": [], "optional": ["severity", "status", "camera_id", "days_back", "limit"], "tables": ["vad_gate_events", "cameras"]},
+    "vad_reasoning_jobs": {"required": [], "optional": ["status", "limit"], "tables": ["vad_reasoning_jobs"]},
+    "vad_reasoning_results": {"required": [], "optional": ["case_id", "alert_decision", "severity", "limit"], "tables": ["vad_reasoning_results"]},
+    "vad_case_reviews": {"required": [], "optional": ["decision", "limit"], "tables": ["vad_case_reviews"]},
+    "vad_case_gate_events": {"required": ["case_id"], "optional": ["limit"], "tables": ["vad_case_gate_events", "vad_gate_events", "cameras"]},
+    "vad_case_evidence": {"required": ["case_id"], "optional": ["limit"], "tables": ["vad_evidence_items", "vad_media_objects"]},
+    "vad_gate_scores": {"required": [], "optional": ["case_id", "gate_name", "days_back", "limit"], "tables": ["vad_gate_scores", "vad_gate_events", "vad_case_gate_events"]},
+    "vad_streams": {"required": [], "optional": ["is_active", "limit"], "tables": ["vad_streams", "cameras"]},
+    "vad_stream_sessions": {"required": [], "optional": ["status", "limit"], "tables": ["vad_stream_sessions", "cameras"]},
 
-    # Vector / pgvector investigations
-    "similar_unknown_faces": {
-        "tool": "similar_unknown_faces",
-        "tool_type": "vector",
-        "required_params": ["event_id"],
-        "description": "Find visually similar unknown faces for an event.",
-    },
-    "possible_identity_match": {
-        "tool": "possible_identity_match",
-        "tool_type": "vector",
-        "required_params": ["event_id"],
-        "description": "Find closest known identities for an unknown face event.",
-    },
-    "investigate_unknown_face_event": {
-        "tool": "investigate_unknown_face_event",
-        "tool_type": "vector",
-        "required_params": ["event_id"],
-        "description": "Complete investigation for an unknown face event.",
-    },
+    # Admin / system
+    "cameras": {"required": [], "optional": ["limit"], "tables": ["cameras"]},
+    "edge_devices": {"required": [], "optional": ["limit"], "tables": ["edge_devices"]},
+    "anomaly_rules": {"required": [], "optional": ["is_active", "rule_type", "limit"], "tables": ["anomaly_rules"]},
+    "reasoning_rules": {"required": [], "optional": ["is_active", "rule_type", "limit"], "tables": ["vad_reasoning_rules"]},
+    "rule_conflicts": {"required": [], "optional": ["status", "limit"], "tables": ["rule_conflicts"]},
+    "schedules": {"required": [], "optional": ["limit"], "tables": ["schedules"]},
+    "audit_logs": {"required": [], "optional": ["limit"], "tables": ["audit_logs"]},
 
-    # Anomaly investigations
-    "latest_anomalies": {
-        "tool": "latest_anomalies",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Latest anomaly log entries.",
-    },
-    "anomalies_near_person": {
-        "tool": "anomalies_near_person",
-        "tool_type": "normal",
-        "required_params": ["name"],
-        "description": "Anomalies near the latest detection of a named person.",
-    },
-    "anomalies_near_unknown_event": {
-        "tool": "anomalies_near_unknown_event",
-        "tool_type": "normal",
-        "required_params": ["event_id"],
-        "description": "Anomalies near an unknown-face event timestamp/camera.",
-    },
-
-    # Registry lookups
-    "all_known_people": {
-        "tool": "all_known_people",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "List all known people (employees + visitors) from the registry.",
-    },
-
-    # Summaries / metadata
-    "camera_activity_summary": {
-        "tool": "camera_activity_summary",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Detection counts grouped by camera.",
-    },
-    "daily_security_summary": {
-        "tool": "daily_security_summary",
-        "tool_type": "normal",
-        "required_params": ["target_date"],
-        "description": "Daily counts for detections, unknowns, and anomalies.",
-    },
-    "table_record_counts": {
-        "tool": "table_record_counts",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Record counts for all public database tables.",
-    },
-
-    # New Admin / System Tables
-    "anomaly_candidates": {
-        "tool": "anomaly_candidates",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Pending and reviewed anomaly candidates.",
-    },
-    "anomaly_candidate_review": {
-        "tool": "anomaly_candidate_review",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Decisions on anomaly candidates.",
-    },
-    "ollama_jobs": {
-        "tool": "ollama_jobs",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Ollama background job queue status.",
-    },
-    "scene_window_embeddings": {
-        "tool": "scene_window_embeddings",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Camera scene windows flagged as anomalous.",
-    },
-    "anomaly_rules": {
-        "tool": "anomaly_rules",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Active intrusion/anomaly rules.",
-    },
-    "edge_devices": {
-        "tool": "edge_devices",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Registered edge devices.",
-    },
-    "normal_behavior_models": {
-        "tool": "normal_behavior_models",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Active normal behavior models.",
-    },
-    "rule_conflicts": {
-        "tool": "rule_conflicts",
-        "tool_type": "normal",
-        "required_params": [],
-        "description": "Pending rule conflicts.",
-    },
-
-    # Non-tool routes
-    "small_talk": {
-        "tool": None,
-        "tool_type": "small_talk",
-        "required_params": [],
-        "description": "Greeting/help/general chatbot text.",
-    },
-    "sql_fallback": {
-        "tool": None,
-        "tool_type": "sql",
-        "required_params": [],
-        "description": "Low-risk read-only database exploration fallback.",
-    },
+    # Meta
+    "table_counts": {"required": [], "optional": [], "tables": ["information_schema.tables"]},
+    "daily_summary": {"required": [], "optional": ["target_date"], "tables": ["entry_logs", "unknown_face_events", "vad_anomaly_cases", "vad_reasoning_jobs"]},
+    "camera_activity": {"required": [], "optional": ["target_date", "days_back", "limit"], "tables": ["entry_logs", "cameras"]},
 }
 
-INTENT_ALIASES = {
-    "list_known_people": "all_known_people",
-    "list_employees": "all_known_people",
-    "list_visitors": "all_known_people",
-    "known_people": "all_known_people",
-    # Backward compatibility with older tool names
-    "last_seen": "person_last_seen",
-    "first_seen": "person_first_seen",
-    "timeline": "person_timeline",
-    "unknown_face_events": "latest_unknown_face_events",
-    "unknown_detections_count": "unknown_detection_count",
-    "known_detections_count": "known_face_detection_count",
-    "known_faces_count": "known_face_detection_count",
-    "detection_count": "face_detection_count",
-    "unknown_faces": "latest_unknown_face_events",
-    "repeated_unknowns": "repeated_unknown_faces",
-    "anomalies_near_face": "anomalies_near_person",
-    "people_seen_today": "people_seen_on_date",
-    "sql": "sql_fallback",
+COMMON_ALIASES = {
+    "activity_logs": "audit_logs",
+    "user_actions": "audit_logs",
+    "unknown_detections_count": "count_unknown_detections",
+    "known_detections_count": "count_known_detections",
+    "detection_count": "count_all_detections",
 }
-
-
-def canonical_intent(intent: str | None) -> str:
-    value = (intent or "sql_fallback").strip()
-    value = INTENT_ALIASES.get(value, value)
-    if value not in SUPPORTED_INTENTS:
-        return "sql_fallback"
-    return value
-
-
-def required_params(intent: str) -> list[str]:
-    return list(SUPPORTED_INTENTS[canonical_intent(intent)].get("required_params", []))
-
-
-def tool_type(intent: str) -> str:
-    return str(SUPPORTED_INTENTS[canonical_intent(intent)].get("tool_type", "sql"))
-
-
-def tool_name(intent: str) -> str | None:
-    return SUPPORTED_INTENTS[canonical_intent(intent)].get("tool")

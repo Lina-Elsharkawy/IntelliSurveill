@@ -6,7 +6,7 @@ import logging
 import psycopg2
 from psycopg2 import sql
 from typing import List, Dict, Any
-from config import DB_DSN
+from config import DB_DSN, CHATBOT_TIMEZONE
 from typing import TypedDict
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ def get_db_connection():
     """Create a database connection"""
     conn = psycopg2.connect(DB_DSN)
     with conn.cursor() as cur:
-        cur.execute("SET TIME ZONE 'Africa/Cairo'")
+        cur.execute("SET TIME ZONE %s", (CHATBOT_TIMEZONE,))
     return conn
 
 # Cache schema in memory with TTL — refreshes every 5 minutes so new tables
@@ -90,6 +90,17 @@ def execute_sql_safely(sql_query: str, params: tuple = None) -> Dict[str, Any]:
 
         stripped = sql_query.strip()
         first_word = stripped.split()[0].upper() if stripped else ""
+
+        # Defensive guard for callers that use execute_sql_safely directly.
+        # The LangGraph path already runs validators.safety_gate first, but this
+        # keeps the DB helper read-only by itself too.
+        if ";" in stripped.rstrip(";"):
+            return {
+                "success": False,
+                "data": [],
+                "row_count": 0,
+                "error": "Only one read-only SQL statement is allowed."
+            }
 
         if first_word not in ("SELECT", "WITH"):
             return {

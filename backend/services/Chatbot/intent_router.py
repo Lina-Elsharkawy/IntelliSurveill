@@ -18,10 +18,12 @@ Flow:
 from __future__ import annotations
 
 import logging
-from datetime import date, timedelta
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from typing import Any
 
 from model import OllamaLLM
+from config import CHATBOT_TIMEZONE
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +55,9 @@ _TOOL_INTENTS = {
     "vad_reasoning_jobs",
     "vad_reasoning_results",
     "vad_case_reviews",
+    "vad_case_gate_events",
+    "vad_case_evidence",
+    "vad_gate_scores",
     "vad_streams",
     "vad_stream_sessions",
     # System / admin
@@ -62,7 +67,6 @@ _TOOL_INTENTS = {
     "reasoning_rules",
     "rule_conflicts",
     "schedules",
-    "activity_logs",
     "audit_logs",
     # Meta
     "table_counts",
@@ -98,11 +102,12 @@ DATABASE TABLES:
 - vad_reasoning_jobs → LLM reasoning queue (status: queued/running/succeeded/failed)
 - vad_reasoning_results → LLM decisions (alert_decision: YES/NO/UNCERTAIN)
 - vad_case_reviews → human review decisions (decision: confirmed/dismissed/uncertain)
+- vad_case_gate_events, vad_case_evidence, vad_gate_scores → case evidence, linked gates, score/threshold/ratio data
 - vad_streams, vad_stream_sessions → live camera streams
 - vad_reasoning_rules → rules guiding VAD reasoning (rule_type: trigger/suppress)
 - rule_conflicts → conflicts between rules
 - schedules → access schedules
-- activity_logs, audit_logs → system logs
+- audit_logs → system logs and user/admin activity logs
 
 INTENT → RULE MAPPING:
 "where was X" / "last seen X" / "find X" → person_last_seen (extract name)
@@ -122,8 +127,11 @@ INTENT → RULE MAPPING:
 "case #N" / "case details N" → vad_case_details (extract case_id)
 "gate events" / "gate triggers" → vad_gate_events
 "reasoning job" / "llm job" / "reasoning queue" → vad_reasoning_jobs
-"reasoning result" / "llm decision" / "alert decision" → vad_reasoning_results (extract alert_decision as YES/NO/UNCERTAIN if mentioned)
-"case review" / "human review" → vad_case_reviews
+"reasoning result" / "llm decision" / "alert decision" → vad_reasoning_results (extract alert_decision as YES/NO/UNCERTAIN if mentioned; extract severity if mentioned)
+"case review" / "human review" → vad_case_reviews (extract decision if confirmed/dismissed/uncertain/needs_more_evidence/calibration_feedback is mentioned)
+"case gate events" / "gates for case N" → vad_case_gate_events (extract case_id)
+"evidence for case N" / "media for case N" / "reasoning evidence" → vad_case_evidence (extract case_id)
+"gate scores" / "score ratio" / "threshold scores" → vad_gate_scores (extract case_id if mentioned; extract gate_name if pose/deep/homography mentioned)
 "camera stream" / "active streams" / "stream status" → vad_streams
 "stream session" / "session status" → vad_stream_sessions
 "cameras" / "list cameras" → cameras
@@ -132,10 +140,9 @@ INTENT → RULE MAPPING:
 "reasoning rule" / "vad rule" → reasoning_rules
 "rule conflict" / "conflicting rules" → rule_conflicts
 "schedule" / "access schedule" → schedules
-"activity log" / "user actions" → activity_logs
-"audit log" / "system audit" → audit_logs
+"activity log" / "user actions" / "audit log" / "system audit" → audit_logs
 "how many tables" / "record count" / "table sizes" → table_counts
-"today summary" / "daily report" / "security summary" → daily_summary
+"today summary" / "daily report" / "security summary" → daily_summary (extract target_date if today/yesterday/explicit date is mentioned)
 "camera activity" / "detections per camera" → camera_activity
 "hello" / "hi" / "help" / "what can you do" → small_talk
 anything else → sql_fallback
@@ -170,6 +177,12 @@ A: {{"intent":"vad_gate_events","entities":{{"severity":"critical"}}}}
 Q: "Show reasoning results where the alert decision was YES"
 A: {{"intent":"vad_reasoning_results","entities":{{"alert_decision":"YES"}}}}
 
+Q: "Show evidence for case 12"
+A: {{"intent":"vad_case_evidence","entities":{{"case_id":12}}}}
+
+Q: "Show gate scores for case 12"
+A: {{"intent":"vad_gate_scores","entities":{{"case_id":12}}}}
+
 Q: "Who was seen today?"
 A: {{"intent":"people_seen_on_date","entities":{{"target_date":"{today}"}}}}
 
@@ -187,8 +200,9 @@ def route(question: str, history: list | None = None) -> dict[str, Any]:
     Returns { intent, entities, route }
     where route ∈ { "tool", "vector", "sql", "small_talk" }
     """
-    today = date.today().isoformat()
-    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    today_date = datetime.now(ZoneInfo(CHATBOT_TIMEZONE)).date()
+    today = today_date.isoformat()
+    yesterday = (today_date - timedelta(days=1)).isoformat()
 
     system = _SYSTEM_PROMPT.format(today=today, yesterday=yesterday)
 

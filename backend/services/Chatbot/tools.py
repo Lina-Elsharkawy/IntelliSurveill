@@ -11,7 +11,7 @@ Schema groups:
                     vad_reasoning_results, vad_case_reviews, vad_streams,
                     vad_stream_sessions, vad_reasoning_rules
   System/Admin    → anomaly_rules, edge_devices, rule_conflicts, schedules,
-                    activity_logs, audit_logs
+                    audit_logs
 """
 from __future__ import annotations
 
@@ -20,8 +20,9 @@ import psycopg2
 import psycopg2.pool
 from psycopg2 import sql as pg_sql
 from contextlib import contextmanager
-from datetime import date, timedelta
-from config import DB_DSN
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
+from config import DB_DSN, CHATBOT_TIMEZONE
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +89,7 @@ def _conn():
     broken = False
     try:
         with conn.cursor() as cur:
-            cur.execute("SET TIME ZONE 'Africa/Cairo'")
+            cur.execute("SET TIME ZONE %s", (CHATBOT_TIMEZONE,))
         yield conn
         conn.commit()
     except Exception:
@@ -112,6 +113,10 @@ def _rows(cur) -> list[dict]:
     return [dict(zip(cols, r)) for r in cur.fetchall()]
 
 
+def _today_cairo() -> str:
+    return datetime.now(ZoneInfo(CHATBOT_TIMEZONE)).date().isoformat()
+
+
 def _resolve_date(target_date: str | None, default_today: bool = True) -> str | None:
     if target_date:
         try:
@@ -119,7 +124,7 @@ def _resolve_date(target_date: str | None, default_today: bool = True) -> str | 
             return target_date
         except ValueError:
             pass
-    return date.today().isoformat() if default_today else None
+    return _today_cairo() if default_today else None
 
 
 def _ok(tool: str, data, **extra) -> dict:
@@ -433,10 +438,12 @@ def tool_count_all_detections(target_date: str | None = None, days_back: int | N
 
 def tool_unknown_face_events(
     status: str | None = None,
+    target_date: str | None = None,
     days_back: int | None = None,
+    hour: int | None = None,
     limit: int = 20,
 ) -> dict:
-    """List unknown face events with optional status filter."""
+    """List unknown face events with optional status/date filters."""
     params: list = []
     where: list = []
     if status:
@@ -445,6 +452,14 @@ def tool_unknown_face_events(
     if days_back is not None:
         where.append("ufe.created_at >= NOW() - (%s * INTERVAL '1 day')")
         params.append(days_back)
+    elif target_date:
+        resolved = _resolve_date(target_date, default_today=False)
+        if resolved:
+            where.append("DATE(ufe.created_at) = %s")
+            params.append(resolved)
+    if hour is not None:
+        where.append("EXTRACT(HOUR FROM ufe.created_at) = %s")
+        params.append(int(hour))
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
     params.append(max(1, min(200, int(limit or 20))))
     sql = f"""
@@ -509,6 +524,9 @@ def tool_unknown_face_details(event_id: int) -> dict:
 
 def tool_similar_unknown_faces(event_id: int, threshold: float = 0.60, limit: int = 10) -> dict:
     """Find visually similar unknown faces using pgvector cosine distance."""
+    details = tool_unknown_face_details(event_id)
+    if not details.get("found"):
+        return details
     max_dist = 1.0 - float(threshold)
     try:
         with _conn() as conn:
@@ -536,6 +554,9 @@ def tool_similar_unknown_faces(event_id: int, threshold: float = 0.60, limit: in
 
 def tool_possible_identity_match(event_id: int, threshold: float = 0.55, limit: int = 5) -> dict:
     """Find closest known people for an unknown face event."""
+    details = tool_unknown_face_details(event_id)
+    if not details.get("found"):
+        return details
     max_dist = 1.0 - float(threshold)
     try:
         with _conn() as conn:
@@ -567,12 +588,14 @@ def tool_possible_identity_match(event_id: int, threshold: float = 0.55, limit: 
 
 def tool_investigate_unknown_face(event_id: int) -> dict:
     """Full investigation: details + similar unknowns + identity matches."""
-    details  = tool_unknown_face_details(event_id)
-    similar  = tool_similar_unknown_faces(event_id)
+    details = tool_unknown_face_details(event_id)
+    if not details.get("found"):
+        return details
+    similar = tool_similar_unknown_faces(event_id)
     identity = tool_possible_identity_match(event_id)
     return _ok("investigate_unknown_face", {
-        "details":  details,
-        "similar":  similar,
+        "details": details,
+        "similar": similar,
         "identity": identity,
     }, event_id=event_id)
 
@@ -741,6 +764,7 @@ def tool_vad_reasoning_jobs(status: str | None = None, limit: int = 20) -> dict:
 def tool_vad_reasoning_results(
     case_id: int | None = None,
     alert_decision: str | None = None,
+    severity: str | None = None,
     limit: int = 20,
 ) -> dict:
     """List VAD reasoning results / LLM decisions."""
@@ -752,6 +776,9 @@ def tool_vad_reasoning_results(
     if alert_decision:
         where.append("rr.alert_decision = %s")
         params.append(alert_decision.upper())
+    if severity:
+        where.append("rr.severity = %s")
+        params.append(severity.lower())
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
     params.append(max(1, min(100, int(limit or 20))))
     sql = f"""
@@ -804,6 +831,132 @@ def tool_vad_case_reviews(
     except Exception as e:
         return _err(str(e))
 
+
+
+def tool_vad_case_gate_events(case_id: int, limit: int = 50) -> dict:
+    """List low-level gate events linked to a VAD case."""
+    try:
+        with _conn() as conn:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT
+                    cge.case_id,
+                    cge.relation,
+                    ge.id AS gate_event_id,
+                    ge.gate_name,
+                    ge.event_type,
+                    ge.status,
+                    ge.severity,
+                    ge.start_ts,
+                    ge.peak_ts,
+                    ge.end_ts,
+                    ge.peak_score,
+                    ge.threshold_value,
+                    ge.reason_when_fired,
+                    c.name AS camera_name
+                FROM vad_case_gate_events cge
+                JOIN vad_gate_events ge ON cge.gate_event_id = ge.id
+                LEFT JOIN cameras c ON ge.camera_id = c.id
+                WHERE cge.case_id = %s
+                ORDER BY ge.start_ts DESC
+                LIMIT %s
+            """, (case_id, max(1, min(200, int(limit or 50)))))
+            rows = _rows(cur)
+            return _ok("vad_case_gate_events", rows, case_id=case_id, count=len(rows))
+    except Exception as e:
+        return _err(str(e))
+
+
+def tool_vad_case_evidence(case_id: int, limit: int = 50) -> dict:
+    """List evidence/media items linked to a VAD case."""
+    try:
+        with _conn() as conn:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT
+                    ei.id AS evidence_item_id,
+                    ei.case_id,
+                    ei.gate_event_id,
+                    ei.evidence_role,
+                    ei.evidence_rank,
+                    ei.description,
+                    ei.included_in_reasoning,
+                    mo.id AS media_object_id,
+                    mo.media_role,
+                    mo.media_type,
+                    mo.bucket,
+                    mo.object_key,
+                    mo.uri,
+                    mo.content_type,
+                    mo.width,
+                    mo.height,
+                    mo.duration_sec,
+                    mo.captured_at,
+                    mo.created_at
+                FROM vad_evidence_items ei
+                LEFT JOIN vad_media_objects mo ON ei.media_object_id = mo.id
+                WHERE ei.case_id = %s
+                ORDER BY ei.evidence_rank ASC, ei.created_at DESC
+                LIMIT %s
+            """, (case_id, max(1, min(200, int(limit or 50)))))
+            rows = _rows(cur)
+            return _ok("vad_case_evidence", rows, case_id=case_id, count=len(rows))
+    except Exception as e:
+        return _err(str(e))
+
+
+def tool_vad_gate_scores(
+    case_id: int | None = None,
+    gate_name: str | None = None,
+    days_back: int | None = None,
+    limit: int = 50,
+) -> dict:
+    """List VAD gate scores, optionally narrowed to a case or gate."""
+    params: list = []
+    where: list = []
+    if case_id is not None:
+        where.append("cge.case_id = %s")
+        params.append(case_id)
+    if gate_name:
+        where.append("gs.gate_name = %s")
+        params.append(gate_name)
+    if days_back is not None:
+        where.append("gs.score_ts >= NOW() - (%s * INTERVAL '1 day')")
+        params.append(days_back)
+    where_sql = ("WHERE " + " AND ".join(where)) if where else ""
+    params.append(max(1, min(200, int(limit or 50))))
+    sql = f"""
+        SELECT
+            gs.id AS score_id,
+            gs.gate_name,
+            gs.score_ts,
+            gs.raw_score,
+            gs.smoothed_score,
+            gs.normalized_score,
+            gs.threshold_value,
+            gs.above_threshold,
+            gs.persistent,
+            gs.persistence_hits,
+            gs.persistence_required_hits,
+            gs.trigger_recommendation,
+            ge.id AS gate_event_id,
+            cge.case_id
+        FROM vad_gate_scores gs
+        LEFT JOIN vad_gate_events ge
+          ON gs.id IN (ge.start_score_id, ge.peak_score_id, ge.end_score_id)
+        LEFT JOIN vad_case_gate_events cge ON cge.gate_event_id = ge.id
+        {where_sql}
+        ORDER BY gs.score_ts DESC NULLS LAST, gs.id DESC
+        LIMIT %s
+    """
+    try:
+        with _conn() as conn:
+            cur = conn.cursor()
+            cur.execute(sql, params)
+            rows = _rows(cur)
+            return _ok("vad_gate_scores", rows, count=len(rows), case_id=case_id)
+    except Exception as e:
+        return _err(str(e))
 
 def tool_vad_streams(is_active: bool | None = None, limit: int = 50) -> dict:
     """List VAD camera streams."""
@@ -985,19 +1138,6 @@ def tool_schedules(limit: int = 50) -> dict:
         return _err(str(e))
 
 
-def tool_activity_logs(limit: int = 50) -> dict:
-    """List recent user activity logs."""
-    try:
-        with _conn() as conn:
-            cur = conn.cursor()
-            cur.execute("""
-                SELECT id, user_email, action, "timestamp"
-                FROM activity_logs ORDER BY "timestamp" DESC LIMIT %s
-            """, (limit,))
-            return _ok("activity_logs", _rows(cur))
-    except Exception as e:
-        return _err(str(e))
-
 
 def tool_audit_logs(limit: int = 50) -> dict:
     """List recent audit logs."""
@@ -1038,9 +1178,9 @@ def tool_table_counts() -> dict:
         return _err(str(e))
 
 
-def tool_daily_summary() -> dict:
-    """Today's security summary across face and VAD pipelines."""
-    today = date.today().isoformat()
+def tool_daily_summary(target_date: str | None = None) -> dict:
+    """Security summary across face and VAD pipelines for a given date."""
+    today = _resolve_date(target_date, default_today=True)
     try:
         with _conn() as conn:
             cur = conn.cursor()
@@ -1147,6 +1287,9 @@ TOOL_MAP = {
     "vad_reasoning_jobs":      tool_vad_reasoning_jobs,
     "vad_reasoning_results":   tool_vad_reasoning_results,
     "vad_case_reviews":        tool_vad_case_reviews,
+    "vad_case_gate_events":    tool_vad_case_gate_events,
+    "vad_case_evidence":       tool_vad_case_evidence,
+    "vad_gate_scores":         tool_vad_gate_scores,
     "vad_streams":             tool_vad_streams,
     "vad_stream_sessions":     tool_vad_stream_sessions,
     "cameras":                 tool_cameras,
@@ -1155,7 +1298,6 @@ TOOL_MAP = {
     "reasoning_rules":         tool_reasoning_rules,
     "rule_conflicts":          tool_rule_conflicts,
     "schedules":               tool_schedules,
-    "activity_logs":           tool_activity_logs,
     "audit_logs":              tool_audit_logs,
     "table_counts":            tool_table_counts,
     "daily_summary":           tool_daily_summary,

@@ -106,6 +106,21 @@ def _coerce_params(intent: str, entities: dict) -> dict:
         if old in p and new not in p:
             p[new] = p.pop(old)
 
+    # Intent-specific aliases / normalisation.
+    if intent == "vad_case_reviews" and "status" in p and "decision" not in p:
+        p["decision"] = p.pop("status")
+
+    if isinstance(p.get("alert_decision"), str):
+        p["alert_decision"] = p["alert_decision"].upper()
+    if isinstance(p.get("severity"), str):
+        p["severity"] = p["severity"].lower()
+    if isinstance(p.get("decision"), str):
+        p["decision"] = p["decision"].lower()
+    if isinstance(p.get("status"), str):
+        p["status"] = p["status"].lower()
+    if isinstance(p.get("rule_type"), str):
+        p["rule_type"] = p["rule_type"].lower()
+
     # Keep only params the function actually accepts, drop None values
     sig = inspect.signature(fn)
     allowed = set(sig.parameters.keys())
@@ -574,6 +589,59 @@ def format_tool_result(state: SQLState) -> SQLState:  # noqa: C901
         )
         return {**state, "final_answer": answer, "results": rows}
 
+    if intent == "vad_case_gate_events":
+        rows = data if isinstance(data, list) else []
+        cid = result.get("case_id", "?")
+        if not rows:
+            return {**state, "final_answer": f"No gate events are linked to VAD case #{cid}.", "results": []}
+        lines = [
+            f"- Gate event **#{r.get('gate_event_id')}** [{r.get('gate_name')}]: "
+            f"severity={r.get('severity')}, type={r.get('event_type')}, "
+            f"peak_score={r.get('peak_score','N/A')}, threshold={r.get('threshold_value','N/A')}, "
+            f"start={r.get('start_ts','N/A')}"
+            for r in rows
+        ]
+        answer = f"Gate events linked to VAD case #{cid} ({len(rows)}):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
+    if intent == "vad_case_evidence":
+        rows = data if isinstance(data, list) else []
+        cid = result.get("case_id", "?")
+        if not rows:
+            return {**state, "final_answer": f"No evidence items found for VAD case #{cid}.", "results": []}
+        lines = [
+            f"- Evidence **#{r.get('evidence_item_id')}** [{r.get('evidence_role')} / {r.get('media_type','N/A')}]: "
+            f"rank={r.get('evidence_rank')}, included={r.get('included_in_reasoning')}, "
+            f"object={r.get('object_key') or r.get('uri') or 'N/A'}"
+            for r in rows
+        ]
+        answer = f"Evidence for VAD case #{cid} ({len(rows)} item(s)):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
+    if intent == "vad_gate_scores":
+        rows = data if isinstance(data, list) else []
+        if not rows:
+            return {**state, "final_answer": "No VAD gate scores found.", "results": []}
+        lines = []
+        for r in rows[:30]:
+            raw = r.get('raw_score')
+            thr = r.get('threshold_value')
+            ratio = None
+            try:
+                if raw is not None and thr not in (None, 0):
+                    ratio = float(raw) / float(thr)
+            except Exception:
+                ratio = None
+            ratio_text = f", ratio={ratio:.3f}" if ratio is not None else ""
+            lines.append(
+                f"- Score **#{r.get('score_id')}** [{r.get('gate_name')}]: "
+                f"raw={raw}, threshold={thr}{ratio_text}, "
+                f"above={r.get('above_threshold')}, persistent={r.get('persistent')}, "
+                f"case={r.get('case_id','N/A')}, time={r.get('score_ts','N/A')}"
+            )
+        answer = f"VAD gate scores ({len(rows)} shown):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
     if intent == "vad_streams":
         rows = data if isinstance(data, list) else []
         if not rows:
@@ -689,17 +757,6 @@ def format_tool_result(state: SQLState) -> SQLState:  # noqa: C901
         answer = f"Access schedules ({len(rows)}):\n\n" + "\n".join(lines)
         return {**state, "final_answer": answer, "results": rows}
 
-    if intent == "activity_logs":
-        rows = data if isinstance(data, list) else []
-        if not rows:
-            return {**state, "final_answer": "No activity logs found.", "results": []}
-        lines = [
-            f"- {r.get('timestamp','N/A')}: [{r.get('user_email','N/A')}] {r.get('action','N/A')}"
-            for r in rows
-        ]
-        answer = f"Activity logs ({len(rows)} entries):\n\n" + "\n".join(lines)
-        return {**state, "final_answer": answer, "results": rows}
-
     if intent == "audit_logs":
         rows = data if isinstance(data, list) else []
         if not rows:
@@ -720,10 +777,12 @@ def format_tool_result(state: SQLState) -> SQLState:  # noqa: C901
             return {**state, "final_answer": "No table data found.", "results": []}
         counts = {r["table_name"]: r["record_count"] for r in rows}
         _TABLE_KW = {
-            "department": "departments", "lab": "labs", "camera": "cameras",
+            "camera": "cameras",
             "employee": "employees", "visitor": "visitors",
             "entry log": "entry_logs", "unknown face": "unknown_face_events",
             "anomaly rule": "anomaly_rules", "schedule": "schedules",
+            "audit log": "audit_logs", "activity log": "audit_logs",
+            "vad case": "vad_anomaly_cases", "reasoning job": "vad_reasoning_jobs",
         }
         matched = next((tname for kw, tname in _TABLE_KW.items() if kw in q_lower), None)
         if matched:
@@ -749,7 +808,7 @@ def format_tool_result(state: SQLState) -> SQLState:  # noqa: C901
             f"- **Known Detections:** {d.get('known_detections', 0)}\n"
             f"- **Unknown Faces:** {d.get('unknown_detections', 0)}\n"
             f"- **Average Quality Score:** {d.get('avg_quality', 0.0):.3f}\n"
-            f"- **VAD Cases Today:** {d.get('vad_cases_today', 0)} "
+            f"- **VAD Cases:** {d.get('vad_cases_today', 0)} "
             f"({d.get('vad_confirmed', 0)} confirmed)\n"
             f"- **Reasoning Jobs:** {d.get('reasoning_jobs', 0)} "
             f"({d.get('reasoning_failed', 0)} failed)"
@@ -896,13 +955,37 @@ def process_question(question: str, history: list | None = None) -> dict:
     }
     try:
         final = _get_workflow().invoke(initial_state, config={"recursion_limit": 20})
+
+        tool_result = final.get("tool_result") or {}
+        tool_failed = bool(tool_result) and tool_result.get("found") is False
+        sql_failed = (
+            final.get("route") == "sql"
+            and final.get("error_message")
+            and not final.get("sql_valid", True)
+        )
+        blocked = bool(final.get("_write_blocked")) or final.get("sql_safe") is False
+        needs_clarification = bool(final.get("needs_clarification"))
+
+        success = not (tool_failed or sql_failed or blocked)
+        # Clarifications are successful interactions, not backend failures.
+        if needs_clarification:
+            success = True
+
+        err = None
+        if tool_failed:
+            err = tool_result.get("message") or tool_result.get("error")
+        elif sql_failed:
+            err = final.get("error_message")
+        elif blocked:
+            err = final.get("safety_reason") or "Request was blocked in read-only mode."
+
         return {
-            "success":  True,
+            "success":  success,
             "question": question,
             "sql":      final.get("sql", ""),
             "results":  final.get("results", []),
             "answer":   final.get("final_answer", "No answer generated"),
-            "error":    None,
+            "error":    err,
         }
     except Exception as e:
         return {
