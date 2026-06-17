@@ -500,6 +500,7 @@ Return ONLY valid JSON. No markdown. No explanation outside the JSON.
     {{
       "rule_id": "exact rule_id from the trigger rules list above",
       "rule_name": "exact rule_name",
+      "event_type": "exact event_type from the matched trigger rule",
       "applied": true,
       "reason": "Quote the specific caption text that matches this rule's event_type and conditions."
     }}
@@ -508,6 +509,7 @@ Return ONLY valid JSON. No markdown. No explanation outside the JSON.
     {{
       "rule_id": "exact rule_id from the suppress rules list above",
       "rule_name": "exact rule_name",
+      "event_type": "exact event_type from the matched suppress rule if provided",
       "applied": true,
       "reason": "Quote the specific caption text that matches this suppress rule."
     }}
@@ -526,7 +528,7 @@ Return ONLY valid JSON. No markdown. No explanation outside the JSON.
   "decision_reason": "One paragraph: state which rule was matched (or not matched), which caption evidence supports it, and why that leads to the final decision.",
   "limitations": [
     "List any ambiguity, occlusion, weak score ratio, evidence gaps."
-  ],
+  ]
 }}
 
 Constraints:

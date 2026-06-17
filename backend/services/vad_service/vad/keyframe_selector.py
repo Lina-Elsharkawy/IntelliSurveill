@@ -7,8 +7,9 @@ evidence-writing path.  It only chooses which already-saved event frames should
 be sent to the VLM.
 
 Selectors:
-- deep: 16-frame temporal-change selector, optionally backed by VideoMAE/kNN
-  when the reasoning worker has GPU/model/artifact access.
+- deep: 16-frame person-centered temporal visual-change selector over saved
+  evidence frames. The Deep gate has already detected the suspicious tubelet;
+  this selector only compresses evidence for VLM review.
 - pose: 24-frame body-motion selector, using saved keypoints when present,
   otherwise optional YOLO-pose reinference on saved evidence frames, then bbox
   and image-motion fallbacks.
@@ -24,8 +25,7 @@ import logging
 import math
 import os
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import numpy as np
 from PIL import Image
@@ -154,13 +154,6 @@ def _decode_rgb(image_bytes: bytes) -> np.ndarray | None:
         return None
 
 
-def _decode_pil(image_bytes: bytes) -> Image.Image | None:
-    try:
-        return Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    except Exception:
-        return None
-
-
 def _samples(metadata: dict[str, Any]) -> list[dict[str, Any]]:
     value = (metadata or {}).get("samples")
     return value if isinstance(value, list) else []
@@ -224,114 +217,6 @@ def _image_transition_scores(frame_keys: list[str], image_bytes_map: dict[str, b
         if cur is not None:
             prev = cur
     return np.asarray(scores, dtype=np.float64)
-
-
-class _VideoMAEHelper:
-    """Lazy VideoMAE loader for the reasoning worker.
-
-    This is optional.  If anything is missing, selectors fall back instead of
-    crashing the worker.
-    """
-
-    def __init__(self, cfg: Any | None) -> None:
-        self.cfg = cfg
-        self.model_name = str(getattr(cfg, "deep_videomae_model", None) or os.getenv("VAD_DEEP_VIDEOMAE_MODEL", "MCG-NJU/videomae-base"))
-        self.device_name = str(os.getenv("VAD_REASONING_DEEP_DEVICE", getattr(cfg, "deep_device", "cuda")))
-        self.fp16 = str(os.getenv("VAD_REASONING_DEEP_FP16", "1")).lower() in {"1", "true", "yes"}
-        self.cache_dir = os.getenv("VAD_REASONING_VIDEOMAE_CACHE", "/models/vad/deep_videomae")
-        self.artifact_dir = Path(str(os.getenv("VAD_DEEP_ARTIFACT_DIR", getattr(cfg, "deep_artifact_dir", "/models/vad/deep"))))
-        self.knn_path = self.artifact_dir / "models" / "03_knn_index.joblib"
-        self._loaded = False
-        self._load_error: str | None = None
-        self._torch = None
-        self._processor = None
-        self._model = None
-        self._device = None
-        self._knn = None
-
-    def load(self) -> bool:
-        if self._loaded:
-            return True
-        if self._load_error:
-            return False
-        try:
-            import torch
-            from transformers import VideoMAEImageProcessor, VideoMAEModel
-
-            if self.device_name == "cuda" and not torch.cuda.is_available():
-                device_name = "cpu"
-            else:
-                device_name = self.device_name
-            self._device = torch.device(device_name)
-            self._torch = torch
-            try:
-                self._processor = VideoMAEImageProcessor.from_pretrained(self.model_name, cache_dir=self.cache_dir, use_fast=False)
-            except TypeError:
-                self._processor = VideoMAEImageProcessor.from_pretrained(self.model_name, cache_dir=self.cache_dir)
-            self._model = VideoMAEModel.from_pretrained(self.model_name, cache_dir=self.cache_dir)
-            self._model.eval().to(self._device)
-            if self.fp16 and self._device.type == "cuda":
-                self._model.half()
-
-            if self.knn_path.exists():
-                try:
-                    import joblib
-                    artifact = joblib.load(self.knn_path)
-                    self._knn = artifact.get("knn") if isinstance(artifact, dict) and "knn" in artifact else artifact
-                except Exception as e:
-                    log.warning("VideoMAE selector could not load kNN artifact %s: %s", self.knn_path, e)
-
-            self._loaded = True
-            log.info("VideoMAE selector loaded model=%s device=%s knn=%s", self.model_name, self._device, bool(self._knn))
-            return True
-        except Exception as e:
-            self._load_error = str(e)
-            log.warning("VideoMAE selector load failed: %s", e)
-            return False
-
-    def embed_pil_sequence(self, images: list[Image.Image]) -> np.ndarray | None:
-        if not images or not self.load():
-            return None
-        try:
-            torch = self._torch
-            assert torch is not None and self._processor is not None and self._model is not None and self._device is not None
-            try:
-                inputs = self._processor(images, return_tensors="pt", do_flip_channel_order=False)
-            except TypeError:
-                inputs = self._processor(images, return_tensors="pt")
-            inputs = {k: v.to(self._device) for k, v in inputs.items()}
-            if self.fp16 and self._device.type == "cuda":
-                inputs = {k: (v.half() if torch.is_floating_point(v) else v) for k, v in inputs.items()}
-            with torch.inference_mode():
-                with torch.autocast(device_type=self._device.type, dtype=torch.float16, enabled=(self.fp16 and self._device.type == "cuda")):
-                    outputs = self._model(**inputs)
-            emb = outputs.last_hidden_state.mean(dim=1).squeeze(0).float().cpu().numpy().astype(np.float32)
-            emb = emb / max(float(np.linalg.norm(emb)), 1e-12)
-            return emb.astype(np.float32)
-        except Exception as e:
-            log.warning("VideoMAE selector embedding failed: %s", e)
-            return None
-
-    def knn_distance(self, emb: np.ndarray | None, k: int = 5) -> float | None:
-        if emb is None or self._knn is None:
-            return None
-        try:
-            distances, _ = self._knn.kneighbors(emb.reshape(1, -1), n_neighbors=int(k), return_distance=True)
-            d = np.asarray(distances).reshape(-1)
-            return float(np.mean(d[:k])) if d.size else None
-        except Exception as e:
-            log.warning("VideoMAE selector kNN distance failed: %s", e)
-            return None
-
-
-_videomae_helper: _VideoMAEHelper | None = None
-
-
-def _get_videomae_helper(cfg: Any | None) -> _VideoMAEHelper:
-    global _videomae_helper
-    if _videomae_helper is None:
-        _videomae_helper = _VideoMAEHelper(cfg)
-    return _videomae_helper
 
 
 class _YoloPoseHelper:
@@ -423,64 +308,36 @@ def _get_yolo_pose_helper(cfg: Any | None) -> _YoloPoseHelper:
 
 
 def _deep_select(frame_keys: list[str], image_bytes_map: dict[str, bytes], metadata: dict[str, Any], max_images: int, cfg: Any | None) -> FrameSelectionResult:
+    """Deep gate keyframe selection: person-centered temporal visual-change scoring.
+
+    The Deep detector has already identified the suspicious 16-frame tubelet.
+    This selector only compresses the saved evidence frames for the VLM by
+    comparing consecutive person-centered crops and selecting clear
+    before/during/after visual-change frames.
+    """
     n = len(frame_keys)
     if n == 0:
         return FrameSelectionResult([], [], "even_spacing_fallback", "no_frames", {"gate": "deep", "total_frames": 0})
     if n <= max_images:
-        return FrameSelectionResult(frame_keys, list(range(n)), "deep_temporal_change_16f", "n_le_budget", {
+        return FrameSelectionResult(frame_keys, list(range(n)), "deep_temporal_change_selector", "n_le_budget", {
             "gate": "deep",
             "native_expected_frames": 16,
             "total_frames": n,
             "selection_mode": "all_frames_under_budget",
         })
 
-    # Correct Deep-native assumption: 16 frames are the main temporal unit.
-    # We load VideoMAE for alignment/metadata/kNN when available.  For exactly
-    # 16 frames, frame indices are still selected from temporal crop changes,
-    # because VideoMAE emits one tubelet embedding rather than one clean score
-    # per frame.
-    videomae_ok = False
-    knn_note = ""
-    if str(os.getenv("VAD_REASONING_DEEP_USE_VIDEOMAE", "1")).lower() in {"1", "true", "yes"}:
-        helper = _get_videomae_helper(cfg)
-        pil_images = [_decode_pil(image_bytes_map.get(k, b"")) for k in frame_keys]
-        pil_images = [im for im in pil_images if im is not None]
-        if len(pil_images) >= min(16, n):
-            # Use the native 16-frame Deep unit. If more frames exist, score
-            # overlapping 16-frame windows and spread their score to member frames.
-            window = int(os.getenv("VAD_DEEP_TUBELET_FRAMES", getattr(cfg, "deep_tubelet_frames", 16) if cfg is not None else 16))
-            window = max(1, min(window, len(pil_images)))
-            step = max(1, window // 2)
-            frame_window_scores = np.zeros(n, dtype=np.float64)
-            frame_window_counts = np.zeros(n, dtype=np.float64)
-            for start in range(0, max(1, len(pil_images) - window + 1), step):
-                seq = pil_images[start:start + window]
-                emb = helper.embed_pil_sequence(seq)
-                if emb is not None:
-                    videomae_ok = True
-                    d = helper.knn_distance(emb, k=int(getattr(cfg, "deep_k", 5)))
-                    if d is not None:
-                        frame_window_scores[start:start + window] += float(d)
-                        frame_window_counts[start:start + window] += 1.0
-            if np.any(frame_window_counts > 0):
-                frame_window_scores = frame_window_scores / np.maximum(frame_window_counts, 1.0)
-                # Add weak VideoMAE-window guidance to image temporal changes.
-                # For exactly 16 frames this is nearly uniform, which is fine.
-                knn_note = "videomae_knn_guided"
-
+    # Person-centered temporal visual-change scoring.
+    # Compare consecutive person crops to find frames with the highest visual
+    # transition (before/during/after the event). First and last frames are
+    # included as context anchors.
     scores = _image_transition_scores(frame_keys, image_bytes_map, metadata)
     idx = _select_around_peaks(n, scores, max_images, anchors=True)
-    selector_name = "deep_temporal_change_16f" if n <= 16 else "deep_temporal_change_videomae_windows"
-    reason = "videomae_available" if videomae_ok else "videomae_unavailable_image_temporal_change"
-    if knn_note:
-        reason += f"_{knn_note}"
-    return FrameSelectionResult([frame_keys[i] for i in idx], idx, selector_name, reason, {
+    return FrameSelectionResult([frame_keys[i] for i in idx], idx, "deep_temporal_change_selector", "person_crop_temporal_change", {
         "gate": "deep",
         "native_expected_frames": 16,
         "total_frames": n,
         "max_images": max_images,
-        "videomae_loaded": bool(videomae_ok),
-        "selection_basis": reason,
+        "selection_basis": "person_crop_temporal_change",
         "transition_scores": _round_scores(scores),
         "top_transition_peaks": _peak_frames_from_scores(scores, top_k=5),
         "selected_indices": idx,

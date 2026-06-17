@@ -126,6 +126,45 @@ def _rule_id(rule: Any) -> str:
     return ""
 
 
+def _rules_by_id(rules: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Map both DB id and rule_id aliases to their active Anomaly_Rules row."""
+    out: dict[str, dict[str, Any]] = {}
+    for rule in rules or []:
+        if not isinstance(rule, dict):
+            continue
+        for key in (rule.get("rule_id"), rule.get("id")):
+            if key is not None and str(key).strip():
+                out[str(key).strip()] = rule
+                # Some prompts expose ids as anomaly_rule_<id>. Support that too.
+                if str(key).isdigit():
+                    out[f"anomaly_rule_{key}"] = rule
+    return out
+
+
+def _enriched_rule_application(rule: Any, rules_lookup: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    """Dump an LLM rule application and attach source event_type if available."""
+    if hasattr(rule, "model_dump"):
+        data = rule.model_dump(mode="json")
+    elif isinstance(rule, dict):
+        data = dict(rule)
+    else:
+        data = {"rule_id": _rule_id(rule), "applied": bool(getattr(rule, "applied", False))}
+
+    rid = str(data.get("rule_id") or "").strip()
+    source = rules_lookup.get(rid)
+    if source is None and rid.startswith("anomaly_rule_"):
+        source = rules_lookup.get(rid.replace("anomaly_rule_", "", 1))
+
+    if isinstance(source, dict):
+        if not data.get("event_type") and source.get("event_type"):
+            data["event_type"] = source.get("event_type")
+        if not data.get("event_types") and source.get("event_type"):
+            data["event_types"] = [source.get("event_type")]
+        if not data.get("rule_name"):
+            data["rule_name"] = source.get("rule_name") or source.get("name") or source.get("rule_text")
+    return data
+
+
 def apply_python_final_guardrails(
     *,
     ctx: DeepReasoningContext | PoseReasoningContext,
@@ -164,6 +203,18 @@ def apply_python_final_guardrails(
     llm_suppress_rules = _applied_rules(llm.matched_suppress_rules)
     concrete_visual = _has_concrete_visual_evidence(vlm)
     image_usable = vlm.image_quality not in {"UNUSABLE"}
+
+    # 0) If the rule source is unavailable/empty, the closed-world policy has no
+    # active rule set to apply. Do not convert this into a confident NO; require
+    # review and expose the issue in validation_notes/rule_evaluation metadata.
+    if not rules:
+        decision, severity, recommended_action = "UNCERTAIN", "LOW", "review_only"
+        confidence = min(confidence, 0.35)
+        actions.append({
+            "rule_id": "NO_ACTIVE_ANOMALY_RULES",
+            "effect": "forced UNCERTAIN",
+            "reason": "No active Anomaly_Rules were loaded, so the LLM has no closed-world policy source to apply.",
+        })
 
     # 1) Parser failures are never allowed to become final alerts.
     if vlm_parse_error:
@@ -271,13 +322,14 @@ def apply_python_final_guardrails(
         guardrail_actions=actions,
     )
 
+    rules_lookup = _rules_by_id(rules)
     rules_result = {
         "rules_version": RULES_VERSION,
         "rule_source": "Anomaly_Rules",
         "decision_authority": "llm_policy_review",
         "python_role": "validation_only_no_yes_upgrade",
-        "llm_matched_trigger_rules": [r.model_dump(mode="json") for r in llm.matched_trigger_rules],
-        "llm_matched_suppress_rules": [r.model_dump(mode="json") for r in llm.matched_suppress_rules],
+        "llm_matched_trigger_rules": [_enriched_rule_application(r, rules_lookup) for r in llm.matched_trigger_rules],
+        "llm_matched_suppress_rules": [_enriched_rule_application(r, rules_lookup) for r in llm.matched_suppress_rules],
         "deterministic_matched_trigger_rules_diagnostic": deterministic_triggers,
         "deterministic_matched_suppress_rules_diagnostic": deterministic_suppress,
         "rule_reasoning": llm.rule_reasoning,

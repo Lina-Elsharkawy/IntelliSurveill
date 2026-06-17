@@ -47,7 +47,9 @@ export const EvidenceModal = ({
   const getExplanation = () => {
     switch (selectedEvent.gate_name) {
       case "pose":
-        return "The Pose gate detected abnormal micro-motion. The peak score exceeded the calibrated normal threshold. The event became persistent after satisfying the persistence rule.";
+        return selectedEvent.persistent
+           ? "The Pose gate detected abnormal micro-motion. The event satisfied the configured persistence rule."
+           : "The Pose gate detected an above-threshold raw hit that did not satisfy the persistence rule.";
       case "deep":
         return "The Deep gate detected a visual embedding that was far from the normal memory bank. The score exceeded the calibrated VideoMAE kNN threshold.";
       case "homography_macro":

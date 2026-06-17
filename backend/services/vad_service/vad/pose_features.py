@@ -250,6 +250,57 @@ def _as_pose_arrays_from_sample(sample: SampledPerson) -> tuple[np.ndarray, np.n
     return xy, conf
 
 
+
+
+def _persist_keypoints_to_sample(
+    sample: SampledPerson,
+    xy: np.ndarray,
+    conf: np.ndarray,
+    *,
+    kpt_conf: float = 0.30,
+    min_valid_keypoints: int = 5,
+) -> bool:
+    """Persist full-frame COCO17 keypoints onto the SampledPerson when valid.
+
+    The live Pose gate may re-infer keypoints from the saved person crop for
+    scoring.  Those inferred keypoints are full-frame pixel coordinates after
+    the crop offset is restored.  Persisting them here lets event_metadata.json
+    carry keypoints for the reasoning worker, so Pose keyframe selection can use
+    metadata_keypoints instead of re-running YOLO-pose on the saved JPEGs.
+
+    This helper is intentionally metadata-only: it does not change the pose
+    feature values, gate score, thresholds, smoothing, or persistence state.
+    """
+    try:
+        arr_xy = np.asarray(xy, dtype=np.float64)
+        arr_conf = np.asarray(conf, dtype=np.float64).reshape(-1)
+    except Exception:
+        return False
+
+    if arr_xy.ndim != 2 or arr_xy.shape[0] < 17 or arr_xy.shape[1] < 2:
+        return False
+    if arr_conf.ndim != 1 or arr_conf.shape[0] < 17:
+        return False
+
+    arr_xy = arr_xy[:17, :2].astype(np.float64, copy=True)
+    arr_conf = arr_conf[:17].astype(np.float64, copy=True)
+
+    finite_xy = np.isfinite(arr_xy).all(axis=1)
+    finite_conf = np.isfinite(arr_conf)
+    valid = finite_xy & finite_conf & (arr_conf >= float(kpt_conf))
+    if int(np.count_nonzero(valid)) < int(min_valid_keypoints):
+        return False
+
+    # Keep JSON safe and selector-safe.  Invalid/hidden points are retained as
+    # coordinate 0 with confidence 0, so downstream code ignores them via conf.
+    safe_xy = np.where(finite_xy[:, None], arr_xy, 0.0)
+    safe_conf = np.where(finite_conf, arr_conf, 0.0)
+    safe_conf = np.clip(safe_conf, 0.0, 1.0)
+
+    sample.keypoints_xy = [[float(x), float(y)] for x, y in safe_xy.tolist()]
+    sample.keypoints_conf = [float(c) for c in safe_conf.tolist()]
+    return True
+
 def _as_pose_arrays(
     sample: SampledPerson,
     *,
@@ -498,6 +549,7 @@ def make_pose_feature_from_tubelet(
     times: list[float] = []
     pose_sources: list[str] = []
     pose_source_meta: list[dict[str, Any]] = []
+    persisted_keypoint_frames = 0
 
     use_sample_time = str(time_mode or "sample").lower().strip() == "sample"
 
@@ -575,6 +627,10 @@ def make_pose_feature_from_tubelet(
             pose_min_crop_size=pose_min_crop_size,
             device=device,
         )
+        persisted = _persist_keypoints_to_sample(s, xy, conf, kpt_conf=kpt_conf)
+        src_meta["persisted_to_sample"] = bool(persisted)
+        if persisted:
+            persisted_keypoint_frames += 1
         h, w = s.frame_bgr.shape[:2]
         
         # Apply fully smoothed dynamic box
@@ -667,6 +723,8 @@ def make_pose_feature_from_tubelet(
         "bbox_size_jitter_relative_p95": float(bbox_size_jitter_relative_p95),
         "pose_sources": pose_sources,
         "pose_source_counts": {src: int(pose_sources.count(src)) for src in sorted(set(pose_sources))},
+        "pose_persisted_keypoint_frames": int(persisted_keypoint_frames),
+        "pose_persisted_keypoint_ratio": float(persisted_keypoint_frames / max(n, 1)),
         "pose_source_meta": pose_source_meta,
     }
     return feature, meta

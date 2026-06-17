@@ -412,7 +412,10 @@ services:
       VAD_REASONING_MAX_IMAGES: "8"
 
       # Gate-aware frame selection.
-      VAD_REASONING_DEEP_USE_VIDEOMAE: "1"
+      # VideoMAE is NOT used for keyframe selection (it belongs to the Deep
+      # gate detection path). Keyframe selection uses person-centered temporal
+      # visual-change scoring instead.
+      # VAD_REASONING_DEEP_USE_VIDEOMAE: "0"  # unused by keyframe selection
       VAD_REASONING_DEEP_DEVICE: cuda
       VAD_REASONING_DEEP_FP16: "1"
       VAD_REASONING_POSE_REINFER: "1"
