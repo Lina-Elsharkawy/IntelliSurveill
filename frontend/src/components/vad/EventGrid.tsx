@@ -51,7 +51,7 @@ export const EventGrid = ({ items, gateName, viewEvidence }: { items: VadEvent[]
                 {event.peak_score.toFixed(2)}
                 <span className="text-[10px] font-normal text-slate-500 uppercase tracking-widest font-['Montserrat']">Peak Score</span>
                 {ratio !== null && (
-                  <span className={`ml-auto text-sm font-mono ${ratio > 1.5 ? 'text-amber-400' : 'text-slate-400'}`}>
+                  <span className={`ml-auto text-sm font-mono ${ratio > 1.5 ? 'text-emerald-400' : 'text-slate-400'}`}>
                     {ratio.toFixed(2)}x
                   </span>
                 )}
@@ -60,7 +60,7 @@ export const EventGrid = ({ items, gateName, viewEvidence }: { items: VadEvent[]
               <div className="text-xs text-slate-400 mb-4 flex items-center gap-2">
                 <div className="w-full bg-slate-800/50 h-1.5 rounded-full overflow-hidden">
                   <div 
-                    className={`h-full ${event.persistent ? 'bg-red-500' : 'bg-amber-500'}`}
+                    className={`h-full ${event.persistent ? 'bg-red-500' : 'bg-emerald-500'}`}
                     style={{ width: `${Math.min(100, ratio ? ratio * 50 : 0)}%` }}
                   />
                 </div>

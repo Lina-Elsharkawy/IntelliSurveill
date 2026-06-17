@@ -56,7 +56,7 @@ export const EventTable = ({ items, gateName, viewEvidence }: { items: VadEvent[
                 <td className="px-4 py-3 font-mono text-slate-400">{event.tracker_track_id ?? "N/A"}</td>
                 <td className="px-4 py-3 text-right font-mono font-medium text-white">{event.peak_score.toFixed(2)}</td>
                 <td className="px-4 py-3 text-right font-mono text-slate-500">{event.threshold_value.toFixed(2)}</td>
-                <td className={`px-4 py-3 text-right font-mono font-bold ${ratio && ratio > 1.5 ? 'text-amber-400' : 'text-slate-400'}`}>
+                <td className={`px-4 py-3 text-right font-mono font-bold ${ratio && ratio > 1.5 ? 'text-emerald-400' : 'text-slate-400'}`}>
                   {ratio ? `${ratio.toFixed(2)}x` : 'N/A'}
                 </td>
                 <td className="px-4 py-3 text-center">
@@ -67,7 +67,7 @@ export const EventTable = ({ items, gateName, viewEvidence }: { items: VadEvent[
                   )}
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 group-hover:text-[rgb(50,150,255)] group-hover:bg-[rgba(50,150,255,0.1)]">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 group-hover:text-[rgb(46,213,115)] group-hover:bg-[rgba(46,213,115,0.1)]">
                     <Eye className="h-4 w-4" />
                   </Button>
                 </td>

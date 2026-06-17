@@ -172,14 +172,14 @@ export const VadLab = () => {
         {/* Global System State Banner */}
         <div className={`p-4 rounded-xl border flex items-center justify-between shadow-lg ${
           !status?.running ? 'bg-slate-900/50 border-slate-700' :
-          isStreamOffline ? 'bg-amber-950/30 border-amber-500/30' :
+          isStreamOffline ? 'bg-teal-950/30 border-teal-500/30' :
           'bg-[rgba(46,213,115,0.05)] border-[rgba(46,213,115,0.2)]'
         }`}>
           <div className="flex items-center gap-4">
             {status?.running ? (
               <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${isStreamOffline ? 'bg-amber-500' : 'bg-[rgb(46,213,115)] animate-pulse'}`}></div>
-                <span className={`font-['Montserrat'] font-bold ${isStreamOffline ? 'text-amber-400' : 'text-[rgb(46,213,115)]'}`}>
+                <div className={`w-3 h-3 rounded-full ${isStreamOffline ? 'bg-teal-500' : 'bg-[rgb(46,213,115)] animate-pulse'}`}></div>
+                <span className={`font-['Montserrat'] font-bold ${isStreamOffline ? 'text-teal-400' : 'text-[rgb(46,213,115)]'}`}>
                   {isStreamOffline ? 'WAITING FOR STREAM' : 'SYSTEM ACTIVE'}
                 </span>
               </div>
@@ -203,14 +203,14 @@ export const VadLab = () => {
           <div className="flex items-center gap-6">
             <div className="flex flex-col text-right">
               <span className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold">Stream Status</span>
-              <span className={`font-mono text-sm ${!status?.running ? 'text-slate-400' : isStreamOffline ? 'text-amber-400' : 'text-emerald-400'}`}>
+              <span className={`font-mono text-sm ${!status?.running ? 'text-slate-400' : isStreamOffline ? 'text-teal-400' : 'text-emerald-400'}`}>
                 {!status?.running ? 'Offline' : isStreamOffline ? 'Stream Offline' : 'Receiving'}
               </span>
             </div>
             {status?.running && !isStreamOffline && status?.actual_sample_fps !== undefined && (
               <div className="flex flex-col text-right">
                 <span className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold">FPS</span>
-                <span className="text-[rgb(50,150,255)] font-mono text-sm font-bold">{status.actual_sample_fps.toFixed(1)}</span>
+                <span className="text-emerald-400 font-mono text-sm font-bold">{status.actual_sample_fps.toFixed(1)}</span>
               </div>
             )}
           </div>
@@ -241,7 +241,7 @@ export const VadLab = () => {
 
 
             {/* Visual Evidence Area */}
-            <div className="hover:-translate-y-1 hover:shadow-[0_4px_20px_-4px_rgba(59,130,246,0.15)] hover:border-blue-500/30 transition-all duration-300 bg-zinc-950/50 backdrop-blur-sm border border-zinc-800 rounded-xl flex-1 flex flex-col overflow-hidden p-6 shadow-xl">
+            <div className="hover:-translate-y-1 hover:shadow-[0_4px_20px_-4px_rgba(16,185,129,0.15)] hover:border-emerald-500/30 transition-all duration-300 bg-zinc-950/50 backdrop-blur-sm border border-zinc-800 rounded-xl flex-1 flex flex-col overflow-hidden p-6 shadow-xl">
               
                   <div className="border-b border-white/5 pb-4 mb-4">
                     <div className="flex justify-between items-center">

@@ -65,8 +65,8 @@ export const EvidenceModal = ({
         {/* Modal Header */}
         <div className="bg-black/40 px-6 py-4 border-b border-white/10 flex items-center justify-between flex-shrink-0">
           <DialogTitle className="flex items-center gap-3 text-xl font-bold tracking-tight font-['Montserrat']">
-            <div className="p-1.5 bg-[rgba(50,150,255,0.15)] rounded border border-[rgba(50,150,255,0.3)]">
-              <Maximize2 className="w-5 h-5 text-[rgb(50,150,255)]" />
+            <div className="p-1.5 bg-[rgba(46,213,115,0.15)] rounded border border-[rgba(46,213,115,0.3)]">
+              <Maximize2 className="w-5 h-5 text-[rgb(46,213,115)]" />
             </div>
             Analysis Lab: Event #{selectedEvent.id}
           </DialogTitle>
@@ -126,14 +126,14 @@ export const EvidenceModal = ({
                 <div><span className="text-slate-500 block mb-1">Track ID</span><span className="text-slate-200 font-mono">{selectedEvent.tracker_track_id ?? "N/A"}</span></div>
                 <div><span className="text-slate-500 block mb-1">Peak Score</span><span className="text-red-400 font-bold font-mono text-sm">{selectedEvent.peak_score.toFixed(4)}</span></div>
                 <div><span className="text-slate-500 block mb-1">Threshold</span><span className="text-slate-300 font-mono">{selectedEvent.threshold_value.toFixed(4)}</span></div>
-                <div><span className="text-slate-500 block mb-1">Ratio</span><span className="text-amber-400 font-mono font-bold text-sm">{ratio}x</span></div>
+                <div><span className="text-slate-500 block mb-1">Ratio</span><span className="text-emerald-400 font-mono font-bold text-sm">{ratio}x</span></div>
                 <div><span className="text-slate-500 block mb-1">Evidence Frames</span><span className="text-slate-300 font-mono">{evidenceData?.frame_urls?.length ?? 0}</span></div>
               </div>
             </div>
 
             {/* Decision Explanation */}
-            <div className="flex flex-col gap-3 bg-[rgba(50,150,255,0.05)] border border-[rgba(50,150,255,0.2)] rounded-lg p-4">
-              <h4 className="text-xs font-semibold text-[rgb(50,150,255)] font-['Montserrat'] uppercase tracking-wider flex items-center">
+            <div className="flex flex-col gap-3 bg-[rgba(46,213,115,0.05)] border border-[rgba(46,213,115,0.2)] rounded-lg p-4">
+              <h4 className="text-xs font-semibold text-[rgb(46,213,115)] font-['Montserrat'] uppercase tracking-wider flex items-center">
                 <Info className="w-4 h-4 mr-2" /> Decision Explanation
               </h4>
               <p className="text-sm text-slate-300 leading-relaxed">
@@ -141,31 +141,6 @@ export const EvidenceModal = ({
               </p>
             </div>
 
-            {/* Gate Specific Evidence (Conditional) */}
-            {metadataJson && (
-              <div className="flex flex-col gap-3">
-                <h4 className="text-sm font-semibold text-white font-['Montserrat'] uppercase tracking-wider border-b border-white/10 pb-2">
-                  Gate Diagnostics
-                </h4>
-                <div className="flex flex-col gap-2 text-xs font-mono text-slate-300 bg-black/40 p-3 rounded-lg border border-white/5 overflow-x-auto">
-                  {selectedEvent.gate_name === "pose" && metadataJson.skeleton_confidence && (
-                    <div className="flex justify-between"><span className="text-slate-500">Skeleton Conf:</span> <span>{metadataJson.skeleton_confidence}</span></div>
-                  )}
-                  {selectedEvent.gate_name === "deep" && metadataJson.knn_distance && (
-                    <div className="flex justify-between"><span className="text-slate-500">kNN Distance:</span> <span>{metadataJson.knn_distance}</span></div>
-                  )}
-                  {selectedEvent.gate_name === "deep" && metadataJson.memory_bank_k && (
-                    <div className="flex justify-between"><span className="text-slate-500">Memory Bank k:</span> <span>{metadataJson.memory_bank_k}</span></div>
-                  )}
-                  {selectedEvent.gate_name === "homography_macro" && metadataJson.speed && (
-                    <div className="flex justify-between"><span className="text-slate-500">Speed (px/s):</span> <span>{metadataJson.speed}</span></div>
-                  )}
-                  {!metadataJson.skeleton_confidence && !metadataJson.knn_distance && !metadataJson.speed && (
-                    <span className="text-slate-500 italic">No diagnostic metadata found for this event.</span>
-                  )}
-                </div>
-              </div>
-            )}
 
 
 
