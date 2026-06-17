@@ -87,8 +87,8 @@
 .anomaly-page-wrapper {
   --neon-green: rgb(46, 213, 115);
   --neon-red: rgb(255, 80, 80);
-  --neon-amber: rgb(255, 180, 50);
-  --neon-blue: rgb(50, 150, 255);
+  --neon-amber: rgb(16, 185, 129); /* Emerald */
+  --neon-blue: rgb(20, 184, 166); /* Teal-green */
 }
 .anomaly-page-wrapper .anomaly-cards-container {
   display: grid;
@@ -130,8 +130,8 @@
 
 /* Card states */
 .anomaly-page-wrapper .anomaly-card.severity-high { border-left: 4px solid var(--neon-red); background: linear-gradient(135deg, rgba(255, 80, 80, 0.1) 0%, rgba(15, 18, 15, 0.8) 100%); }
-.anomaly-page-wrapper .anomaly-card.severity-medium { border-left: 4px solid var(--neon-amber); background: linear-gradient(135deg, rgba(255, 180, 50, 0.1) 0%, rgba(15, 18, 15, 0.8) 100%); }
-.anomaly-page-wrapper .anomaly-card.severity-low { border-left: 4px solid var(--neon-blue); background: linear-gradient(135deg, rgba(50, 150, 255, 0.1) 0%, rgba(15, 18, 15, 0.8) 100%); }
+.anomaly-page-wrapper .anomaly-card.severity-medium { border-left: 4px solid var(--neon-amber); background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(15, 18, 15, 0.8) 100%); }
+.anomaly-page-wrapper .anomaly-card.severity-low { border-left: 4px solid var(--neon-blue); background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(15, 18, 15, 0.8) 100%); }
 .anomaly-page-wrapper .anomaly-card.status-resolved { border-left: 4px solid var(--neon-green); background: linear-gradient(135deg, rgba(46, 213, 115, 0.1) 0%, rgba(15, 18, 15, 0.8) 100%); }
 .anomaly-page-wrapper .anomaly-card.status-discarded { border-left: 4px solid #64748b; background: linear-gradient(135deg, rgba(100, 116, 139, 0.1) 0%, rgba(15, 18, 15, 0.8) 100%); opacity: 0.6; }
 
@@ -212,7 +212,7 @@
   box-shadow: 0 8px 25px rgba(0,0,0,0.2);
 }
 .anomaly-stat-card.destructive { box-shadow: inset 0 0 0 1px rgba(255,80,80,0.2), 0 4px 15px rgba(255,80,80,0.1); }
-.anomaly-stat-card.warning { box-shadow: inset 0 0 0 1px rgba(255,180,50,0.2), 0 4px 15px rgba(255,180,50,0.1); }
+.anomaly-stat-card.warning { box-shadow: inset 0 0 0 1px rgba(16,185,129,0.2), 0 4px 15px rgba(16,185,129,0.1); }
 .anomaly-stat-card.success { box-shadow: inset 0 0 0 1px rgba(46,213,115,0.2), 0 4px 15px rgba(46,213,115,0.1); }
 
 .anomaly-modal-glass {

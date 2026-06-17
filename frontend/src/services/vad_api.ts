@@ -36,7 +36,7 @@ export interface VadEvent {
   peak_score: number;
   threshold_value: number;
   persistence_hits: number;
-  persistent: boolean;
+  persistent?: boolean;
   track_id: number | null;
   tracker_track_id: number | null;
   global_track_key: string | null;
@@ -174,7 +174,13 @@ export const vadApi = {
     }
     const res = await fetch(url);
     if (!res.ok) throw new Error("Failed to fetch VAD events");
-    return res.json();
+    const data = await res.json();
+    return {
+      events: (data.events || []).map((event: VadEvent) => ({
+        ...event,
+        persistent: event.persistent ?? true,
+      })),
+    };
   },
 
   async getEventDetails(eventId: number): Promise<VadEventDetails> {

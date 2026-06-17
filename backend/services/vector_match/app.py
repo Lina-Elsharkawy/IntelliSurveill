@@ -22,7 +22,7 @@ from .models import (
 from .utils import l2_normalize, to_pgvector_literal, interval_from_ms
 from . import db
 from .logic import decide_identity, should_identify, should_autolearn
-
+import os
 
 app = FastAPI(title="Face Vector Match Service (Flink -> FastAPI -> pgvector)")
 
@@ -250,10 +250,12 @@ def admin_list_pending_unknowns(limit: int = 2000, offset: int = 0):
 
 
 @app.get("/admin/recent-entry-logs", response_model=list[EntryLogItem])
-def admin_list_recent_entry_logs(limit: int = 2000, offset: int = 0):
-    """List recent entry logs (for debugging / dashboards)."""
-    limit = max(1, min(int(limit), 2000))
+def admin_list_recent_entry_logs(limit: int = 5000, offset: int = 0):
+    """List recent entry logs for admin tables and analytics dashboards."""
+    max_limit = int(os.getenv("ADMIN_ENTRY_LOG_MAX_LIMIT", "10000"))
+    limit = max(1, min(int(limit), max_limit))
     offset = max(0, int(offset))
+
     with db.get_conn() as conn:
         rows = db.list_recent_entry_logs(conn, limit=limit, offset=offset)
 

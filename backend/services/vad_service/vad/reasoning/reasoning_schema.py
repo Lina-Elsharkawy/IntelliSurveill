@@ -236,6 +236,8 @@ class VlmVisualReview(BaseModel):
 class RuleApplication(BaseModel):
     rule_id: str
     rule_name: str | None = None
+    event_type: str | None = None
+    event_types: list[str] = Field(default_factory=list)
     applied: bool = False
     reason: str = ""
 
@@ -302,26 +304,43 @@ def model_to_dict(model: BaseModel) -> dict[str, Any]:
     return model.model_dump(mode="json")
 
 
+def _loads_json_object_lenient(candidate: str) -> dict[str, Any]:
+    """Load a JSON object, allowing common local-LLM trailing commas.
+
+    This is intentionally conservative: it only removes commas immediately
+    before a closing } or ], and still requires the result to be a JSON object.
+    """
+    candidate = (candidate or "").strip()
+    if not candidate:
+        return {}
+    for text in (candidate, re.sub(r",\s*([}\]])", r"\1", candidate)):
+        try:
+            parsed = json.loads(text)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            continue
+    return {}
+
+
 def extract_json_object(text: str) -> dict[str, Any]:
-    """Extract first JSON object from a possibly chatty/fenced model response."""
+    """Extract first JSON object from a possibly chatty/fenced model response.
+
+    Ollama/local models sometimes wrap JSON in fences or leave a final trailing
+    comma.  Parse leniently, but only enough to recover valid JSON objects;
+    unsafe/unparseable output still falls back to UNCERTAIN in the caller.
+    """
     text = (text or "").strip()
     if not text:
         return {}
     text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\s*```$", "", text)
-    try:
-        parsed = json.loads(text)
-        return parsed if isinstance(parsed, dict) else {}
-    except Exception:
-        pass
+    parsed = _loads_json_object_lenient(text)
+    if parsed:
+        return parsed
     start = text.find("{")
     end = text.rfind("}")
     if start >= 0 and end > start:
-        try:
-            parsed = json.loads(text[start : end + 1])
-            return parsed if isinstance(parsed, dict) else {}
-        except Exception:
-            return {}
+        return _loads_json_object_lenient(text[start : end + 1])
     return {}
 
 

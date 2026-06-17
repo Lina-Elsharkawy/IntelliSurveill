@@ -1,4 +1,14 @@
-"""VAD Anomaly Rules — DB-backed rule engine for the Deep Gate reasoning pipeline.
+"""LEGACY — vad_rules_engine.py (UNUSED by the active pipeline)
+==========================================================================
+The active reasoning pipeline loads rules from the ``Anomaly_Rules`` table
+via ``vad_anomaly_rules/__init__.py::load_anomaly_rules()``.
+
+This file implements the older ``vad_reasoning_rules`` DB-backed rule engine.
+It is preserved for reference only. Do NOT import from this module in the
+active reasoning_worker or reasoning_policy paths.
+
+See vad_anomaly_rules/__init__.py for the active rule source.
+
 
 This module replaces the previous compile-time hardcoded rule list in
 ``reasoning/reasoning_rules.py`` with a live-queryable Postgres table

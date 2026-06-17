@@ -66,10 +66,27 @@ def _final_event_type_from_rules(final: dict[str, Any], rules_json: dict[str, An
     """
     decision = str((final or {}).get("final_alert_decision") or "UNCERTAIN").upper()
     if decision == "YES":
-        for rule in (rules_json or {}).get("matched_trigger_rules", []) or []:
-            et = rule.get("event_type") or (rule.get("event_types") or [None])[0]
-            if et:
-                return str(et)
+        # Try both field names: reasoning_policy stores as llm_matched_trigger_rules,
+        # but the LLM JSON itself may use matched_trigger_rules.
+        trigger_rules = (
+            (rules_json or {}).get("llm_matched_trigger_rules")
+            or (rules_json or {}).get("matched_trigger_rules")
+            or []
+        )
+        for rule in trigger_rules:
+            if not isinstance(rule, dict):
+                continue
+            # Only consider rules that were actually applied.
+            if rule.get("applied") is False:
+                continue
+            et = rule.get("event_type")
+            if not et:
+                # Some rules store event_types as a list.
+                ets = rule.get("event_types")
+                if isinstance(ets, list) and ets:
+                    et = ets[0]
+            if et and str(et).strip():
+                return str(et).strip()
         return "rule_matched_alert"
     if decision == "NO":
         return "no_rule_alert"
@@ -90,7 +107,14 @@ def _load_merged_rules(db: VadDB, conn) -> list[dict[str, Any]]:
     this rule list — it cannot reason freely beyond what the rules cover.
     """
     rules = load_anomaly_rules(conn)
-    log.info("Rules loaded from Anomaly_Rules: %d active", len(rules))
+    if not rules:
+        log.warning(
+            "No active rules loaded from Anomaly_Rules. "
+            "The LLM will have no rules to match against. "
+            "Reasoning results will be UNCERTAIN with metadata: no_active_rules."
+        )
+    else:
+        log.info("Rules loaded from Anomaly_Rules: %d active", len(rules))
     return rules
 
 
@@ -464,6 +488,12 @@ class GateReasoningWorker:
             vlm_parse_info=vlm_parse_info,
             llm_parse_info=llm_parse_info,
         )
+        # Store rule source status for frontend audit display.
+        if not rules:
+            structured.setdefault("rule_evaluation", {})["rule_source_status"] = "no_active_rules"
+        else:
+            structured.setdefault("rule_evaluation", {})["rule_source_status"] = "active"
+            structured.setdefault("rule_evaluation", {})["active_rule_count"] = len(rules)
         structured["frame_selection"] = sanitize_json(frame_selection_audit)
         return ReasoningCallResult(
             raw_vlm_output=raw_vlm,

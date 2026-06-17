@@ -864,7 +864,9 @@ class VadDB:
     def get_recent_gate_events(self, conn: psycopg.Connection, *, limit: int = 50, gate_name: str | None = None) -> list[dict[str, Any]]:
         query = """
             SELECT e.id, e.event_key, e.gate_name, e.severity, e.start_ts, e.peak_ts, e.peak_score,
-                   e.threshold_value, e.persistence_hits, e.persistence_window, e.track_id,
+                   e.threshold_value, e.persistence_hits, e.persistence_window,
+                   TRUE AS persistent,
+                   e.track_id,
                    t.tracker_track_id, t.global_track_key,
                    e.reason_when_fired
             FROM vad_gate_events e
