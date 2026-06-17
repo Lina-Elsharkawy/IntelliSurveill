@@ -1,15 +1,23 @@
 """
-LangGraph workflow for a tool-first Surveillance Investigation Chatbot.
+langgraph_workflow.py — Clean LangGraph orchestration for the Surveillance Chatbot.
 
-Design:
-  - LangGraph stays as the orchestrator.
-  - Trusted investigation tools are the main path.
-  - Vector/pgvector tools are first-class investigation tools.
-  - Generic NL-to-SQL is kept only as a read-only fallback.
+Architecture (paper-backed):
+  ReAct  (Yao et al. 2022)       → reasoning + acting in each node
+  DIN-SQL (Pourreza & Rafiei)    → decomposed in-context SQL generation
+  Hybrid LLM+Tools (2410.01066) → deterministic tools first, SQL as fallback
+
+Flow:
+  normalize → route → validate_params
+                           ↓
+               ┌────────────────────────┐
+           small_talk   tool   vector   sql
+               ↓         ↓       ↓      ↓
+              END     format  format  generate→safety→validate→execute→format
+                         ↓       ↓
+                        END     END
 """
 from __future__ import annotations
 
-import inspect
 import json
 import re
 from datetime import date
@@ -17,102 +25,25 @@ from typing import Any
 
 from langgraph.graph import StateGraph, END
 
-from model import OllamaLLM, SQLState
+from model import SQLState, OllamaLLM
 from db import get_database_schema, execute_sql_safely
 from validators import validate_sql, sanitize_sql, safety_gate, is_write_intent
 from prompts import get_sql_generation_prompt, get_error_correction_prompt, get_result_formatting_prompt
-from intent_router import route
-from capabilities import required_params, tool_type
-from tools import (
-    get_all_known_people,
-    get_person_last_seen,
-    get_person_first_seen,
-    get_person_timeline,
-    get_unknown_faces_today,
-    get_unknown_face_events,
-    get_unknown_face_event_details,
-    get_repeated_unknowns,
-    get_anomalies_near_face,
-    get_anomalies_near_unknown_event,
-    get_people_seen_today,
-    get_table_record_counts,
-    get_latest_anomalies,
-    get_camera_activity_summary,
-    get_daily_security_summary,
-    get_dashboard_sync_metrics,
-    get_unknown_detection_count,
-    get_known_face_detection_count,
-    get_face_detection_count,
-    find_similar_unknown_faces,
-    find_possible_identity_match,
-    investigate_unknown_face_event,
-    get_anomaly_candidates,
-    get_anomaly_candidate_review,
-    get_ollama_jobs,
-    get_scene_window_embeddings,
-    get_anomaly_rules,
-    get_edge_devices,
-    get_normal_behavior_models,
-    get_rule_conflicts,
-)
+from intent_router import route as _router_route, _TOOL_INTENTS, _VECTOR_INTENTS
+from tools import TOOL_MAP
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Lazy singletons
+# ─────────────────────────────────────────────────────────────────────────────
 _llm = None
 _workflow = None
 
 
-def get_llm():
+def _llm_instance() -> OllamaLLM:
     global _llm
     if _llm is None:
         _llm = OllamaLLM()
     return _llm
-
-
-TOOL_MAP = {
-    # Registry
-    "all_known_people": get_all_known_people,
-
-    # New canonical tool names
-    "person_last_seen": get_person_last_seen,
-    "person_first_seen": get_person_first_seen,
-    "person_timeline": get_person_timeline,
-    "people_seen_on_date": get_people_seen_today,
-    "latest_unknown_face_events": get_unknown_face_events,
-    "unknown_detection_count": get_unknown_detection_count,
-    "known_face_detection_count": get_known_face_detection_count,
-    "face_detection_count": get_face_detection_count,
-    "unknown_face_event_details": get_unknown_face_event_details,
-    "repeated_unknown_faces": get_repeated_unknowns,
-    "latest_anomalies": get_latest_anomalies,
-    "anomalies_near_person": get_anomalies_near_face,
-    "anomalies_near_unknown_event": get_anomalies_near_unknown_event,
-    "camera_activity_summary": get_camera_activity_summary,
-    "daily_security_summary": get_daily_security_summary,
-    "dashboard_sync_metrics": get_dashboard_sync_metrics,
-    "table_record_counts": get_table_record_counts,
-    "anomaly_candidates": get_anomaly_candidates,
-    "anomaly_candidate_review": get_anomaly_candidate_review,
-    "ollama_jobs": get_ollama_jobs,
-    "scene_window_embeddings": get_scene_window_embeddings,
-    "anomaly_rules": get_anomaly_rules,
-    "edge_devices": get_edge_devices,
-    "normal_behavior_models": get_normal_behavior_models,
-    "rule_conflicts": get_rule_conflicts,
-
-    # Vector tools
-    "similar_unknown_faces": find_similar_unknown_faces,
-    "possible_identity_match": find_possible_identity_match,
-    "investigate_unknown_face_event": investigate_unknown_face_event,
-
-    # Backward compatibility aliases
-    "last_seen": get_person_last_seen,
-    "first_seen": get_person_first_seen,
-    "timeline": get_person_timeline,
-    "unknown_faces": get_unknown_faces_today,
-    "unknown_face_events": get_unknown_face_events,
-    "repeated_unknowns": get_repeated_unknowns,
-    "anomalies_near_face": get_anomalies_near_face,
-    "people_seen_today": get_people_seen_today,
-}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -121,40 +52,14 @@ TOOL_MAP = {
 
 def _compact(value: Any, max_len: int = 220) -> str:
     text = str(value)
-    return text if len(text) <= max_len else text[: max_len - 3] + "..."
+    return text if len(text) <= max_len else text[:max_len - 3] + "..."
 
 
-def _coerce_tool_params(tool_name: str, params: dict[str, Any]) -> dict[str, Any]:
-    """Map canonical params to the actual function signature and drop extras."""
-    fn = TOOL_MAP.get(tool_name)
-    if not fn:
-        return params
-
-    p = dict(params or {})
-
-    # Existing functions still use old names.
-    if tool_name in {"person_last_seen", "person_first_seen", "person_timeline", "anomalies_near_person"}:
-        if "person_name" in p and "name" not in p:
-            p["name"] = p.pop("person_name")
-    if tool_name == "anomalies_near_person":
-        if "name" in p and "person_name" not in p:
-            p["person_name"] = p.pop("name")
-    if tool_name in {"people_seen_on_date", "person_timeline", "person_last_seen", "person_first_seen"}:
-        if "date" in p and "target_date" not in p:
-            p["target_date"] = p.pop("date")
-    if tool_name == "latest_unknown_face_events":
-        # get_unknown_face_events does not accept target_date. days_back covers recent ranges.
-        p.pop("target_date", None)
-    if tool_name == "repeated_unknown_faces":
-        p.pop("target_date", None)
-        p.setdefault("days_back", 7)
-
-    sig = inspect.signature(fn)
-    allowed = set(sig.parameters.keys())
-    return {k: v for k, v in p.items() if k in allowed and v is not None}
+def _safe_json(value: Any) -> str:
+    return json.dumps(value, default=str, ensure_ascii=False, indent=2)
 
 
-def _flatten_results(result: dict[str, Any]) -> list[dict[str, Any]]:
+def _flatten(result: dict) -> list:
     data = result.get("data", [])
     if isinstance(data, list):
         return data
@@ -163,209 +68,159 @@ def _flatten_results(result: dict[str, Any]) -> list[dict[str, Any]]:
     return []
 
 
-def _safe_json(value: Any) -> str:
-    return json.dumps(value, default=str, ensure_ascii=False, indent=2)
+_EMBED_COLS = {
+    "embedding", "face_embedding", "vector", "encoding",
+    "scene_embedding", "image_data", "thumbnail",
+    "student_embedding", "teacher_embedding",
+}
 
 
 def _strip_embeddings(data: Any) -> Any:
-    """Recursively strip high-dimensional vectors and binary data from tool results before sending to LLM."""
-    _SKIP_COLS = {
-        "embedding", "face_embedding", "vector", "encoding",
-        "scene_embedding", "image_data", "thumbnail",
-        "student_embedding", "teacher_embedding", "student_embeddings", "teacher_embeddings"
-    }
-
     if isinstance(data, dict):
-        return {k: _strip_embeddings(v) for k, v in data.items() if k.lower() not in _SKIP_COLS}
-    elif isinstance(data, list):
+        return {k: _strip_embeddings(v) for k, v in data.items() if k.lower() not in _EMBED_COLS}
+    if isinstance(data, list):
         return [_strip_embeddings(x) for x in data]
     return data
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Nodes
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _needs_normalization(q: str) -> bool:
+def _coerce_params(intent: str, entities: dict) -> dict:
     """
-    Return True only when the question is likely to have real typos worth correcting.
-    Skip the LLM call for short questions, pure-ASCII well-formed questions, and
-    questions that are already handled by Layer 1 (deterministic router).
-    This prevents the normalize LLM call from blocking the Ollama thread and
-    causing downstream classify() timeouts.
+    Map entity names to the actual function signature of the tool.
+    Drop any keys the function doesn't accept.
     """
-    words = q.split()
-    # Very short questions are handled well by regex alone
-    if len(words) <= 4:
-        return False
-    # If every word looks like normal ASCII text with no obvious run-together errors, skip
-    import re as _re
-    suspicious = sum(1 for w in words if len(w) > 15 or _re.search(r"[^a-zA-Z0-9 '?.,!-]", w))
-    return suspicious > 0
+    import inspect
+    fn = TOOL_MAP.get(intent)
+    if not fn:
+        return {}
 
+    p = dict(entities or {})
+
+    # Canonical renames
+    renames = {
+        "person_last_seen":    {"person_name": "name"},
+        "person_first_seen":   {"person_name": "name"},
+        "person_timeline":     {"person_name": "name", "date": "target_date"},
+        "people_seen_on_date": {"date": "target_date"},
+    }
+    for old, new in renames.get(intent, {}).items():
+        if old in p and new not in p:
+            p[new] = p.pop(old)
+
+    # Keep only params the function actually accepts, drop None values
+    sig = inspect.signature(fn)
+    allowed = set(sig.parameters.keys())
+    return {k: v for k, v in p.items() if k in allowed and v is not None}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NODES
+# ─────────────────────────────────────────────────────────────────────────────
 
 def normalize_question(state: SQLState) -> SQLState:
+    """Pass-through — LLM understanding handles any phrasing."""
     q = (state.get("question") or "").strip()
-    retry = state.get("retry_count", 0)
-    
-    # Only perform spelling/casing correction on the first try to avoid overhead on retries.
-    # Skip entirely when the question looks clean — avoids blocking the Ollama thread,
-    # which caused downstream classify() timeouts (Layer 2 timed out at 90s while
-    # normalize was still holding the model for 2+ minutes).
-    if retry == 0 and _needs_normalization(q):
-        prompt = f"""You are a spelling correction assistant for a surveillance system.
-Your ONLY job is to fix obvious typos and capitalize person names.
-STRICT RULES:
-- Do NOT rephrase, restructure, or change the meaning of the question.
-- Do NOT change verb tenses (e.g. "inserted" stays "inserted", never change to "insert into").
-- Do NOT add or remove words beyond fixing clear spelling errors.
-- Keep the question in whatever tense and structure the user wrote it.
-- If it is already correct, output it exactly as is.
-
-USER QUESTION: {q}
-
-CORRECTED QUESTION:"""
-        try:
-            corrected_q = get_llm().generate(prompt, temperature=0.0, num_predict=60).strip()
-            # Clean up the response just in case the LLM includes the prefix
-            for prefix in ["Corrected Query:", "CORRECTED QUESTION:", "Corrected question:"]:
-                if corrected_q.lower().startswith(prefix.lower()):
-                    corrected_q = corrected_q[len(prefix):].strip()
-            corrected_q = corrected_q.strip('"').strip("'")
-            # Safety: if the LLM output triggers write-intent but original didn't, discard correction
-            if is_write_intent(corrected_q) and not is_write_intent(q):
-                corrected_q = q
-            
-            # Fix 2: post-normalization guard for intent keywords
-            # If the original had "first" and the correction doesn't, restore it.
-            if "first" in q.lower() and "first" not in corrected_q.lower():
-                # Re-insert "first" before the main verb or at a reasonable spot
-                # Simple approach: if it was "first inserted" and became "inserted", fix it.
-                # Even simpler: just use original if a critical keyword is lost.
-                corrected_q = q 
-
-            q = corrected_q
-        except Exception:
-            pass  # fallback to original on LLM failure
-
-    return {**state, "question": q, "original_question": state.get("question", ""), "retry_count": retry}
+    return {**state, "question": q, "original_question": q, "retry_count": state.get("retry_count", 0)}
 
 
 def route_intent(state: SQLState) -> SQLState:
     question = state["question"]
-    # Also check the pre-normalization question so a bad LLM correction can't
-    # cause a false write-block on a genuine historical read query.
     original = state.get("original_question", question)
 
-    # Block write commands before any routing — catches "drop anomaly rules",
-    # "remove table", "delete employee X", etc. even when Layer 1 would match a tool.
-    # IMPORTANT: only block if BOTH the normalized AND original question trigger write-intent.
-    # This prevents a bad LLM spelling correction from false-blocking historical questions
-    # like "when did Lina first inserted in the system?"
+    # Block write commands before routing
     if is_write_intent(question) and is_write_intent(original):
-        blocked = {
-            "path": "small_talk",
-            "intent": "small_talk",
-            "tool": None,
-            "params": {},
-            "confidence": 1.0,
-            "needs_clarification": False,
-            "clarification_question": None,
-            "required_params": [],
-            "_write_blocked": True,
-        }
-        return {**state, "intent": blocked}
+        return {**state, "intent": "small_talk", "entities": {}, "route": "small_talk", "_write_blocked": True}
 
-    decision = route(question, history=state.get("history", []))
-    return {**state, "intent": decision}
+    decision = _router_route(question, history=state.get("history", []))
+    return {
+        **state,
+        "intent":   decision["intent"],
+        "entities": decision["entities"],
+        "route":    decision["route"],
+    }
 
 
 def validate_intent_params(state: SQLState) -> SQLState:
-    intent = state.get("intent", {})
-    intent_name = intent.get("intent") or intent.get("tool") or "sql_fallback"
-    params = intent.get("params", {}) or {}
+    """Check required params; set needs_clarification if missing."""
+    intent = state.get("intent", "sql_fallback")
+    entities = state.get("entities", {})
+    route = state.get("route", "sql")
 
-    missing = [p for p in required_params(intent_name) if not params.get(p)]
+    # Tools that need an event_id
+    needs_event_id = {"similar_unknown_faces", "possible_identity_match",
+                      "investigate_unknown_face", "unknown_face_details"}
+    # Tools that need a name
+    needs_name = {"person_last_seen", "person_first_seen", "person_timeline"}
+    # Tools that need a case_id
+    needs_case_id = {"vad_case_details"}
 
-    if missing and tool_type(intent_name) not in {"sql", "small_talk"}:
-        if "name" in missing:
-            question = "Which person do you mean? Please provide the name, for example: “Where was Maged last seen?”"
-        elif "event_id" in missing:
-            question = "Which unknown face event ID should I use? For example: “Investigate unknown face event 274.”"
-        elif "target_date" in missing:
-            params["target_date"] = date.today().isoformat()
-            missing = []
-            question = None
-        else:
-            question = f"I need the missing parameter(s): {', '.join(missing)}."
+    clarification = None
 
-        if missing:
-            return {
-                **state,
-                "intent": {
-                    **intent,
-                    "needs_clarification": True,
-                    "clarification_question": question,
-                    "missing_params": missing,
-                },
-            }
+    if route in {"tool", "vector"}:
+        if intent in needs_name and not entities.get("name"):
+            clarification = "Which person do you mean? Please provide a name, e.g. 'Where was Maged last seen?'"
+        elif intent in needs_event_id and not entities.get("event_id"):
+            clarification = "Which unknown face event ID? e.g. 'Investigate unknown face event 42.'"
+        elif intent in needs_case_id and not entities.get("case_id"):
+            clarification = "Which VAD case ID? e.g. 'Show details for case 7.'"
 
-    return {**state, "intent": {**intent, "params": params, "needs_clarification": False}}
+    return {**state, "needs_clarification": bool(clarification), "clarification_question": clarification}
 
 
 def ask_clarification(state: SQLState) -> SQLState:
-    intent = state.get("intent", {})
-    answer = intent.get("clarification_question") or "I need one more detail before I can answer that."
+    answer = state.get("clarification_question") or "I need one more detail to answer that."
     return {**state, "final_answer": answer, "sql": "", "results": []}
 
 
 def handle_small_talk(state: SQLState) -> SQLState:
-    intent = state.get("intent", {})
-
-    # Write-command block — triggered by is_write_intent() in route_intent
-    if intent.get("_write_blocked"):
-        answer = (
-            "⛔ That looks like a write or delete command. "
-            "I only support read-only investigation queries. "
-            "Please ask me to show, find, count, or investigate instead."
-        )
-        return {**state, "final_answer": answer, "sql": "", "results": []}
+    if state.get("_write_blocked"):
+        return {**state,
+                "final_answer": (
+                    "⛔ That looks like a write or delete command. "
+                    "I only support read-only investigation queries. "
+                    "Please ask me to show, find, count, or investigate instead."
+                ),
+                "sql": "", "results": []}
 
     q = state["question"].lower()
-    if any(p in q for p in ["hello", "hi", "hey", "hiya", "howdy"]):
-        answer = "👋 Hello! I’m the AI-Edge surveillance investigation assistant. Ask me about detections, unknown faces, anomalies, cameras, or security summaries."
+    if any(w in q for w in ["hello", "hi", "hey", "howdy", "hiya"]):
+        answer = ("👋 Hello! I'm the AI-Edge surveillance investigation assistant. "
+                  "Ask me about detections, unknown faces, anomaly cases, cameras, or security summaries.")
     elif "how are you" in q:
-        answer = "I’m operational and ready to investigate the surveillance data. 🟢"
-    elif any(p in q for p in ["thank", "thanks"]):
-        answer = "You’re welcome!"
-    elif any(p in q for p in ["what can you do", "help"]):
+        answer = "I'm operational and ready to investigate. 🟢"
+    elif any(w in q for w in ["thank", "thanks"]):
+        answer = "You're welcome!"
+    elif any(w in q for w in ["what can you do", "help"]):
         answer = (
             "I can help with surveillance investigations:\n\n"
-            "People: 'Where was Maged last seen?', 'Show Ahmed movements yesterday'\n"
-            "Unknown faces: 'Show latest unknown events', 'Investigate event 274'\n"
-            "Anomaly pipeline: 'Show pending candidates', 'Any failed Ollama jobs?', 'Which scene windows were flagged?'\n"
-            "Rules & devices: 'Show active anomaly rules', 'Any rule conflicts?', 'Show edge devices'\n"
-            "Models: 'List active behavior models'\n"
-            "Summaries: 'Today security summary', 'Camera activity', 'How many cameras?'"
+            "**People:** 'Where was Maged last seen?', 'Show Ahmed's movements yesterday'\n"
+            "**Unknown faces:** 'Show latest unknown events', 'Investigate event 42'\n"
+            "**VAD anomaly pipeline:** 'Show open cases', 'Any failed reasoning jobs?', 'Critical gate events'\n"
+            "**Rules & devices:** 'Show active anomaly rules', 'Any rule conflicts?', 'List edge devices'\n"
+            "**Summaries:** 'Today's security summary', 'Camera activity', 'Table record counts'"
         )
     else:
-        answer = "I’m the AI-Edge surveillance investigation assistant. Ask me about people, cameras, unknown faces, anomalies, or summaries."
+        answer = ("I'm the AI-Edge surveillance investigation assistant. "
+                  "Ask me about people, cameras, unknown faces, anomalies, or summaries.")
     return {**state, "final_answer": answer, "sql": "", "results": []}
 
 
 def run_tool(state: SQLState) -> SQLState:
-    intent = state.get("intent", {})
-    tool_name = intent.get("tool")
-    params = _coerce_tool_params(tool_name, intent.get("params", {}))
-    fn = TOOL_MAP.get(tool_name)
+    intent = state.get("intent", "")
+    entities = state.get("entities", {})
+    fn = TOOL_MAP.get(intent)
     if not fn:
-        return {**state, "tool_result": {"found": False, "message": f"Unknown tool: {tool_name}"}}
-    result = fn(**params)
-    return {**state, "tool_result": result, "sql": f"[Tool: {tool_name}]"}
+        return {**state, "tool_result": {"found": False, "message": f"No tool registered for intent '{intent}'"}}
+    params = _coerce_params(intent, entities)
+    try:
+        result = fn(**params)
+    except Exception as e:
+        result = {"found": False, "message": str(e)}
+    return {**state, "tool_result": result, "sql": f"[Tool: {intent}]"}
 
 
 def run_vector_tool(state: SQLState) -> SQLState:
-    # Same execution model as normal tools, but separate node makes the graph explicit.
+    # Same execution path — separate node makes the graph explicit and allows
+    # different error handling / logging in the future.
     return run_tool(state)
 
 
@@ -388,8 +243,8 @@ def generate_sql(state: SQLState) -> SQLState:
             state.get("error_message", ""),
             state.get("schema", ""),
         )
-    raw_sql = get_llm().generate(prompt, temperature=0.0)
-    return {**state, "sql": sanitize_sql(raw_sql)}
+    raw = _llm_instance().generate(prompt, temperature=0.0)
+    return {**state, "sql": sanitize_sql(raw)}
 
 
 def check_sql_safety(state: SQLState) -> SQLState:
@@ -401,586 +256,558 @@ def validate_sql_query(state: SQLState) -> SQLState:
     is_valid, error_msg = validate_sql(state.get("sql", ""))
     if is_valid:
         return {**state, "sql_valid": True, "error_message": ""}
-    return {
-        **state,
-        "sql_valid": False,
-        "error_message": error_msg,
-        "retry_count": state.get("retry_count", 0) + 1,
-    }
+    return {**state, "sql_valid": False, "error_message": error_msg,
+            "retry_count": state.get("retry_count", 0) + 1}
 
 
 def execute_query(state: SQLState) -> SQLState:
     result = execute_sql_safely(state.get("sql", ""))
     if result["success"]:
         return {**state, "results": result["data"], "sql_valid": True}
-    return {
-        **state,
-        "sql_valid": False,
-        "error_message": result["error"],
-        "retry_count": state.get("retry_count", 0) + 1,
-    }
+    return {**state, "sql_valid": False, "error_message": result["error"],
+            "retry_count": state.get("retry_count", 0) + 1}
 
 
 def reject_write_sql(state: SQLState) -> SQLState:
     reason = state.get("safety_reason", "")
-    answer = (
-        "⛔ I can only run read-only database queries. This request produced SQL that was blocked.\n\n"
-        f"Technical reason: {reason}"
-    )
-    return {**state, "final_answer": answer, "results": []}
+    return {**state,
+            "final_answer": (
+                "⛔ I can only run read-only database queries. "
+                f"The generated SQL was blocked.\n\nReason: {reason}"
+            ),
+            "results": []}
 
 
 def give_up_sql(state: SQLState) -> SQLState:
-    answer = (
-        "I could not safely answer this through the SQL fallback after retrying.\n\n"
-        "This question may need a dedicated investigation tool.\n\n"
-        f"Last SQL attempted:\n{state.get('sql', '')}\n\n"
-        f"Error:\n{state.get('error_message', 'Unknown error')}"
-    )
-    return {**state, "final_answer": answer, "results": state.get("results", [])}
+    return {**state,
+            "final_answer": (
+                "I could not safely answer this via the SQL fallback after retrying.\n\n"
+                f"Last SQL attempted:\n{state.get('sql', '')}\n\n"
+                f"Error:\n{state.get('error_message', 'Unknown error')}"
+            ),
+            "results": state.get("results", [])}
 
 
 def format_sql_response(state: SQLState) -> SQLState:
     results = state.get("results", [])
     if not results:
-        return {**state, "final_answer": "I searched the database but found no matching records for your question."}
+        return {**state, "final_answer": "I searched the database but found no matching records."}
     prompt = get_result_formatting_prompt(state["question"], state.get("sql", ""), results)
-    answer = get_llm().generate(prompt, temperature=0.2)
+    answer = _llm_instance().generate(prompt, temperature=0.2)
     return {**state, "final_answer": answer}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Tool result formatting
+# Tool result formatters — deterministic, no LLM needed for most cases
 # ─────────────────────────────────────────────────────────────────────────────
 
-def format_tool_result(state: SQLState) -> SQLState:
+def format_tool_result(state: SQLState) -> SQLState:  # noqa: C901
     result = state.get("tool_result", {}) or {}
     question = state.get("question", "")
-    tool = result.get("tool") or state.get("intent", {}).get("tool") or "tool"
+    intent = state.get("intent", "")
 
     if not result.get("found"):
-        answer = result.get("message") or result.get("error") or "No matching records were found."
-        return {**state, "final_answer": answer, "results": []}
+        msg = result.get("message") or result.get("error") or "No matching records found."
+        return {**state, "final_answer": msg, "results": []}
 
     data = result.get("data", [])
 
-    # Deterministic formatters for factual outputs.
-    if tool == "all_known_people":
-        rows = data if isinstance(data, list) else []
-        if not rows:
-            answer = "No known people (employees or visitors) found in the registry."
-        else:
-            employees = [r for r in rows if r.get("person_type") == "employee"]
-            visitors = [r for r in rows if r.get("person_type") == "visitor"]
-            enrolled = [r for r in rows if r.get("person_type") == "enrolled"]
-            lines = []
-            if employees:
-                lines.append(f"**Employees ({len(employees)}):**")
-                for r in employees:
-                    dept = f", dept: {r['department']}" if r.get("department") else ""
-                    lines.append(f"  - {r['name']}{dept}")
-            if visitors:
-                lines.append(f"**Visitors ({len(visitors)}):**")
-                for r in visitors:
-                    visit = f", visit date: {r['visit_date']}" if r.get("visit_date") else ""
-                    purpose = f", purpose: {r['purpose']}" if r.get("purpose") else ""
-                    lines.append(f"  - {r['name']}{visit}{purpose}")
-            if enrolled:
-                lines.append(f"**Enrolled Profiles ({len(enrolled)}):**")
-                for r in enrolled:
-                    lines.append(f"  - {r['name']}, source: {r.get('department', 'Unknown')}")
-            answer = f"Known people in the system ({len(rows)} total):\n\n" + "\n".join(lines)
-        return {**state, "final_answer": answer, "results": rows}
-
-    if tool == "table_record_counts":
-        rows = data if isinstance(data, list) else []
-        empty = [r for r in rows if r.get("record_count") == 0]
-        top = rows[0] if rows else None
-        q = question.lower()
-
-        # Build a fast lookup: table_name → record_count
-        counts = {r["table_name"]: r["record_count"] for r in rows}
-
-        # ── Specific entity count: "how many departments/labs/rules/..." ──────
-        # Map question keywords → table name(s) to look up
-        _ENTITY_TABLE_MAP = {
-            "department": "departments",
-            "departments": "departments",
-            "lab": "labs",
-            "labs": "labs",
-            "rule": "anomaly_rules",
-            "rules": "anomaly_rules",
-            "schedule": "schedules",
-            "schedules": "schedules",
-            "camera": "cameras",
-            "cameras": "cameras",
-            "employee": "employees",
-            "employees": "employees",
-            "visitor": "visitors",
-            "visitors": "visitors",
-            "entry log": "entry_logs",
-            "entry logs": "entry_logs",
-            "anomaly log": "anomalies_logs",
-            "anomaly logs": "anomalies_logs",
-            "unknown face": "unknown_face_events",
-            "unknown faces": "unknown_face_events",
-        }
-        matched_table = None
-        for keyword, tname in _ENTITY_TABLE_MAP.items():
-            if keyword in q:
-                matched_table = tname
-                break
-
-        if matched_table:
-            count = counts.get(matched_table)
-            if count is not None:
-                # Friendly singular/plural label
-                friendly = matched_table.replace("_", " ").rstrip("s")
-                answer = f"There {'is' if count == 1 else 'are'} **{count}** {matched_table.replace('_', ' ')} in the system."
-            else:
-                answer = f"I couldn't find a table named '{matched_table}' in the database."
-        elif "empty" in q:
-            answer = "There are no empty tables in the database." if not empty else (
-                f"There are {len(empty)} empty tables:\n\n" + "\n".join(f"- {r['table_name']}" for r in empty)
-            )
-        elif "most records" in q or "largest" in q:
-            answer = "I could not find any tables." if not top else (
-                f"The table with the most records is **{top['table_name']}**, with {top['record_count']:,} records."
-            )
-        else:
-            answer = "Here are the record counts:\n\n" + "\n".join(
-                f"- {r['table_name']}: {r['record_count']:,} records" for r in rows
-            )
-        return {**state, "final_answer": answer, "results": rows}
-
-    if tool in {"unknown_detection_count", "known_face_detection_count", "face_detection_count"}:
+    # ── Person tracking ──────────────────────────────────────────────────────
+    if intent in {"person_last_seen", "person_first_seen"}:
         d = data if isinstance(data, dict) else {}
-        count = d.get("count", 0)
-        target_date = d.get("target_date", "today")
-        hour = d.get("hour")
-        if tool == "unknown_detection_count":
-            label = "unknown detection(s)"
-        elif tool == "known_face_detection_count":
-            label = "known face detection(s)"
-        else:
-            label = "face/person detection(s)"
-
-        if hour is None:
-            answer = f"There were {count} {label} on {target_date}."
-        else:
-            answer = f"There were {count} {label} on {target_date} between {int(hour):02d}:00 and {int(hour):02d}:59."
-        return {**state, "final_answer": answer, "results": [d]}
-
-    if tool == "latest_unknown_face_events":
-        rows = data if isinstance(data, list) else []
-        if not rows:
-            answer = "No unknown face events were found."
-        else:
-            heading = f"Latest {len(rows)} unknown face event(s)"
-            if result.get("days_back"):
-                heading += f" from the last {result.get('days_back')} day(s)"
-            lines = []
-            for r in rows:
-                assigned = r.get("assigned_detected_id")
-                review = "unreviewed" if assigned is None else f"assigned to detected_id={assigned}"
-                lines.append(
-                    f"- Event {r.get('id', 'N/A')}: {r.get('created_at') or r.get('timestamp') or 'N/A'}, "
-                    f"status={r.get('status', 'N/A')}, {review}, "
-                    f"quality={r.get('quality_score', 'N/A')}, best_similarity={r.get('best_similarity_score', 'N/A')}"
-                )
-            answer = heading + ":\n\n" + "\n".join(lines)
-        return {**state, "final_answer": answer, "results": rows}
-
-    if tool == "unknown_face_event_details":
-        d = data if isinstance(data, dict) else {}
-        answer = f"Unknown face event {result.get('event_id')} details:\n\n" + "\n".join(
-            f"- {k}: {_compact(v)}" for k, v in d.items()
-        )
-        return {**state, "final_answer": answer, "results": [d]}
-
-    if tool in {"person_last_seen", "person_first_seen", "last_seen", "first_seen"}:
-        d = data if isinstance(data, dict) else {}
-        label = "Last seen" if "last" in tool else "First detected"
+        label = "Last seen" if intent == "person_last_seen" else "First detected"
         answer = (
-            f"{label}: {d.get('person_name', 'N/A')} was detected at "
+            f"{label}: **{d.get('person_name', 'N/A')}** at "
             f"{d.get('camera_name', 'N/A')} ({d.get('camera_location', 'N/A')}) "
-            f"at {d.get('timestamp', 'N/A')}."
+            f"on {d.get('timestamp', 'N/A')}."
         )
         if d.get("evidence_url"):
-            answer += f"\nEvidence: {d.get('evidence_url')}"
+            answer += f"\nEvidence: {d['evidence_url']}"
         return {**state, "final_answer": answer, "results": [d]}
 
-    if tool in {"person_timeline", "timeline"}:
+    if intent == "person_timeline":
         rows = data if isinstance(data, list) else []
         if not rows:
-            answer = "No detections were found for that timeline."
-        else:
-            answer = f"Timeline for {rows[0].get('person_name', 'person')} on {result.get('date')}:\n\n" + "\n".join(
-                f"- {r.get('timestamp')}: {r.get('camera_name')} ({r.get('camera_location')})" for r in rows
-            )
+            return {**state, "final_answer": "No detections found for that timeline.", "results": []}
+        name = rows[0].get("person_name", "person")
+        period = result.get("period", "")
+        lines = [f"- {r.get('timestamp')}: {r.get('camera_name')} ({r.get('camera_location')})" for r in rows]
+        answer = f"Timeline for **{name}** ({period}, {len(rows)} stop(s)):\n\n" + "\n".join(lines)
         return {**state, "final_answer": answer, "results": rows}
 
-    if tool in {"people_seen_on_date", "people_seen_today"}:
+    if intent == "people_seen_on_date":
+        rows = data if isinstance(data, list) else []
+        dt = result.get("date", "that date")
+        if not rows:
+            return {**state, "final_answer": f"No identified people found on {dt}.", "results": []}
+        lines = [
+            f"- **{r.get('person_name')}** ({r.get('person_type')}): "
+            f"{r.get('detections')} detection(s), "
+            f"first={r.get('first_seen')}, last={r.get('last_seen')}, "
+            f"cameras={r.get('cameras_seen')}"
+            for r in rows
+        ]
+        answer = f"People seen on {dt} ({len(rows)} total):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
+    if intent == "known_people":
         rows = data if isinstance(data, list) else []
         if not rows:
-            answer = f"No identified people were found on {result.get('date', 'that date')}."
-        else:
-            answer = f"People seen on {result.get('date')} ({len(rows)}):\n\n" + "\n".join(
-                f"- {r.get('person_name')} ({r.get('person_type')}): {r.get('detections')} detections, "
-                f"first={r.get('first_seen')}, last={r.get('last_seen')}, cameras={r.get('cameras_seen')}"
-                for r in rows
-            )
+            return {**state, "final_answer": "No known people in the registry.", "results": []}
+        employees = [r for r in rows if r.get("person_type") == "employee"]
+        visitors  = [r for r in rows if r.get("person_type") == "visitor"]
+        enrolled  = [r for r in rows if r.get("person_type") == "enrolled"]
+        lines = []
+        if employees:
+            lines.append(f"**Employees ({len(employees)}):**")
+            lines += [f"  - {r['name']}" for r in employees]
+        if visitors:
+            lines.append(f"**Visitors ({len(visitors)}):**")
+            lines += [f"  - {r['name']} (visit: {r.get('visit_date','?')}, purpose: {r.get('purpose','?')})" for r in visitors]
+        if enrolled:
+            lines.append(f"**Enrolled profiles ({len(enrolled)}):**")
+            lines += [f"  - {r['name']}" for r in enrolled]
+        answer = f"Known people ({len(rows)} total):\n\n" + "\n".join(lines)
         return {**state, "final_answer": answer, "results": rows}
 
-    if tool == "latest_anomalies":
-        rows = data if isinstance(data, list) else []
-        if not rows:
-            answer = "No anomaly logs were found."
-        else:
-            answer = f"Latest {len(rows)} anomaly log(s):\n\n" + "\n".join(
-                f"- {r.get('timestamp')}: {r.get('description', 'N/A')} at {r.get('camera_name', 'N/A')} "
-                f"({r.get('camera_location', 'N/A')}), severity={r.get('severity', 'N/A')}"
-                for r in rows
-            )
-        return {**state, "final_answer": answer, "results": rows}
-
-    if tool in {"anomalies_near_person", "anomalies_near_face", "anomalies_near_unknown_event"}:
-        rows = data if isinstance(data, list) else []
-        if not rows:
-            answer = f"No anomalies were found within the checked time window."
-        else:
-            answer = f"Found {len(rows)} nearby anomaly/anomalies:\n\n" + "\n".join(
-                f"- {r.get('timestamp') or r.get('detected_at')}: {r.get('description') or r.get('event_type')} "
-                f"at {r.get('camera_name', 'N/A')} ({r.get('seconds_apart', 'N/A')}s apart)"
-                for r in rows
-            )
-        return {**state, "final_answer": answer, "results": rows}
-
-    if tool in {"repeated_unknowns", "repeated_unknown_faces"}:
-        rows = data if isinstance(data, list) else []
-        if not rows:
-            days = result.get('days_back', 7)
-            answer = f"No repeated unknown visitors were found in the last {days} day(s)."
-        else:
-            days = result.get('days_back', 7)
-            answer = f"Repeated unknown visitors in the last {days} day(s) ({len(rows)} group(s)):\n\n" + "\n".join(
-                f"- {r.get('camera_name', 'N/A')} on {r.get('day', 'N/A')}: "
-                f"{r.get('appearances', 'N/A')} appearances, "
-                f"first={r.get('first_seen', 'N/A')}, last={r.get('last_seen', 'N/A')}"
-                for r in rows
-            )
-        return {**state, "final_answer": answer, "results": rows}
-
-    if tool == "similar_unknown_faces":
-        rows = data if isinstance(data, list) else []
-        if not rows:
-            answer = f"No similar unknown faces were found for event {result.get('event_id')} above the threshold {result.get('threshold')}."
-        else:
-            answer = f"Similar unknown faces for event {result.get('event_id')}:\n\n" + "\n".join(
-                f"- Event {r.get('event_id')}: similarity={float(r.get('similarity', 0)):.3f}, time={r.get('created_at')}"
-                for r in rows
-            )
-        return {**state, "final_answer": answer, "results": rows}
-
-    if tool == "possible_identity_match":
-        rows = data if isinstance(data, list) else []
-        if not rows:
-            answer = f"No possible known identity match was found for event {result.get('event_id')} above the threshold {result.get('threshold')}."
-        else:
-            answer = f"Possible known identity matches for event {result.get('event_id')}:\n\n" + "\n".join(
-                f"- {r.get('person_name')} ({r.get('person_type')}), detected_id={r.get('detected_id')}, similarity={float(r.get('similarity', 0)):.3f}"
-                for r in rows
-            )
-        return {**state, "final_answer": answer, "results": rows}
-
-    if tool == "camera_activity_summary":
-        rows = data if isinstance(data, list) else []
-        if not rows:
-            answer = "No camera activity was found for the selected period."
-        else:
-            answer = f"Camera activity summary ({len(rows)} camera(s)):\n\n" + "\n".join(
-                f"- {r.get('camera_name')}: {r.get('detections')} detections, first={r.get('first_seen')}, last={r.get('last_seen')}"
-                for r in rows
-            )
-        return {**state, "final_answer": answer, "results": rows}
-
-    if tool in {"daily_security_summary", "dashboard_sync_metrics"}:
+    # ── Detection counts ─────────────────────────────────────────────────────
+    if intent in {"count_unknown_detections", "count_known_detections", "count_all_detections"}:
         d = data if isinstance(data, dict) else {}
-        answer = (
-            f"### 🛡️ Dashboard Summary (Today)\n"
-            f"**Logic synchronized with Africa/Cairo timezone**\n\n"
-            f"- **Total Detections**: {d.get('total', 0)}\n"
-            f"- **Known People**: {d.get('known', 0)}\n"
-            f"- **Unknown/Unidentified**: {d.get('unknown', 0)}\n"
-            f"- **Average Quality**: {d.get('avg_quality', 0.0):.2f}\n"
-            f"- **Average Processing Time**: {d.get('avg_time_ms', 0.0):.1f} ms"
-        )
+        count = d.get("count", 0)
+        period = d.get("period", "today")
+        hour = d.get("hour")
+        labels = {
+            "count_unknown_detections": "unknown face detection(s)",
+            "count_known_detections":   "known face detection(s)",
+            "count_all_detections":     "total detection(s)",
+        }
+        label = labels.get(intent, "detection(s)")
+        time_str = f" between {int(hour):02d}:00–{int(hour):02d}:59" if hour is not None else ""
+        answer = f"There were **{count}** {label} on {period}{time_str}."
         return {**state, "final_answer": answer, "results": [d]}
 
-    if tool == "investigate_unknown_face_event":
-        # Build a structured answer without the LLM when data is sufficient
-        # — avoids generate_long timeout on slow/loaded models.
-        details_data = data.get("details", {}).get("data", {}) if isinstance(data, dict) else {}
-        similar_data = data.get("similar_unknown_faces", {}) if isinstance(data, dict) else {}
-        identity_data = data.get("possible_identity_matches", {}) if isinstance(data, dict) else {}
-        anomaly_data = data.get("nearby_anomalies", {}) if isinstance(data, dict) else {}
+    # ── Unknown face pipeline ────────────────────────────────────────────────
+    if intent == "unknown_face_events":
+        rows = data if isinstance(data, list) else []
+        if not rows:
+            return {**state, "final_answer": "No unknown face events found.", "results": []}
+        lines = [
+            f"- Event **#{r.get('id')}**: "
+            f"status={r.get('status')}, "
+            f"camera={r.get('camera_name','N/A')}, "
+            f"time={r.get('event_timestamp') or r.get('created_at','N/A')}, "
+            f"quality={r.get('quality_score','N/A')}"
+            for r in rows
+        ]
+        answer = f"Unknown face events ({len(rows)} shown):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
 
-        similar_rows = similar_data.get("data", []) if isinstance(similar_data, dict) else []
-        identity_rows = identity_data.get("data", []) if isinstance(identity_data, dict) else []
-        anomaly_rows = anomaly_data.get("data", []) if isinstance(anomaly_data, dict) else []
+    if intent == "unknown_face_details":
+        d = data if isinstance(data, dict) else (rows[0] if isinstance(data, list) and data else {})
+        eid = result.get("event_id", d.get("id", "?"))
+        lines = [f"- {k}: {_compact(v)}" for k, v in d.items()]
+        answer = f"Unknown face event **#{eid}** details:\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": [d]}
 
-        # Event section
-        eid = details_data.get("id", result.get("event_id", "?"))
-        cam = details_data.get("camera_name", details_data.get("camera_id", "N/A"))
-        loc = details_data.get("camera_location", "")
-        ts = details_data.get("event_timestamp", details_data.get("created_at", "N/A"))
-        status = details_data.get("status", "N/A")
-        img = details_data.get("image_video_ref", "")
+    if intent == "similar_unknown_faces":
+        rows = data if isinstance(data, list) else []
+        eid = result.get("event_id", "?")
+        thr = result.get("threshold", 0.6)
+        if not rows:
+            return {**state,
+                    "final_answer": f"No similar unknown faces found for event #{eid} (threshold {thr}).",
+                    "results": []}
+        lines = [
+            f"- Event **#{r.get('event_id')}**: similarity={float(r.get('similarity', 0)):.3f}, "
+            f"camera={r.get('camera_name','N/A')}, time={r.get('created_at','N/A')}"
+            for r in rows
+        ]
+        answer = f"Similar unknown faces for event #{eid} ({len(rows)} match(es)):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
+    if intent == "possible_identity_match":
+        rows = data if isinstance(data, list) else []
+        eid = result.get("event_id", "?")
+        if not rows:
+            return {**state,
+                    "final_answer": f"No known identity match found for event #{eid}.",
+                    "results": []}
+        lines = [
+            f"- **{r.get('person_name')}** ({r.get('person_type')}): "
+            f"similarity={float(r.get('similarity', 0)):.3f}"
+            for r in rows
+        ]
+        answer = f"Possible identity matches for event #{eid}:\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
+    if intent == "investigate_unknown_face":
+        eid = result.get("event_id", "?")
+        d = data if isinstance(data, dict) else {}
+        details  = d.get("details", {})
+        similar  = d.get("similar", {})
+        identity = d.get("identity", {})
+
+        det = details.get("data", {}) if isinstance(details, dict) else {}
+        sim_rows = similar.get("data", []) if isinstance(similar, dict) else []
+        id_rows  = identity.get("data", []) if isinstance(identity, dict) else []
+
+        cam = det.get("camera_name", "N/A")
+        loc = det.get("camera_location", "")
+        ts  = det.get("event_timestamp") or det.get("created_at", "N/A")
+        status = det.get("status", "N/A")
 
         sections = [f"**Investigation Report — Unknown Face Event #{eid}**\n"]
-        sections.append(f"**Event:** Detected at {cam}" + (f" ({loc})" if loc else "") + f" on {ts}. Status: {status}.")
-        if img:
-            sections.append(f"Evidence: {img}")
+        sections.append(f"Detected at **{cam}**" + (f" ({loc})" if loc else "") + f" on {ts}. Status: {status}.")
 
-        # Similar unknown faces
-        if similar_rows:
-            sections.append(f"\n**Similar Unknown Faces ({len(similar_rows)} match(es)):**")
-            for r in similar_rows[:3]:
-                sections.append(f"- Event #{r.get('id')} at {r.get('camera_name', 'N/A')} — distance: {r.get('distance', 'N/A'):.4f}")
+        if sim_rows:
+            sections.append(f"\n**Similar Unknown Faces ({len(sim_rows)} match(es)):**")
+            for r in sim_rows[:3]:
+                sections.append(f"- Event #{r.get('event_id')} — similarity: {float(r.get('similarity',0)):.3f}")
         else:
-            sections.append("\n**Similar Unknown Faces:** No prior sightings found via vector search.")
+            sections.append("\n**Similar Unknown Faces:** None found.")
 
-        # Possible identity matches
-        if identity_rows:
-            sections.append(f"\n**Possible Identity Matches ({len(identity_rows)} result(s)):**")
-            for r in identity_rows[:3]:
-                sections.append(f"- {r.get('name', 'Unknown')} (distance: {r.get('distance', 'N/A'):.4f})")
+        if id_rows:
+            sections.append(f"\n**Possible Identity Matches ({len(id_rows)}):**")
+            for r in id_rows[:3]:
+                sections.append(f"- **{r.get('person_name')}** ({r.get('person_type')}) — similarity: {float(r.get('similarity',0)):.3f}")
+            sections.append("\n**Conclusion:** Possible match found — manual review recommended.")
         else:
-            sections.append("\n**Possible Identity Matches:** No close match found in known identity registry.")
+            sections.append("\n**Possible Identity Matches:** No strong match in registry.")
+            sections.append("\n**Conclusion:** Person remains unidentified.")
 
-        # Nearby anomalies
-        if anomaly_rows:
-            sections.append(f"\n**Nearby Anomalies ({len(anomaly_rows)} found):**")
-            for r in anomaly_rows[:3]:
-                sections.append(f"- {r.get('reason', r.get('type', 'Anomaly'))} at {r.get('timestamp', 'N/A')}")
-        else:
-            sections.append("\n**Nearby Anomalies:** No anomaly events recorded near this event.")
+        return {**state, "final_answer": "\n".join(sections), "results": [d]}
 
-        sections.append("\n**Conclusion:** " + (
-            "This person has possible matches in the known registry — manual review recommended."
-            if identity_rows else
-            "This person remains unidentified. No strong matches found in registry or prior events."
-        ))
-
-        answer = "\n".join(sections)
-        return {**state, "final_answer": answer, "results": [data] if isinstance(data, dict) else _flatten_results(result)}
-
-    # ── NEW: Anomaly candidates ───────────────────────────────────────────────
-    if tool == "anomaly_candidates":
+    # ── VAD anomaly pipeline ─────────────────────────────────────────────────
+    if intent == "vad_cases":
         rows = data if isinstance(data, list) else []
         if not rows:
-            status_label = f" with status '{result.get('status')}'" if result.get("status") else ""
-            answer = f"No anomaly candidates found{status_label}."
-        else:
-            status_counts: dict[str, int] = {}
-            for r in rows:
-                s = str(r.get("status", "unknown"))
-                status_counts[s] = status_counts.get(s, 0) + 1
-            count_str = ", ".join(f"{v} {k}" for k, v in status_counts.items())
-            answer = f"Anomaly candidates ({len(rows)} total — {count_str}):\n\n" + "\n".join(
-                f"- Candidate {r.get('id')}: status={r.get('status')}, "
-                f"severity={r.get('severity', 'N/A')}, "
-                f"alert_decision={r.get('alert_decision', 'N/A')}, "
-                f"reason={str(r.get('reason', 'N/A'))[:80]}"
-                for r in rows
-            )
+            return {**state, "final_answer": "No VAD anomaly cases found.", "results": []}
+        lines = [
+            f"- Case **#{r.get('id')}** [{r.get('case_key','N/A')}]: "
+            f"status={r.get('status')}, severity={r.get('severity')}, "
+            f"type={r.get('case_type')}, camera={r.get('camera_name','N/A')}, "
+            f"start={r.get('start_ts')}"
+            for r in rows
+        ]
+        answer = f"VAD anomaly cases ({len(rows)} shown):\n\n" + "\n".join(lines)
         return {**state, "final_answer": answer, "results": rows}
 
-    # ── NEW: Anomaly candidate review ─────────────────────────────────────────
-    if tool == "anomaly_candidate_review":
+    if intent == "vad_case_details":
+        d = data if isinstance(data, dict) else {}
+        cid = result.get("case_id", d.get("id", "?"))
+        rr = d.get("reasoning_result")
+        lines = [f"- {k}: {_compact(v)}" for k, v in d.items() if k != "reasoning_result"]
+        answer = f"VAD Case **#{cid}** details:\n\n" + "\n".join(lines)
+        if rr:
+            answer += (
+                f"\n\n**LLM Reasoning Result:**\n"
+                f"- Decision: {rr.get('alert_decision')}\n"
+                f"- Severity: {rr.get('severity')}\n"
+                f"- Confidence: {rr.get('confidence')}\n"
+                f"- Summary: {rr.get('reasoning_summary','N/A')}"
+            )
+        return {**state, "final_answer": answer, "results": [d]}
+
+    if intent == "vad_gate_events":
         rows = data if isinstance(data, list) else []
         if not rows:
-            answer = "No anomaly candidate review decisions found."
-        else:
-            confirmed = sum(1 for r in rows if r.get("decision") == "confirmed")
-            dismissed = sum(1 for r in rows if r.get("decision") == "dismissed")
-            uncertain = sum(1 for r in rows if r.get("decision") == "uncertain")
-            answer = (
-                f"Anomaly candidate review decisions ({len(rows)} total — "
-                f"{confirmed} confirmed, {dismissed} dismissed, {uncertain} uncertain):\n\n"
-            ) + "\n".join(
-                f"- Review {r.get('id')}: candidate_id={r.get('anomaly_candidate_id')}, "
-                f"decision={r.get('decision')}, reviewer={r.get('reviewer', 'N/A')}, "
-                f"reviewed_at={r.get('reviewed_at', 'N/A')}"
-                for r in rows
-            )
+            return {**state, "final_answer": "No VAD gate events found.", "results": []}
+        lines = [
+            f"- Event **#{r.get('id')}** [{r.get('gate_name')}]: "
+            f"severity={r.get('severity')}, type={r.get('event_type')}, "
+            f"camera={r.get('camera_name','N/A')}, start={r.get('start_ts')}, "
+            f"peak_score={r.get('peak_score','N/A')}"
+            for r in rows
+        ]
+        answer = f"VAD gate events ({len(rows)} shown):\n\n" + "\n".join(lines)
         return {**state, "final_answer": answer, "results": rows}
 
-    # ── NEW: Ollama jobs ──────────────────────────────────────────────────────
-    if tool == "ollama_jobs":
+    if intent == "vad_reasoning_jobs":
         rows = data if isinstance(data, list) else []
         if not rows:
-            status_label = f" with status '{result.get('status')}'" if result.get("status") else ""
-            answer = f"No Ollama jobs found{status_label}."
-        else:
-            status_counts: dict[str, int] = {}
-            for r in rows:
-                s = str(r.get("status", "unknown"))
-                status_counts[s] = status_counts.get(s, 0) + 1
-            count_str = ", ".join(f"{v} {k}" for k, v in status_counts.items())
-            answer = f"Ollama jobs ({len(rows)} total — {count_str}):\n\n" + "\n".join(
-                f"- Job {r.get('id')}: status={r.get('status')}, "
-                f"model={r.get('model_name', 'N/A')}, "
-                f"candidate_id={r.get('anomaly_candidate_id', 'N/A')}, "
-                f"created={r.get('created_at', 'N/A')}"
-                for r in rows
-            )
+            sf = result.get("status_filter", "")
+            label = f" with status '{sf}'" if sf else ""
+            return {**state, "final_answer": f"No reasoning jobs found{label}.", "results": []}
+        from collections import Counter
+        counts = Counter(r.get("status", "unknown") for r in rows)
+        count_str = ", ".join(f"{v} {k}" for k, v in counts.items())
+        lines = [
+            f"- Job **#{r.get('id')}** (case {r.get('case_id')}): "
+            f"status={r.get('status')}, "
+            f"model={r.get('vlm_model') or r.get('llm_model','N/A')}, "
+            f"queued={r.get('queued_at','N/A')}"
+            for r in rows
+        ]
+        answer = f"Reasoning jobs ({len(rows)} total — {count_str}):\n\n" + "\n".join(lines)
         return {**state, "final_answer": answer, "results": rows}
 
-    # ── NEW: Scene window embeddings ──────────────────────────────────────────
-    if tool == "scene_window_embeddings":
+    if intent == "vad_reasoning_results":
         rows = data if isinstance(data, list) else []
         if not rows:
-            answer = "No scene window embeddings found matching your filter."
-        else:
-            flagged = sum(1 for r in rows if r.get("is_anomalous"))
-            answer = (
-                f"Scene window embeddings ({len(rows)} shown, {flagged} anomalous):\n\n"
-            ) + "\n".join(
-                f"- Window {r.get('id')}: camera_id={r.get('camera_id')}, "
-                f"anomalous={r.get('is_anomalous')}, "
-                f"l2={r.get('l2_score', 'N/A')}, mse={r.get('mse_score', 'N/A')}, "
-                f"cos_flag={r.get('cos_flag', 'N/A')}, "
-                f"start={r.get('start_time', r.get('window_start_ts', 'N/A'))}"
-                for r in rows
-            )
+            return {**state, "final_answer": "No reasoning results found.", "results": []}
+        lines = [
+            f"- Result **#{r.get('id')}** (case {r.get('case_id')}): "
+            f"decision={r.get('alert_decision')}, severity={r.get('severity')}, "
+            f"confidence={r.get('confidence')}, type={r.get('event_type','N/A')}"
+            for r in rows
+        ]
+        answer = f"Reasoning results ({len(rows)} shown):\n\n" + "\n".join(lines)
         return {**state, "final_answer": answer, "results": rows}
 
-    # ── NEW: Anomaly rules ────────────────────────────────────────────────────
-    if tool == "anomaly_rules":
+    if intent == "vad_case_reviews":
+        rows = data if isinstance(data, list) else []
+        if not rows:
+            return {**state, "final_answer": "No case reviews found.", "results": []}
+        confirmed = sum(1 for r in rows if r.get("decision") == "confirmed")
+        dismissed = sum(1 for r in rows if r.get("decision") == "dismissed")
+        uncertain = sum(1 for r in rows if r.get("decision") == "uncertain")
+        lines = [
+            f"- Review **#{r.get('id')}** (case {r.get('case_id')}): "
+            f"decision={r.get('decision')}, reviewer={r.get('reviewer','N/A')}, "
+            f"at={r.get('created_at','N/A')}"
+            for r in rows
+        ]
+        answer = (
+            f"Case reviews ({len(rows)} total — "
+            f"{confirmed} confirmed, {dismissed} dismissed, {uncertain} uncertain):\n\n"
+            + "\n".join(lines)
+        )
+        return {**state, "final_answer": answer, "results": rows}
+
+    if intent == "vad_streams":
+        rows = data if isinstance(data, list) else []
+        if not rows:
+            return {**state, "final_answer": "No VAD streams found.", "results": []}
+        lines = [
+            f"- Stream **{r.get('display_name','N/A')}** (key={r.get('stream_key')}): "
+            f"active={r.get('is_active')}, type={r.get('source_type')}, "
+            f"fps={r.get('target_sample_fps')}, camera={r.get('camera_name','N/A')}"
+            for r in rows
+        ]
+        answer = f"VAD streams ({len(rows)} total):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
+    if intent == "vad_stream_sessions":
+        rows = data if isinstance(data, list) else []
+        if not rows:
+            return {**state, "final_answer": "No stream sessions found.", "results": []}
+        lines = [
+            f"- Session **#{r.get('id')}**: "
+            f"status={r.get('status')}, camera={r.get('camera_name','N/A')}, "
+            f"started={r.get('started_at','N/A')}, "
+            f"frames={r.get('sampled_frame_count',0)}"
+            for r in rows
+        ]
+        answer = f"Stream sessions ({len(rows)} shown):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
+    # ── System / admin ───────────────────────────────────────────────────────
+    if intent == "cameras":
+        rows = data if isinstance(data, list) else []
+        if not rows:
+            return {**state, "final_answer": "No cameras registered.", "results": []}
+        lines = [f"- **{r.get('name','N/A')}**: location={r.get('location','N/A')}" for r in rows]
+        answer = f"Cameras ({len(rows)} total):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
+    if intent == "edge_devices":
+        rows = data if isinstance(data, list) else []
+        if not rows:
+            return {**state, "final_answer": "No edge devices registered.", "results": []}
+        lines = [
+            f"- **{r.get('name','N/A')}** (key={r.get('device_key','N/A')}): "
+            f"location={r.get('location','N/A')}, registered={r.get('created_at','N/A')}"
+            for r in rows
+        ]
+        answer = f"Edge devices ({len(rows)} total):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
+    if intent == "anomaly_rules":
         rows = data if isinstance(data, list) else []
         q_lower = question.lower()
         if not rows:
-            answer = "No anomaly rules found matching your filter."
-        # Count-only: "how many rules", "how many active rules", etc.
-        elif re.search(r"\bhow\s+many\b|\bcount\b", q_lower):
-            label = "total"
-            if "trigger" in q_lower:
-                label = "trigger"
-            elif "suppress" in q_lower:
-                label = "suppress"
-            elif "inactive" in q_lower or "not active" in q_lower:
-                label = "inactive"
-            elif "active" in q_lower:
-                label = "active"
-            answer = f"There are **{len(rows)}** {label} anomaly rule(s) in the system."
-        # Single rule lookup: "show me rule 32", "description of anomaly rule 32"
-        elif len(rows) == 1:
+            return {**state, "final_answer": "No anomaly rules found.", "results": []}
+        if re.search(r"\bhow\s+many\b|\bcount\b", q_lower):
+            label = "trigger" if "trigger" in q_lower else "suppress" if "suppress" in q_lower else "total"
+            return {**state, "final_answer": f"There are **{len(rows)}** {label} anomaly rule(s).", "results": rows}
+        if len(rows) == 1:
             r = rows[0]
             answer = (
-                f"Anomaly Rule {r.get('id')} [{r.get('rule_type')}|{r.get('event_type', 'N/A')}|{r.get('source', 'N/A')}]:\n\n"
-                f"{r.get('rule_text', 'No rule text available.')}"
+                f"Anomaly Rule **#{r.get('id')}** [{r.get('rule_type')} | {r.get('event_type','N/A')} | {r.get('source','N/A')}]:\n\n"
+                f"{r.get('rule_text','(no text)')}"
             )
-        else:
-            triggers  = [r for r in rows if r.get("rule_type") == "trigger"]
-            suppresses = [r for r in rows if r.get("rule_type") == "suppress"]
-            answer = (
-                f"Anomaly rules ({len(rows)} total — "
-                f"{len(triggers)} trigger, {len(suppresses)} suppress):\n\n"
-            ) + "\n".join(
-                f"- Rule {r.get('id')} [{r.get('rule_type')}|{r.get('event_type', 'N/A')}|{r.get('source', 'N/A')}]: "
-                f"{str(r.get('rule_text', ''))[:100]}"
-                for r in rows
-            )
+            return {**state, "final_answer": answer, "results": rows}
+        triggers   = [r for r in rows if r.get("rule_type") == "trigger"]
+        suppresses = [r for r in rows if r.get("rule_type") == "suppress"]
+        lines = [
+            f"- Rule **#{r.get('id')}** [{r.get('rule_type')} | {r.get('event_type','N/A')}]: "
+            f"{str(r.get('rule_text',''))[:100]}"
+            for r in rows
+        ]
+        answer = (
+            f"Anomaly rules ({len(rows)} total — "
+            f"{len(triggers)} trigger, {len(suppresses)} suppress):\n\n"
+            + "\n".join(lines)
+        )
         return {**state, "final_answer": answer, "results": rows}
 
-    # ── NEW: Edge devices ─────────────────────────────────────────────────────
-    if tool == "edge_devices":
+    if intent == "reasoning_rules":
         rows = data if isinstance(data, list) else []
         if not rows:
-            answer = "No edge devices are registered in the system."
-        else:
-            answer = f"Registered edge devices ({len(rows)}):\n\n" + "\n".join(
-                f"- {r.get('name', 'N/A')} (key={r.get('device_key', 'N/A')}): "
-                f"location={r.get('location', 'N/A')}, "
-                f"registered={r.get('created_at', 'N/A')}"
-                for r in rows
-            )
+            return {**state, "final_answer": "No reasoning rules found.", "results": []}
+        lines = [
+            f"- Rule **#{r.get('id')}** [{r.get('rule_type')}]: "
+            f"{r.get('rule_name','N/A')} (priority={r.get('priority',0)}, active={r.get('active')})"
+            for r in rows
+        ]
+        answer = f"VAD reasoning rules ({len(rows)} total):\n\n" + "\n".join(lines)
         return {**state, "final_answer": answer, "results": rows}
 
-    # ── NEW: Normal behavior models ───────────────────────────────────────────
-    if tool == "normal_behavior_models":
+    if intent == "rule_conflicts":
         rows = data if isinstance(data, list) else []
         if not rows:
-            answer = "No behavior models found in the system."
-        else:
-            active = [r for r in rows if r.get("is_active")]
-            answer = (
-                f"Normal behavior models ({len(rows)} total, {len(active)} active):\n\n"
-            ) + "\n".join(
-                f"- Model {r.get('id')}: {r.get('name', 'N/A')} v{r.get('version', 'N/A')}, "
-                f"active={r.get('is_active')}, dim={r.get('embedding_dim', 'N/A')}"
-                for r in rows
-            )
+            return {**state, "final_answer": "No rule conflicts recorded.", "results": []}
+        pending = [r for r in rows if r.get("status") == "pending"]
+        lines = [
+            f"- Conflict **#{r.get('id')}**: rule {r.get('rule_id_1')} vs rule {r.get('rule_id_2')}, "
+            f"status={r.get('status')}, reason={str(r.get('conflict_reason','N/A'))[:80]}"
+            for r in rows
+        ]
+        answer = f"Rule conflicts ({len(rows)} total, {len(pending)} pending):\n\n" + "\n".join(lines)
         return {**state, "final_answer": answer, "results": rows}
 
-    # ── NEW: Rule conflicts ───────────────────────────────────────────────────
-    if tool == "rule_conflicts":
+    if intent == "schedules":
         rows = data if isinstance(data, list) else []
         if not rows:
-            answer = "No rule conflicts are currently recorded."
-        else:
-            pending = [r for r in rows if r.get("status") == "pending"]
-            answer = (
-                f"Rule conflicts ({len(rows)} total, {len(pending)} pending):\n\n"
-            ) + "\n".join(
-                f"- Conflict {r.get('id')}: rule {r.get('rule_id_1')} vs rule {r.get('rule_id_2')}, "
-                f"status={r.get('status', 'N/A')}, reason={str(r.get('conflict_reason', 'N/A'))[:80]}"
-                for r in rows
-            )
+            return {**state, "final_answer": "No access schedules found.", "results": []}
+        lines = [
+            f"- **{r.get('name','N/A')}**: "
+            f"{r.get('access_start_time','?')} → {r.get('access_end_time','?')}, "
+            f"weekdays={r.get('applies_to_weekdays')}, weekends={r.get('applies_to_weekends')}"
+            for r in rows
+        ]
+        answer = f"Access schedules ({len(rows)}):\n\n" + "\n".join(lines)
         return {**state, "final_answer": answer, "results": rows}
 
-    # ── Generic LLM fallback — for any tool without a specific formatter ───────
+    if intent == "activity_logs":
+        rows = data if isinstance(data, list) else []
+        if not rows:
+            return {**state, "final_answer": "No activity logs found.", "results": []}
+        lines = [
+            f"- {r.get('timestamp','N/A')}: [{r.get('user_email','N/A')}] {r.get('action','N/A')}"
+            for r in rows
+        ]
+        answer = f"Activity logs ({len(rows)} entries):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
+    if intent == "audit_logs":
+        rows = data if isinstance(data, list) else []
+        if not rows:
+            return {**state, "final_answer": "No audit logs found.", "results": []}
+        lines = [
+            f"- {r.get('created_at','N/A')}: [{r.get('user_email','N/A')}] "
+            f"{r.get('action','N/A')} on {r.get('resource','N/A')} #{r.get('resource_id','N/A')}"
+            for r in rows
+        ]
+        answer = f"Audit logs ({len(rows)} entries):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
+    # ── Meta ────────────────────────────────────────────────────────────────
+    if intent == "table_counts":
+        rows = data if isinstance(data, list) else []
+        q_lower = question.lower()
+        if not rows:
+            return {**state, "final_answer": "No table data found.", "results": []}
+        counts = {r["table_name"]: r["record_count"] for r in rows}
+        _TABLE_KW = {
+            "department": "departments", "lab": "labs", "camera": "cameras",
+            "employee": "employees", "visitor": "visitors",
+            "entry log": "entry_logs", "unknown face": "unknown_face_events",
+            "anomaly rule": "anomaly_rules", "schedule": "schedules",
+        }
+        matched = next((tname for kw, tname in _TABLE_KW.items() if kw in q_lower), None)
+        if matched:
+            count = counts.get(matched, "N/A")
+            answer = f"There are **{count}** record(s) in the `{matched}` table."
+        elif "most" in q_lower or "largest" in q_lower:
+            top = rows[0]
+            answer = f"The largest table is **{top['table_name']}** with {top['record_count']:,} records."
+        elif "empty" in q_lower:
+            empty = [r for r in rows if r["record_count"] == 0]
+            answer = ("No empty tables." if not empty else
+                      f"Empty tables ({len(empty)}):\n\n" + "\n".join(f"- {r['table_name']}" for r in empty))
+        else:
+            lines = [f"- {r['table_name']}: {r['record_count']:,}" for r in rows]
+            answer = f"Record counts ({len(rows)} tables):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
+    if intent == "daily_summary":
+        d = data if isinstance(data, dict) else {}
+        answer = (
+            f"### 🛡️ Daily Security Summary ({d.get('date', 'today')})\n\n"
+            f"- **Total Detections:** {d.get('total_detections', 0)}\n"
+            f"- **Known Detections:** {d.get('known_detections', 0)}\n"
+            f"- **Unknown Faces:** {d.get('unknown_detections', 0)}\n"
+            f"- **Average Quality Score:** {d.get('avg_quality', 0.0):.3f}\n"
+            f"- **VAD Cases Today:** {d.get('vad_cases_today', 0)} "
+            f"({d.get('vad_confirmed', 0)} confirmed)\n"
+            f"- **Reasoning Jobs:** {d.get('reasoning_jobs', 0)} "
+            f"({d.get('reasoning_failed', 0)} failed)"
+        )
+        return {**state, "final_answer": answer, "results": [d]}
+
+    if intent == "camera_activity":
+        rows = data if isinstance(data, list) else []
+        if not rows:
+            return {**state, "final_answer": "No camera activity found.", "results": []}
+        lines = [
+            f"- **{r.get('camera_name','N/A')}** ({r.get('location','N/A')}): "
+            f"{r.get('detections',0)} detection(s), "
+            f"first={r.get('first_seen','N/A')}, last={r.get('last_seen','N/A')}"
+            for r in rows
+        ]
+        answer = f"Camera activity ({len(rows)} camera(s)):\n\n" + "\n".join(lines)
+        return {**state, "final_answer": answer, "results": rows}
+
+    # ── Generic LLM fallback for any unhandled tool ──────────────────────────
     prompt = f"""You are a surveillance security assistant. Answer naturally and concisely.
-Base your answer ONLY on the structured data below. Do not invent facts.
+Base your answer ONLY on the data below. Do not invent facts.
 
 USER QUESTION: {question}
 TOOL RESULT:
 {_safe_json(_strip_embeddings(result))}
 
-ANSWER:
-"""
-    answer = get_llm().generate(prompt, temperature=0.2)
-    return {**state, "final_answer": answer, "results": _flatten_results(result)}
+ANSWER:"""
+    answer = _llm_instance().generate(prompt, temperature=0.2)
+    return {**state, "final_answer": answer, "results": _flatten(result)}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Routing functions
 # ─────────────────────────────────────────────────────────────────────────────
 
-def after_validate_params(state: SQLState) -> str:
-    intent = state.get("intent", {})
-    if intent.get("needs_clarification"):
+def _after_validate_params(state: SQLState) -> str:
+    if state.get("needs_clarification"):
         return "clarification"
-    path = intent.get("path") or tool_type(intent.get("intent", "sql_fallback"))
-    if path == "small_talk":
+    route = state.get("route", "sql")
+    if route == "small_talk":
         return "small_talk"
-    if path == "vector":
+    if route == "vector":
         return "vector"
-    if path == "normal":
+    if route == "tool":
         return "tool"
     return "sql"
 
 
-def after_safety_check(state: SQLState) -> str:
+def _after_safety(state: SQLState) -> str:
     return "safe" if state.get("sql_safe", False) else "blocked"
 
 
-def after_validate_sql(state: SQLState) -> str:
+def _after_validate_sql(state: SQLState) -> str:
     return "execute" if state.get("sql_valid", False) else "retry"
 
 
-def should_retry(state: SQLState) -> str:
+def _should_retry(state: SQLState) -> str:
     if state.get("sql_valid", False):
         return "format"
     if state.get("retry_count", 0) < 2:
@@ -989,93 +816,100 @@ def should_retry(state: SQLState) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Graph
+# Graph assembly
 # ─────────────────────────────────────────────────────────────────────────────
 
-def create_workflow():
+def _build_workflow():
     wf = StateGraph(SQLState)
 
-    wf.add_node("normalize_question", normalize_question)
-    wf.add_node("route_intent", route_intent)
-    wf.add_node("validate_intent_params", validate_intent_params)
+    wf.add_node("normalize",         normalize_question)
+    wf.add_node("route_intent",      route_intent)
+    wf.add_node("validate_params",   validate_intent_params)
     wf.add_node("ask_clarification", ask_clarification)
-    wf.add_node("small_talk", handle_small_talk)
-    wf.add_node("run_tool", run_tool)
-    wf.add_node("run_vector_tool", run_vector_tool)
-    wf.add_node("format_tool_result", format_tool_result)
-    wf.add_node("load_schema", load_schema)
-    wf.add_node("generate", generate_sql)
-    wf.add_node("safety_check", check_sql_safety)
-    wf.add_node("reject_write", reject_write_sql)
-    wf.add_node("validate_sql", validate_sql_query)
-    wf.add_node("execute", execute_query)
-    wf.add_node("format_sql", format_sql_response)
-    wf.add_node("give_up", give_up_sql)
+    wf.add_node("small_talk",        handle_small_talk)
+    wf.add_node("run_tool",          run_tool)
+    wf.add_node("run_vector_tool",   run_vector_tool)
+    wf.add_node("format_tool",       format_tool_result)
+    wf.add_node("load_schema",       load_schema)
+    wf.add_node("generate_sql",      generate_sql)
+    wf.add_node("safety_check",      check_sql_safety)
+    wf.add_node("reject_write",      reject_write_sql)
+    wf.add_node("validate_sql",      validate_sql_query)
+    wf.add_node("execute",           execute_query)
+    wf.add_node("format_sql",        format_sql_response)
+    wf.add_node("give_up",           give_up_sql)
 
-    wf.set_entry_point("normalize_question")
-    wf.add_edge("normalize_question", "route_intent")
-    wf.add_edge("route_intent", "validate_intent_params")
+    wf.set_entry_point("normalize")
+    wf.add_edge("normalize",    "route_intent")
+    wf.add_edge("route_intent", "validate_params")
 
     wf.add_conditional_edges(
-        "validate_intent_params",
-        after_validate_params,
+        "validate_params", _after_validate_params,
         {
             "clarification": "ask_clarification",
-            "small_talk": "small_talk",
-            "tool": "run_tool",
-            "vector": "run_vector_tool",
-            "sql": "load_schema",
+            "small_talk":    "small_talk",
+            "tool":          "run_tool",
+            "vector":        "run_vector_tool",
+            "sql":           "load_schema",
         },
     )
 
     wf.add_edge("ask_clarification", END)
-    wf.add_edge("small_talk", END)
+    wf.add_edge("small_talk",        END)
+    wf.add_edge("run_tool",          "format_tool")
+    wf.add_edge("run_vector_tool",   "format_tool")
+    wf.add_edge("format_tool",       END)
 
-    wf.add_edge("run_tool", "format_tool_result")
-    wf.add_edge("run_vector_tool", "format_tool_result")
-    wf.add_edge("format_tool_result", END)
+    wf.add_edge("load_schema",  "generate_sql")
+    wf.add_edge("generate_sql", "safety_check")
 
-    wf.add_edge("load_schema", "generate")
-    wf.add_edge("generate", "safety_check")
-    wf.add_conditional_edges("safety_check", after_safety_check, {"safe": "validate_sql", "blocked": "reject_write"})
+    wf.add_conditional_edges("safety_check", _after_safety,
+                              {"safe": "validate_sql", "blocked": "reject_write"})
     wf.add_edge("reject_write", END)
-    wf.add_conditional_edges("validate_sql", after_validate_sql, {"execute": "execute", "retry": "generate"})
-    wf.add_conditional_edges("execute", should_retry, {"format": "format_sql", "retry": "generate", "give_up": "give_up"})
+
+    wf.add_conditional_edges("validate_sql", _after_validate_sql,
+                              {"execute": "execute", "retry": "generate_sql"})
+    wf.add_conditional_edges("execute", _should_retry,
+                              {"format": "format_sql", "retry": "generate_sql", "give_up": "give_up"})
     wf.add_edge("format_sql", END)
-    wf.add_edge("give_up", END)
+    wf.add_edge("give_up",    END)
 
     return wf.compile()
 
 
-def get_workflow():
+def _get_workflow():
     global _workflow
     if _workflow is None:
-        _workflow = create_workflow()
+        _workflow = _build_workflow()
     return _workflow
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Public API
+# ─────────────────────────────────────────────────────────────────────────────
+
 def process_question(question: str, history: list | None = None) -> dict:
-    initial_state = {
-        "question": question,
-        "history": history or [],
+    initial_state: SQLState = {
+        "question":    question,
+        "history":     history or [],
         "retry_count": 0,
     }
     try:
-        final_state = get_workflow().invoke(initial_state, config={"recursion_limit": 20})
+        final = _get_workflow().invoke(initial_state, config={"recursion_limit": 20})
         return {
-            "success": True,
+            "success":  True,
             "question": question,
-            "sql": final_state.get("sql", ""),
-            "results": final_state.get("results", []),
-            "answer": final_state.get("final_answer", "No answer generated"),
-            "error": None,
+            "sql":      final.get("sql", ""),
+            "results":  final.get("results", []),
+            "answer":   final.get("final_answer", "No answer generated"),
+            "error":    None,
         }
     except Exception as e:
         return {
-            "success": False,
+            "success":  False,
             "question": question,
-            "sql": "",
-            "results": [],
-            "answer": "I could not answer that question because the investigation workflow failed.",
-            "error": str(e),
+            "sql":      "",
+            "results":  [],
+            "answer":   "The investigation workflow encountered an error.",
+            "error":    str(e),
         }
