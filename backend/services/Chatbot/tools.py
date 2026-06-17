@@ -27,6 +27,16 @@ logger = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Connection pool
+#
+# IMPORTANT: ThreadedConnectionPool does NOT detect dead connections on its
+# own. If Postgres closes a connection (idle timeout, network blip, restart),
+# the pool keeps handing it out — and putconn() puts it right back, poisoning
+# every subsequent caller with "connection already closed". We fix this by:
+#   1. Validating the connection with a cheap SELECT 1 before use.
+#   2. If validation fails, discarding it (close=True) instead of recycling it,
+#      and opening a fresh connection.
+#   3. On any failure inside the `with` block, also discarding the connection
+#      rather than returning a potentially-broken one to the pool.
 # ─────────────────────────────────────────────────────────────────────────────
 _pool: psycopg2.pool.ThreadedConnectionPool | None = None
 
@@ -38,20 +48,63 @@ def _get_pool() -> psycopg2.pool.ThreadedConnectionPool:
     return _pool
 
 
+def _is_alive(conn) -> bool:
+    """Cheap liveness check. Returns False if the connection is dead/broken."""
+    try:
+        if conn.closed:
+            return False
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1")
+            cur.fetchone()
+        return True
+    except Exception:
+        return False
+
+
 @contextmanager
 def _conn():
     pool = _get_pool()
     conn = pool.getconn()
+
+    # Validate before use — discard and replace if dead, instead of failing.
+    if not _is_alive(conn):
+        try:
+            pool.putconn(conn, close=True)  # tell the pool to drop it, not reuse it
+        except Exception:
+            pass
+        conn = pool.getconn()
+        if not _is_alive(conn):
+            # Pool itself may be holding only dead connections (e.g. DB restarted) —
+            # recreate the pool entirely as a last resort.
+            global _pool
+            try:
+                pool.closeall()
+            except Exception:
+                pass
+            _pool = None
+            pool = _get_pool()
+            conn = pool.getconn()
+
+    broken = False
     try:
         with conn.cursor() as cur:
             cur.execute("SET TIME ZONE 'Africa/Cairo'")
         yield conn
         conn.commit()
     except Exception:
-        conn.rollback()
+        broken = True
+        try:
+            conn.rollback()
+        except Exception:
+            pass  # connection is already dead — rollback itself may fail, that's fine
         raise
     finally:
-        pool.putconn(conn)
+        # If anything went wrong, tell the pool to discard this connection
+        # rather than recycling a potentially-broken one back into circulation.
+        try:
+            pool.putconn(conn, close=broken)
+        except Exception:
+            pass
 
 
 def _rows(cur) -> list[dict]:
