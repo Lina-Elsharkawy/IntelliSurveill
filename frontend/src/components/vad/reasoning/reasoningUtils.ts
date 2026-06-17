@@ -24,11 +24,15 @@ export function getGateBadgeVariant(item: VadReasoningListItem): { color: string
 }
 
 export function getTrackId(item: VadReasoningListItem): string {
-  // Tracker ID first, then DB ID, fallback to 'Unknown'
-  return item.job?.metadata_json?.tracker_track_id?.toString() ?? 
-         item.job?.input_bundle_json?.track_id?.toString() ?? 
-         item.case?.primary_track_id?.toString() ?? 
-         "Unknown";
+  // event sub-object (backend stores per-event fields here)
+  const evBundle = item.job?.input_bundle_json?.event;
+  return (
+    evBundle?.tracker_track_id?.toString() ??
+    item.job?.metadata_json?.tracker_track_id?.toString() ??
+    item.job?.input_bundle_json?.track_id?.toString() ??
+    item.case?.primary_track_id?.toString() ??
+    "Unknown"
+  );
 }
 
 // ------------------------------------------------------------------
@@ -96,7 +100,15 @@ export function getFinalRecommendedAction(item: VadReasoningListItem): string {
 // ------------------------------------------------------------------
 
 export function getScoreRatio(item: VadReasoningListItem): number {
-  return item.job?.input_bundle_json?.score_ratio ?? item.case?.score_summary_json?.score_ratio ?? 0;
+  // Check event sub-object first (backend wraps per-event fields here)
+  const evBundle = item.job?.input_bundle_json?.event;
+  return (
+    evBundle?.ratio ??
+    evBundle?.score_ratio ??
+    item.job?.input_bundle_json?.score_ratio ??
+    item.case?.score_summary_json?.score_ratio ??
+    0
+  );
 }
 
 export function getRatioBand(ratio: number): string {
@@ -108,11 +120,24 @@ export function getRatioBand(ratio: number): string {
 
 export function getDeepScore(item: VadReasoningListItem): number {
   // Keeping this for backward compatibility or explicit deep score fetching
-  return item.job?.input_bundle_json?.deep_score ?? item.case?.score_summary_json?.deep_score ?? 0;
+  const evBundle = item.job?.input_bundle_json?.event;
+  return (
+    evBundle?.peak_score ??
+    item.job?.input_bundle_json?.deep_score ??
+    item.job?.input_bundle_json?.peak_score ??
+    item.case?.score_summary_json?.deep_score ??
+    0
+  );
 }
 
 export function getThresholdValue(item: VadReasoningListItem): number {
-  return item.job?.input_bundle_json?.threshold_value ?? item.case?.score_summary_json?.threshold_value ?? 0;
+  const evBundle = item.job?.input_bundle_json?.event;
+  return (
+    evBundle?.threshold_value ??
+    item.job?.input_bundle_json?.threshold_value ??
+    item.case?.score_summary_json?.threshold_value ??
+    0
+  );
 }
 
 // ------------------------------------------------------------------
