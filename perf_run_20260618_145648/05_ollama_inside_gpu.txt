@@ -1,0 +1,3269 @@
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:57:35 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:57:36.103, NVIDIA GeForce RTX 5090 Laptop GPU, 11 %, 14580 MiB, 24463 MiB, 44, 6.24 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:57:38 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:57:38.397, NVIDIA GeForce RTX 5090 Laptop GPU, 2 %, 14580 MiB, 24463 MiB, 44, 5.57 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:57:40 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:57:40.667, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14537 MiB, 24463 MiB, 44, 11.55 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:57:42 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:57:42.951, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14554 MiB, 24463 MiB, 44, 11.34 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:57:45 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:57:45.289, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14554 MiB, 24463 MiB, 44, 6.77 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:57:47 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:57:47.585, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14554 MiB, 24463 MiB, 44, 4.28 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:57:49 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:57:49.906, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14554 MiB, 24463 MiB, 44, 4.14 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:57:52 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:57:52.211, NVIDIA GeForce RTX 5090 Laptop GPU, 13 %, 14554 MiB, 24463 MiB, 44, 8.47 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:57:54 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:57:54.548, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 8.52 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:57:56 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:57:56.868, NVIDIA GeForce RTX 5090 Laptop GPU, 16 %, 14554 MiB, 24463 MiB, 45, 8.98 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:57:59 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:57:59.137, NVIDIA GeForce RTX 5090 Laptop GPU, 13 %, 14554 MiB, 24463 MiB, 45, 8.68 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:01 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:01.419, NVIDIA GeForce RTX 5090 Laptop GPU, 13 %, 14554 MiB, 24463 MiB, 45, 5.72 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:03 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:03.691, NVIDIA GeForce RTX 5090 Laptop GPU, 13 %, 14554 MiB, 24463 MiB, 45, 8.56 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:05 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:05.962, NVIDIA GeForce RTX 5090 Laptop GPU, 17 %, 14554 MiB, 24463 MiB, 45, 8.40 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:08 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:08.279, NVIDIA GeForce RTX 5090 Laptop GPU, 13 %, 14554 MiB, 24463 MiB, 45, 8.50 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:10 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:10.602, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 8.46 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:12 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:12.892, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 8.48 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:15 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:15.220, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 8.68 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:17 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:17.529, NVIDIA GeForce RTX 5090 Laptop GPU, 13 %, 14554 MiB, 24463 MiB, 45, 8.49 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:19 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:19.850, NVIDIA GeForce RTX 5090 Laptop GPU, 23 %, 14554 MiB, 24463 MiB, 45, 8.31 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:22 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:22.147, NVIDIA GeForce RTX 5090 Laptop GPU, 23 %, 14554 MiB, 24463 MiB, 45, 8.75 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:24 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:24.438, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 8.48 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:26 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:26.771, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 8.62 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:28 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:29.086, NVIDIA GeForce RTX 5090 Laptop GPU, 22 %, 14554 MiB, 24463 MiB, 45, 8.48 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:31 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:31.366, NVIDIA GeForce RTX 5090 Laptop GPU, 25 %, 14554 MiB, 24463 MiB, 46, 8.93 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:33 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:33.670, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 8.67 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:35 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:35.947, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 8.28 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:38 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:38.250, NVIDIA GeForce RTX 5090 Laptop GPU, 22 %, 14554 MiB, 24463 MiB, 45, 8.74 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:40 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:40.562, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 8.66 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:42 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:42.806, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 7.57 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:44 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:45.109, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 6.19 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:47 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:47.433, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 8.70 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:49 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:49.715, NVIDIA GeForce RTX 5090 Laptop GPU, 14 %, 14554 MiB, 24463 MiB, 45, 8.67 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:51 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:52.013, NVIDIA GeForce RTX 5090 Laptop GPU, 25 %, 14554 MiB, 24463 MiB, 45, 10.30 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:54 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:54.299, NVIDIA GeForce RTX 5090 Laptop GPU, 25 %, 14554 MiB, 24463 MiB, 45, 8.26 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:56 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:56.576, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 10.73 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:58:58 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:58:58.851, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 5.54 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:01 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:01.175, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14554 MiB, 24463 MiB, 45, 9.01 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:03 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:03.484, NVIDIA GeForce RTX 5090 Laptop GPU, 15 %, 14557 MiB, 24463 MiB, 45, 13.01 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:05 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:05.765, NVIDIA GeForce RTX 5090 Laptop GPU, 8 %, 14563 MiB, 24463 MiB, 45, 11.76 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:07 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:08.054, NVIDIA GeForce RTX 5090 Laptop GPU, 10 %, 14559 MiB, 24463 MiB, 45, 14.97 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:10 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:10.328, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14558 MiB, 24463 MiB, 45, 9.14 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:12 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:12.620, NVIDIA GeForce RTX 5090 Laptop GPU, 20 %, 14558 MiB, 24463 MiB, 45, 9.07 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:14 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:14.927, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14558 MiB, 24463 MiB, 45, 8.73 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:17 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:17.206, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14558 MiB, 24463 MiB, 45, 9.71 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:19 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:19.458, NVIDIA GeForce RTX 5090 Laptop GPU, 24 %, 14558 MiB, 24463 MiB, 45, 8.31 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:21 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:21.711, NVIDIA GeForce RTX 5090 Laptop GPU, 15 %, 14558 MiB, 24463 MiB, 45, 6.58 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:23 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:23.978, NVIDIA GeForce RTX 5090 Laptop GPU, 25 %, 14558 MiB, 24463 MiB, 45, 6.83 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:26 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:26.253, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14558 MiB, 24463 MiB, 45, 8.08 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:28 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:28.519, NVIDIA GeForce RTX 5090 Laptop GPU, 20 %, 14558 MiB, 24463 MiB, 45, 9.18 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:30 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:30.789, NVIDIA GeForce RTX 5090 Laptop GPU, 18 %, 14558 MiB, 24463 MiB, 45, 9.55 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:32 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:33.096, NVIDIA GeForce RTX 5090 Laptop GPU, 18 %, 14558 MiB, 24463 MiB, 45, 8.67 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:35 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:35.415, NVIDIA GeForce RTX 5090 Laptop GPU, 38 %, 14558 MiB, 24463 MiB, 45, 16.31 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:37 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:37.770, NVIDIA GeForce RTX 5090 Laptop GPU, 9 %, 14558 MiB, 24463 MiB, 45, 13.02 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:39 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:40.129, NVIDIA GeForce RTX 5090 Laptop GPU, 57 %, 14558 MiB, 24463 MiB, 45, 16.91 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:42 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:42.467, NVIDIA GeForce RTX 5090 Laptop GPU, 86 %, 14558 MiB, 24463 MiB, 49, 56.33 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:44 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:44.864, NVIDIA GeForce RTX 5090 Laptop GPU, 26 %, 14558 MiB, 24463 MiB, 50, 44.43 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:47 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:47.157, NVIDIA GeForce RTX 5090 Laptop GPU, 90 %, 14558 MiB, 24463 MiB, 50, 57.81 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:49 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:49.464, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 52, 63.34 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:51 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:51.747, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 51, 68.09 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:53 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:54.010, NVIDIA GeForce RTX 5090 Laptop GPU, 90 %, 14558 MiB, 24463 MiB, 51, 68.22 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:56 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:56.289, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 51, 61.31 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 14:59:58 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 11:59:58.587, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 51, 61.03 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:00 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:00.866, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 52, 64.11 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:03 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:03.137, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 52, 60.60 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:05 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:05.418, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 52, 63.34 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:07 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:07.694, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 54, 64.35 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:09 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:09.963, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 53, 64.01 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:12 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:12.280, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 54, 72.85 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:14 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:14.603, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 55, 73.21 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:16 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:16.912, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 54, 65.59 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:19 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:19.256, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14558 MiB, 24463 MiB, 53, 52.34 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:21 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:21.550, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 53, 48.86 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:23 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:23.854, NVIDIA GeForce RTX 5090 Laptop GPU, 89 %, 14558 MiB, 24463 MiB, 55, 53.88 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:26 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:26.139, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 54, 51.56 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:28 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:28.474, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 55, 54.12 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:30 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:30.759, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 55, 61.48 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:32 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:33.062, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 55, 61.23 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:35 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:35.381, NVIDIA GeForce RTX 5090 Laptop GPU, 97 %, 14558 MiB, 24463 MiB, 55, 59.67 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:37 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:37.680, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 56, 69.62 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:39 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:39.961, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 56, 63.01 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:42 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:42.250, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 56, 64.22 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:44 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:44.525, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 56, 65.83 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:46 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:46.824, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 57, 64.35 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:48 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:49.091, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 57, 62.80 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:51 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:51.365, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 57, 73.10 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:53 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:53.626, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 58, 74.71 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:55 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:55.907, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 57, 64.31 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:00:58 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:00:58.205, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 57, 71.16 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:00 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:00.498, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 58, 50.34 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:02 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:02.816, NVIDIA GeForce RTX 5090 Laptop GPU, 89 %, 14558 MiB, 24463 MiB, 56, 52.21 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:04 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:05.083, NVIDIA GeForce RTX 5090 Laptop GPU, 59 %, 14558 MiB, 24463 MiB, 57, 48.38 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:07 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:07.383, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 57, 53.24 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:09 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:09.664, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 57, 53.58 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:11 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:11.932, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14558 MiB, 24463 MiB, 57, 65.14 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:14 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:14.233, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 57, 61.03 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:16 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:16.501, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 57, 60.42 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:18 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:18.803, NVIDIA GeForce RTX 5090 Laptop GPU, 97 %, 14558 MiB, 24463 MiB, 58, 61.91 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:20 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:21.088, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 58, 65.82 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:23 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:23.367, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 58, 63.18 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:25 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:25.648, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 58, 67.11 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:27 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:27.914, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 58, 65.17 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:30 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:30.207, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 58, 66.06 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:32 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:32.496, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 58, 63.80 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:34 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:34.780, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 58, 61.90 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:36 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:37.067, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 58, 66.52 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:39 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:39.314, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 66.18 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:41 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:41.599, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 69.42 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:43 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:43.883, NVIDIA GeForce RTX 5090 Laptop GPU, 44 %, 14558 MiB, 24463 MiB, 59, 48.97 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:46 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:46.181, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 57, 49.53 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:48 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:48.486, NVIDIA GeForce RTX 5090 Laptop GPU, 19 %, 14558 MiB, 24463 MiB, 59, 47.24 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:50 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:50.791, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 58, 52.14 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:52 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:53.086, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 58, 53.07 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:55 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:55.382, NVIDIA GeForce RTX 5090 Laptop GPU, 90 %, 14558 MiB, 24463 MiB, 58, 64.53 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:57 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:57.657, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 58, 60.58 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:01:59 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:01:59.918, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 58, 62.35 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:02 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:02.194, NVIDIA GeForce RTX 5090 Laptop GPU, 97 %, 14558 MiB, 24463 MiB, 58, 60.55 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:04 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:04.468, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 77.21 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:06 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:06.731, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 74.42 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:08 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:09.023, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 58, 64.92 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:11 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:11.297, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 58, 65.60 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:13 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:13.572, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 58, 66.37 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:15 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:15.850, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 58, 63.59 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:18 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:18.115, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 58, 64.22 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:20 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:20.407, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 58, 65.33 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:22 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:22.675, NVIDIA GeForce RTX 5090 Laptop GPU, 87 %, 14558 MiB, 24463 MiB, 58, 53.18 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:24 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:24.980, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 58, 52.67 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:27 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:27.273, NVIDIA GeForce RTX 5090 Laptop GPU, 73 %, 14558 MiB, 24463 MiB, 57, 51.09 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:29 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:29.532, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 58, 53.20 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:31 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:31.815, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 57, 53.99 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:33 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:34.086, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 58, 64.10 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:36 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:36.345, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 57, 59.31 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:38 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:38.629, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 58, 62.04 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:40 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:40.901, NVIDIA GeForce RTX 5090 Laptop GPU, 98 %, 14558 MiB, 24463 MiB, 60, 75.26 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:43 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:43.174, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 76.12 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:45 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:45.454, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 74.53 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:47 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:47.717, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 74.52 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:49 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:49.992, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 75.27 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:52 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:52.265, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 59, 67.56 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:54 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:54.536, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 59, 69.41 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:56 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:56.829, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 59, 66.56 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:02:59 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:02:59.146, NVIDIA GeForce RTX 5090 Laptop GPU, 46 %, 14558 MiB, 24463 MiB, 59, 61.11 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:01 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:01.485, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 58, 54.16 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:03 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:03.776, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 58, 55.43 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:05 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:06.069, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 58, 58.68 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:08 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:08.361, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 58, 52.75 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:10 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:10.647, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 57, 54.54 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:12 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:12.917, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 58, 67.80 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:15 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:15.193, NVIDIA GeForce RTX 5090 Laptop GPU, 90 %, 14558 MiB, 24463 MiB, 58, 72.65 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:17 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:17.474, NVIDIA GeForce RTX 5090 Laptop GPU, 97 %, 14558 MiB, 24463 MiB, 60, 71.71 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:19 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:19.757, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 58, 63.94 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:21 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:22.055, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 72.11 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:24 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:24.348, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 59, 79.40 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:26 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:26.659, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 64.43 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:28 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:28.939, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 64.72 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:31 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:31.218, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 59, 64.54 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:33 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:33.516, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 59, 66.73 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:35 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:35.809, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 66.90 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:37 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:38.065, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 59, 65.25 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:40 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:40.368, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 59, 64.90 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:42 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:42.656, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 59, 44.15 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:44 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:44.974, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 59, 52.66 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:47 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:47.253, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14558 MiB, 24463 MiB, 58, 54.48 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:49 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:49.545, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 53.32 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:51 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:51.846, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 53.75 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:54 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:54.116, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 61.26 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:56 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:56.378, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 63.47 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:03:58 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:03:58.658, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 58, 63.08 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:00 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:00.949, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 59, 61.76 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:03 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:03.228, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 74.83 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:05 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:05.509, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 60, 78.81 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:07 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:07.781, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 65.65 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:09 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:10.060, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 60, 66.12 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:12 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:12.326, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 60, 65.58 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:14 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:14.597, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 63.63 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:16 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:16.877, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 65.11 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:19 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:19.178, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 60, 64.38 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:21 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:21.454, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 60, 65.03 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:23 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:23.730, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 61, 79.47 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:25 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:26.034, NVIDIA GeForce RTX 5090 Laptop GPU, 53 %, 14558 MiB, 24463 MiB, 60, 54.30 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:28 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:28.337, NVIDIA GeForce RTX 5090 Laptop GPU, 60 %, 14558 MiB, 24463 MiB, 61, 49.19 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:30 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:30.621, NVIDIA GeForce RTX 5090 Laptop GPU, 82 %, 14558 MiB, 24463 MiB, 60, 51.85 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:32 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:32.904, NVIDIA GeForce RTX 5090 Laptop GPU, 87 %, 14558 MiB, 24463 MiB, 59, 55.26 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:35 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:35.206, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 59, 54.02 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:37 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:37.495, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 62, 68.11 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:39 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:39.776, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 59, 62.06 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:41 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:42.044, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 62.07 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:44 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:44.333, NVIDIA GeForce RTX 5090 Laptop GPU, 82 %, 14558 MiB, 24463 MiB, 59, 66.20 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:46 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:46.653, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 69.78 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:48 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:48.957, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 60, 66.38 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:51 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:51.227, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 67.48 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:53 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:53.517, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 60, 67.93 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:55 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:55.799, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 61, 70.90 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:04:57 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:04:58.085, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 60, 66.37 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:00 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:00.376, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 60, 74.69 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:02 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:02.664, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 60, 64.92 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:04 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:04.944, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 60, 65.32 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:07 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:07.246, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 60, 55.20 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:09 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:09.525, NVIDIA GeForce RTX 5090 Laptop GPU, 35 %, 14558 MiB, 24463 MiB, 61, 55.32 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:11 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:11.838, NVIDIA GeForce RTX 5090 Laptop GPU, 22 %, 14558 MiB, 24463 MiB, 60, 49.86 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:14 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:14.158, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14558 MiB, 24463 MiB, 60, 71.40 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:16 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:16.429, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 55.07 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:18 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:18.734, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 68.74 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:20 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:20.998, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 60, 63.58 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:23 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:23.291, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14558 MiB, 24463 MiB, 60, 61.80 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:25 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:25.587, NVIDIA GeForce RTX 5090 Laptop GPU, 97 %, 14558 MiB, 24463 MiB, 62, 68.28 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:27 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:27.863, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 61, 69.28 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:30 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:30.141, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 62, 79.22 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:32 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:32.420, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 64.58 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:34 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:34.702, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 60, 66.25 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:36 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:36.973, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 60, 66.32 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:39 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:39.257, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 60, 67.63 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:41 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:41.531, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 71.65 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:43 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:43.824, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 60, 68.92 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:45 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:46.102, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 61, 69.69 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:48 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:48.367, NVIDIA GeForce RTX 5090 Laptop GPU, 82 %, 14558 MiB, 24463 MiB, 60, 64.69 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:50 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:50.674, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 61, 56.75 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:52 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:52.949, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 52.83 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:55 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:55.256, NVIDIA GeForce RTX 5090 Laptop GPU, 86 %, 14558 MiB, 24463 MiB, 59, 55.36 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:57 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:57.530, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 53.31 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:05:59 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:05:59.868, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 56.80 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:02 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:02.156, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 62.41 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:04 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:04.460, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 60, 61.79 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:06 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:06.742, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 59, 62.06 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:08 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:09.032, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 59, 63.87 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:11 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:11.313, NVIDIA GeForce RTX 5090 Laptop GPU, 97 %, 14558 MiB, 24463 MiB, 61, 74.81 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:13 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:13.617, NVIDIA GeForce RTX 5090 Laptop GPU, 97 %, 14558 MiB, 24463 MiB, 60, 66.75 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:15 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:15.881, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 60, 68.73 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:18 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:18.176, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 61, 68.08 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:20 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:20.455, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 60, 68.26 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:22 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:22.740, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 61, 67.65 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:24 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:25.011, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 61, 67.36 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:27 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:27.272, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 60, 65.12 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:29 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:29.555, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 67.14 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:31 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:31.847, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 69.07 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:34 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:34.121, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 52.44 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:36 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:36.421, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 58, 51.94 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:38 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:38.710, NVIDIA GeForce RTX 5090 Laptop GPU, 97 %, 14558 MiB, 24463 MiB, 60, 55.53 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:40 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:40.992, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 54.22 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:43 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:43.292, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 55.06 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:45 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:45.586, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 63.87 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:47 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:47.825, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 59, 60.31 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:50 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:50.115, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 60.55 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:52 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:52.393, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 59, 68.08 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:54 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:54.684, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 60, 74.21 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:56 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:56.940, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 69.54 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:06:59 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:06:59.239, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 65.85 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:01 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:01.515, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 78.88 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:03 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:03.789, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 60, 77.94 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:05 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:06.067, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 65.65 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:08 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:08.351, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 64.82 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:10 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:10.632, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 59, 65.45 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:12 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:12.912, NVIDIA GeForce RTX 5090 Laptop GPU, 97 %, 14558 MiB, 24463 MiB, 60, 67.90 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:15 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:15.169, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 59, 67.69 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:17 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:17.444, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 60, 43.69 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:19 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:19.749, NVIDIA GeForce RTX 5090 Laptop GPU, 56 %, 14558 MiB, 24463 MiB, 61, 59.13 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:21 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:22.032, NVIDIA GeForce RTX 5090 Laptop GPU, 50 %, 14558 MiB, 24463 MiB, 58, 55.48 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:24 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:24.344, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 54.67 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:26 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:26.681, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 53.57 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:28 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:28.950, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 59, 64.93 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:31 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:31.187, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 59, 63.36 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:33 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:33.461, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 61.93 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:35 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:35.720, NVIDIA GeForce RTX 5090 Laptop GPU, 97 %, 14558 MiB, 24463 MiB, 61, 73.36 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:37 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:37.972, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 60, 72.12 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:40 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:40.253, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 60, 71.69 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:42 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:42.545, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 60, 69.58 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:44 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:44.803, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 60, 71.97 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:46 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:47.081, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 60, 67.98 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:49 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:49.352, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 65.08 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:51 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:51.621, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 64.57 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:53 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:53.886, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 65.44 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:56 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:56.186, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 66.26 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:07:58 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:07:58.463, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 59, 47.83 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:00 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:00.769, NVIDIA GeForce RTX 5090 Laptop GPU, 32 %, 14558 MiB, 24463 MiB, 59, 52.53 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:02 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:03.048, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 59, 55.45 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:05 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:05.329, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 54.58 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:07 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:07.623, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 54.18 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:09 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:09.869, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 59, 68.49 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:12 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:12.165, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 59, 63.72 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:14 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:14.436, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 59.76 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:16 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:16.720, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 61, 78.39 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:18 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:19.017, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 59, 64.97 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:21 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:21.310, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 64.70 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:23 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:23.571, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 59, 66.17 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:25 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:25.863, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 70.49 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:28 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:28.125, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 72.16 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:30 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:30.409, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 61, 78.61 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:32 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:32.699, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 60, 70.86 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:34 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:34.960, NVIDIA GeForce RTX 5090 Laptop GPU, 95 %, 14558 MiB, 24463 MiB, 60, 69.94 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:37 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:37.235, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 55.67 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:39 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:39.529, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 61, 52.42 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:41 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:41.873, NVIDIA GeForce RTX 5090 Laptop GPU, 87 %, 14558 MiB, 24463 MiB, 61, 80.80 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:44 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:44.200, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 60, 61.10 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:46 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:46.493, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14558 MiB, 24463 MiB, 60, 72.33 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:48 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:48.778, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 65.63 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:50 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:51.043, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 64.84 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:53 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:53.295, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 63.27 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:55 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:55.571, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 60.67 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:57 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:08:57.842, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14558 MiB, 24463 MiB, 59, 69.71 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:08:59 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:00.116, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14558 MiB, 24463 MiB, 59, 61.95 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:02 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:02.400, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14558 MiB, 24463 MiB, 59, 62.15 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:04 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:04.657, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14558 MiB, 24463 MiB, 61, 64.30 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:06 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:06.955, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 60, 78.82 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:09 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:09.257, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 60, 76.49 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:11 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:11.528, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 60, 77.04 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:13 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:13.807, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14560 MiB, 24463 MiB, 60, 77.66 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:15 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:16.086, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14560 MiB, 24463 MiB, 60, 77.39 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:18 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:18.363, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 60, 77.13 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:20 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:20.661, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 60, 77.21 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:22 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:22.953, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14560 MiB, 24463 MiB, 58, 70.78 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:25 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:25.277, NVIDIA GeForce RTX 5090 Laptop GPU, 44 %, 14560 MiB, 24463 MiB, 60, 49.60 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:27 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:27.564, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14560 MiB, 24463 MiB, 60, 66.69 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:29 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:29.852, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14560 MiB, 24463 MiB, 59, 61.19 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:32 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:32.135, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 60, 73.42 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:34 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:34.430, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14560 MiB, 24463 MiB, 59, 72.20 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:36 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:36.725, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 59, 71.97 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:38 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:39.039, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 60, 73.97 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:41 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:41.339, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 60, 75.16 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:43 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:43.648, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 60, 76.13 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:45 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:45.951, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 60, 75.69 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:48 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:48.225, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 60, 75.83 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:50 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:50.505, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 61, 75.99 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:52 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:52.808, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 75.62 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:54 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:55.117, NVIDIA GeForce RTX 5090 Laptop GPU, 57 %, 14560 MiB, 24463 MiB, 61, 48.21 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:57 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:57.418, NVIDIA GeForce RTX 5090 Laptop GPU, 14 %, 14560 MiB, 24463 MiB, 61, 50.78 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:09:59 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:09:59.728, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14560 MiB, 24463 MiB, 60, 62.47 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:01 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:02.089, NVIDIA GeForce RTX 5090 Laptop GPU, 89 %, 14560 MiB, 24463 MiB, 61, 63.80 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:04 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:04.423, NVIDIA GeForce RTX 5090 Laptop GPU, 90 %, 14560 MiB, 24463 MiB, 61, 75.74 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:06 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:06.724, NVIDIA GeForce RTX 5090 Laptop GPU, 89 %, 14560 MiB, 24463 MiB, 61, 75.12 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:08 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:09.032, NVIDIA GeForce RTX 5090 Laptop GPU, 97 %, 14560 MiB, 24463 MiB, 63, 78.46 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:11 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:11.382, NVIDIA GeForce RTX 5090 Laptop GPU, 90 %, 14560 MiB, 24463 MiB, 61, 78.49 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:13 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:13.685, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 62, 79.19 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:15 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:15.987, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 62, 79.33 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:18 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:18.270, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14560 MiB, 24463 MiB, 62, 78.80 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:20 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:20.551, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 62, 79.25 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:22 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:22.837, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 62, 79.28 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:25 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:25.096, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 63, 58.55 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:27 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:27.459, NVIDIA GeForce RTX 5090 Laptop GPU, 80 %, 14560 MiB, 24463 MiB, 61, 54.74 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:29 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:29.791, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 62.95 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:31 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:32.116, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 62, 68.72 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:34 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:34.410, NVIDIA GeForce RTX 5090 Laptop GPU, 90 %, 14560 MiB, 24463 MiB, 61, 76.31 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:36 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:36.685, NVIDIA GeForce RTX 5090 Laptop GPU, 90 %, 14560 MiB, 24463 MiB, 61, 75.51 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:38 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:38.991, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14560 MiB, 24463 MiB, 62, 76.73 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:41 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:41.302, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 62, 79.20 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:43 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:43.607, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 62, 79.00 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:45 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:45.920, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14560 MiB, 24463 MiB, 62, 78.90 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:48 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:48.184, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 62, 79.29 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:50 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:50.466, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 59, 15.25 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:52 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:52.767, NVIDIA GeForce RTX 5090 Laptop GPU, 88 %, 14560 MiB, 24463 MiB, 61, 69.60 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:54 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:55.057, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14560 MiB, 24463 MiB, 61, 63.73 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:57 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:57.377, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14560 MiB, 24463 MiB, 61, 63.74 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:10:59 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:10:59.660, NVIDIA GeForce RTX 5090 Laptop GPU, 90 %, 14560 MiB, 24463 MiB, 61, 76.41 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:01 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:01.931, NVIDIA GeForce RTX 5090 Laptop GPU, 90 %, 14560 MiB, 24463 MiB, 61, 76.06 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:04 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:04.206, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14560 MiB, 24463 MiB, 63, 78.69 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:06 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:06.500, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14560 MiB, 24463 MiB, 61, 79.87 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:08 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:08.788, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 79.38 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:10 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:11.073, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 61, 80.96 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:13 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:13.335, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 61, 82.01 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:15 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:15.620, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 79.79 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:17 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:17.907, NVIDIA GeForce RTX 5090 Laptop GPU, 94 %, 14560 MiB, 24463 MiB, 59, 51.87 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:20 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:20.185, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 60, 72.84 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:22 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:22.499, NVIDIA GeForce RTX 5090 Laptop GPU, 89 %, 14560 MiB, 24463 MiB, 61, 62.27 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:24 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:24.813, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 60, 64.23 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:26 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:27.118, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14560 MiB, 24463 MiB, 60, 75.89 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:29 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:29.390, NVIDIA GeForce RTX 5090 Laptop GPU, 89 %, 14560 MiB, 24463 MiB, 60, 75.14 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:31 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:31.676, NVIDIA GeForce RTX 5090 Laptop GPU, 67 %, 14560 MiB, 24463 MiB, 59, 72.38 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:33 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:33.978, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 79.45 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:36 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:36.256, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 61, 79.10 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:38 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:38.545, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 61, 79.34 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:40 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:40.818, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14560 MiB, 24463 MiB, 61, 79.14 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:42 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:43.080, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 79.19 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:45 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:45.349, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 79.26 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:47 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:47.616, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 79.26 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:49 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:49.895, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 61, 79.44 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:52 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:52.177, NVIDIA GeForce RTX 5090 Laptop GPU, 61 %, 14560 MiB, 24463 MiB, 62, 53.27 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:54 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:54.479, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 59, 59.24 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:56 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:56.761, NVIDIA GeForce RTX 5090 Laptop GPU, 87 %, 14560 MiB, 24463 MiB, 61, 61.11 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:11:58 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:11:59.060, NVIDIA GeForce RTX 5090 Laptop GPU, 90 %, 14560 MiB, 24463 MiB, 61, 64.06 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:01 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:01.381, NVIDIA GeForce RTX 5090 Laptop GPU, 89 %, 14560 MiB, 24463 MiB, 61, 78.98 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:03 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:03.656, NVIDIA GeForce RTX 5090 Laptop GPU, 90 %, 14560 MiB, 24463 MiB, 61, 76.07 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:05 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:05.929, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 79.08 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:08 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:08.220, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 61, 79.29 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:10 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:10.520, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 79.38 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:12 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:12.793, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 79.14 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:14 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:15.072, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 61, 79.36 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:17 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:17.356, NVIDIA GeForce RTX 5090 Laptop GPU, 90 %, 14560 MiB, 24463 MiB, 61, 78.80 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:19 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:19.610, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 62, 79.49 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:21 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:21.934, NVIDIA GeForce RTX 5090 Laptop GPU, 89 %, 14560 MiB, 24463 MiB, 61, 15.52 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:24 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:24.268, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 35.54 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:26 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:26.573, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 62, 53.95 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:28 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:28.891, NVIDIA GeForce RTX 5090 Laptop GPU, 86 %, 14560 MiB, 24463 MiB, 61, 62.03 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:31 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:31.158, NVIDIA GeForce RTX 5090 Laptop GPU, 90 %, 14560 MiB, 24463 MiB, 61, 77.86 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:33 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:33.431, NVIDIA GeForce RTX 5090 Laptop GPU, 89 %, 14560 MiB, 24463 MiB, 61, 75.43 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:35 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:35.714, NVIDIA GeForce RTX 5090 Laptop GPU, 96 %, 14560 MiB, 24463 MiB, 63, 78.79 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:37 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:38.015, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 78.99 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:40 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:40.263, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 79.13 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:42 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:42.544, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 79.19 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:44 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:44.807, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 61, 79.55 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:46 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:47.083, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 61, 79.33 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:49 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:49.331, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 62, 50.62 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:51 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:51.631, NVIDIA GeForce RTX 5090 Laptop GPU, 74 %, 14560 MiB, 24463 MiB, 60, 53.66 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:53 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:54.030, NVIDIA GeForce RTX 5090 Laptop GPU, 89 %, 14560 MiB, 24463 MiB, 60, 63.24 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:56 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:56.370, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14560 MiB, 24463 MiB, 61, 64.34 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:12:58 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:12:58.661, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14560 MiB, 24463 MiB, 61, 76.10 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:00 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:00.941, NVIDIA GeForce RTX 5090 Laptop GPU, 97 %, 14560 MiB, 24463 MiB, 60, 75.77 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:03 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:03.230, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 79.18 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:05 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:05.500, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 61, 79.42 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:07 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:07.796, NVIDIA GeForce RTX 5090 Laptop GPU, 91 %, 14560 MiB, 24463 MiB, 61, 79.06 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:09 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:10.063, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 61, 80.88 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:12 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:12.349, NVIDIA GeForce RTX 5090 Laptop GPU, 93 %, 14560 MiB, 24463 MiB, 61, 79.27 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:14 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:14.629, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 79.44 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:16 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:16.896, NVIDIA GeForce RTX 5090 Laptop GPU, 92 %, 14560 MiB, 24463 MiB, 61, 81.14 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:19 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:19.184, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 57, 12.42 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:21 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:21.480, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 56, 12.30 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:23 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:23.755, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 56, 9.47 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:25 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:26.005, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 55, 5.05 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:28 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:28.244, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 55, 4.99 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:30 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:30.536, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 54, 4.87 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:32 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:32.797, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 53, 7.36 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:34 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:35.088, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 53, 4.68 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:37 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:37.350, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 52, 4.68 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:39 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:39.644, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 52, 4.72 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:41 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:41.935, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 52, 4.95 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:44 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:44.227, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 51, 4.40 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:46 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:46.490, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 51, 5.38 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:48 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:48.805, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 51, 4.86 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:50 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:51.081, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 50, 4.63 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:53 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:53.354, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 50, 5.54 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:55 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:55.618, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14560 MiB, 24463 MiB, 50, 4.37 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:13:57 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:13:57.882, NVIDIA GeForce RTX 5090 Laptop GPU, 26 %, 14547 MiB, 24463 MiB, 49, 6.40 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:00 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:00.165, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14547 MiB, 24463 MiB, 49, 5.89 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:02 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:02.438, NVIDIA GeForce RTX 5090 Laptop GPU, 54 %, 14553 MiB, 24463 MiB, 49, 14.04 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:04 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:04.732, NVIDIA GeForce RTX 5090 Laptop GPU, 40 %, 14557 MiB, 24463 MiB, 49, 10.91 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:06 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:06.989, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14557 MiB, 24463 MiB, 49, 6.04 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:09 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:09.270, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14557 MiB, 24463 MiB, 49, 4.55 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:11 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:11.543, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14557 MiB, 24463 MiB, 48, 4.85 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:13 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:13.830, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14557 MiB, 24463 MiB, 48, 4.14 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:16 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:16.108, NVIDIA GeForce RTX 5090 Laptop GPU, 1 %, 14556 MiB, 24463 MiB, 48, 10.97 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:18 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:18.392, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14556 MiB, 24463 MiB, 48, 10.60 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:20 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:20.654, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14556 MiB, 24463 MiB, 48, 5.74 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:22 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:22.956, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14556 MiB, 24463 MiB, 48, 7.48 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:25 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:25.256, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14556 MiB, 24463 MiB, 47, 4.72 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:27 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:27.513, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14556 MiB, 24463 MiB, 47, 4.62 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:29 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:29.779, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14556 MiB, 24463 MiB, 47, 4.18 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:31 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:32.037, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 47, 5.52 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:34 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:34.342, NVIDIA GeForce RTX 5090 Laptop GPU, 2 %, 14545 MiB, 24463 MiB, 47, 6.00 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:36 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:36.628, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14556 MiB, 24463 MiB, 47, 10.55 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:38 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:38.911, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 47, 4.60 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:41 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:41.192, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 47, 4.76 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:43 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:43.490, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 47, 4.70 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:45 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:45.774, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 47, 5.87 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:47 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:48.049, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 47, 4.48 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:50 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:50.341, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 47, 4.25 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:52 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:52.641, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 47, 4.27 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:54 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:54.945, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 46, 4.47 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:57 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:57.238, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 46, 4.22 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:14:59 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:14:59.548, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 46, 4.44 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:15:01 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:15:01.848, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 46, 4.71 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:15:04 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:15:04.126, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 46, 4.28 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:15:06 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:15:06.409, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 46, 5.45 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:15:08 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:15:08.707, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 45, 5.62 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:15:10 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:15:10.942, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 45, 4.15 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:15:13 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:15:13.204, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 45, 4.34 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:15:15 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:15:15.500, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 45, 4.28 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:15:17 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:15:17.778, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 45, 3.91 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:15:19 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:15:20.072, NVIDIA GeForce RTX 5090 Laptop GPU, 0 %, 14555 MiB, 24463 MiB, 45, 4.17 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]
+===== INSIDE OLLAMA GPU CHECK 2026-06-18 15:15:22 =====
+timestamp, name, utilization.gpu [%], memory.used [MiB], memory.total [MiB], temperature.gpu, power.draw [W]
+2026/06/18 12:15:22.330, NVIDIA GeForce RTX 5090 Laptop GPU, 10 %, 14556 MiB, 24463 MiB, 45, 7.48 W
+pid, process_name, used_gpu_memory [MiB]
+1, [Not Found], [N/A]
+153, [Not Found], [N/A]
+183, [Not Found], [N/A]

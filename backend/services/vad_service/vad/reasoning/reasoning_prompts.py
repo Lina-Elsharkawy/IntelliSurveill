@@ -73,6 +73,41 @@ def _rule_to_visual_question(rule: dict[str, Any]) -> str:
     if location.lower() in {"all", "any", ""}:
         location = "the scene"
 
+    # Prefer behavior-specific wording from rule_text/conditions before generic
+    # event_type mapping.  This matters for event_type="sudden_movement": admin
+    # rules may mean jumping, punching a wall, running, etc.  A generic "running"
+    # question caused the VLM to miss jumping/punching demonstrations.
+    target_behavior = str(conditions.get("target_behavior") or "")
+    involved_desc = str(conditions.get("involved_person_description") or "")
+    requires = " ".join(str(x) for x in (conditions.get("requires_visible_evidence") or []))
+    behavior_text = " ".join([rule_text, target_behavior, involved_desc, requires]).lower()
+
+    if any(w in behavior_text for w in ("jump", "jumping", "bounce", "bouncing", "vertical")):
+        return (
+            "Across these frames, is a person making repeated vertical up-and-down body motion: "
+            "knees bending then extending, body rising then landing, or feet leaving/nearly leaving the floor? "
+            "Describe the foot-floor contact, knee motion, and whether the movement repeats."
+        )
+
+    if any(w in behavior_text for w in ("punch", "punching", "strike", "striking", "hit", "hitting", "slam", "slamming")):
+        return (
+            "Across these frames, is a single person repeatedly extending an arm/hand/fist toward a wall, pillar, "
+            "door, glass panel, or fixed structure with visible contact or forceful pushing/striking? "
+            "Distinguish repeated forceful contact from a light touch, leaning, or gentle navigation around the object."
+        )
+
+    if any(w in behavior_text for w in ("forcefully pushes", "forceful contact", "fixed surface", "wall", "pillar")):
+        return (
+            "Is there person-to-object contact with a wall, pillar, door, glass panel, or fixed structure? "
+            "If yes, is the contact repeated/forceful or only a light touch/lean? Describe the arm path and repetitions."
+        )
+
+    if any(w in behavior_text for w in ("run", "running", "dash", "dashing", "abrupt acceleration", "rapid body displacement")):
+        return (
+            "Across these frames, is a person running, dashing, or showing abrupt acceleration/rapid displacement, "
+            "rather than normal walking or mild pacing? Describe speed and direction changes."
+        )
+
     # Map structured event types → concrete visual observation questions.
     question_map = {
         "fall_detected":    "Is any person falling, collapsed, lying on the floor, or in a very low uncontrolled posture?",
@@ -80,7 +115,7 @@ def _rule_to_visual_question(rule: dict[str, Any]) -> str:
         "intrusion":        f"Is a person present in a restricted area or near secured access points in {location}?",
         "loitering":        f"Is a person standing still for an extended time without an obvious task in {location}?",
         "after_hours":      f"Is a person present in {location} when the area should be unoccupied?",
-        "sudden_movement":  "Is any person running, sprinting, or moving at very high speed?",
+        "sudden_movement":  "Is any person making a concrete sudden body movement such as running, dashing, jumping, repeated bouncing, rapid arm swings, or forceful repeated contact with a fixed surface?",
         "camera_tamper":    "Is the camera view being blocked, covered, or physically disturbed?",
         "smoke_fire":       "Is there visible smoke, flame, or fire in the scene?",
         "crowd_detection":  f"Are more than two people gathered in a group in {location}?",
@@ -89,7 +124,7 @@ def _rule_to_visual_question(rule: dict[str, Any]) -> str:
         "pushing_or_shoving":   "Is one person pushing, shoving, or forcibly moving another person?",
         "grappling_or_wrestling": "Are two people locked in a grapple, hold, or wrestling posture?",
         "fall_or_collapse":     "Is any person falling, stumbling, or collapsing to the ground?",
-        "unsafe_equipment_interaction": "Is a person interacting with equipment in an visibly risky or uncontrolled way?",
+        "unsafe_equipment_interaction": "Is a person interacting with equipment in a visibly risky or uncontrolled way?",
         "rapid_unusual_movement": "Is any person making rapid, jerky, or uncontrolled movements?",
         "possible_intrusion_or_security_event": "Is there evidence of unauthorized entry or restricted-entry or access-control activity?",
     }
@@ -202,6 +237,7 @@ IMPORTANT RULES:
 - You are a witness, not a judge: do NOT decide whether any rule is satisfied or whether any follow-up action is needed.
 - Do NOT output policy_decision, visual_decision, severity, event_type, or final_action. Those fields belong only to the LLM/Python rule stages.
 - Describe body posture, limb positions, movement direction, speed, proximity, and physical contact in concrete terms.
+- Pay special attention to repeated visible motion: vertical up/down movement, feet leaving or returning to the floor, repeated arm extension, hand/fist contact with a wall/pillar/fixed object, and whether contact is light or forceful.
 - Compare early frames (first third) to middle frames to late frames (last third) to describe how the scene changes.
 
 OBSERVATION QUESTIONS — answer each one based only on what is visible:
@@ -227,7 +263,7 @@ Return ONLY valid JSON matching this exact structure. No markdown. No null value
   "schema_version": "1.0",
   "review_type": "vlm_visual_review",
   "observation_status": "OBSERVED | NOT_OBSERVED | UNCLEAR",
-  "dominant_visible_activity": "Neutral short label such as walking, standing, sitting, lying_on_floor, object_interaction, person_contact, unclear_view. Do not use policy labels.",
+  "dominant_visible_activity": "Neutral short label such as walking, standing, sitting, jumping, repeated_vertical_motion, repeated_arm_motion, object_interaction, object_contact, person_contact, unclear_view. Do not use policy labels.",
   "observation_confidence": 0.0,
   "visual_confidence": 0.0,
   "image_quality": "GOOD | FAIR | POOR | UNUSABLE",
@@ -235,7 +271,8 @@ Return ONLY valid JSON matching this exact structure. No markdown. No null value
   "evidence_sufficiency": "SUFFICIENT | PARTIAL | INSUFFICIENT",
   "visible_scene": "One sentence describing the room, setting, and fixed objects visible.",
   "person_observation": "Describe each visible person: their location in frame, posture, what body parts are doing, and distance to other people. Use only observable facts.",
-  "motion_observation": "Describe how the scene changes from early frames to middle frames to late frames. Note direction, speed, and any change in posture or contact.",
+  "motion_observation": "Describe how the scene changes from early frames to middle frames to late frames. Note direction, speed, repeated motion, and any change in posture or contact.",
+  "object_interactions": "Describe any contact with walls, pillars, doors, furniture, equipment, or other fixed objects. State whether it is repeated/forceful or light/gentle. If none, say none visible.",
   "observation_answers": {{
     "Q1": "Direct factual answer to observation question 1.",
     "Q2": "Direct factual answer to observation question 2 (if present)."
@@ -296,6 +333,7 @@ IMPORTANT RULES:
 - You are a witness, not a judge: do NOT decide whether any rule is satisfied or whether any follow-up action is needed.
 - Do NOT output policy_decision, visual_decision, severity, event_type, or final_action. Those fields belong only to the LLM/Python rule stages.
 - Focus specifically on: joint positions (shoulders, elbows, wrists, hips, knees, ankles), torso angle, bilateral symmetry, speed of limb movement, and contact with other people or objects.
+- Pay special attention to repeated visible motion: feet leaving or returning to the floor, knees bending/extending, body rising/landing, repeated arm extension, hand/fist contact with a wall/pillar/fixed object, and whether contact is light or forceful.
 - Compare early frames (first third) to middle frames to late frames (last third) to describe how posture changes.
 
 OBSERVATION QUESTIONS — answer each one based only on what is visible:
@@ -321,7 +359,7 @@ Return ONLY valid JSON matching this exact structure. No markdown. No null value
   "schema_version": "1.0",
   "review_type": "vlm_visual_review",
   "observation_status": "OBSERVED | NOT_OBSERVED | UNCLEAR",
-  "dominant_visible_activity": "Neutral short label such as walking, standing, sitting, lying_on_floor, object_interaction, person_contact, unclear_view. Do not use policy labels.",
+  "dominant_visible_activity": "Neutral short label such as walking, standing, sitting, jumping, repeated_vertical_motion, repeated_arm_motion, object_interaction, object_contact, person_contact, unclear_view. Do not use policy labels.",
   "observation_confidence": 0.0,
   "visual_confidence": 0.0,
   "image_quality": "GOOD | FAIR | POOR | UNUSABLE",
@@ -329,7 +367,8 @@ Return ONLY valid JSON matching this exact structure. No markdown. No null value
   "evidence_sufficiency": "SUFFICIENT | PARTIAL | INSUFFICIENT",
   "visible_scene": "One sentence describing the room and setting.",
   "person_observation": "Describe each visible person: torso angle, arm positions, leg positions, whether they are upright or not, and whether they are in contact with another person or object.",
-  "motion_observation": "Describe how body posture changes from early frames to middle frames to late frames. Include direction of movement and speed estimate (slow / moderate / fast).",
+  "motion_observation": "Describe how body posture changes from early frames to middle frames to late frames. Include direction of movement, speed estimate (slow / moderate / fast), repeated motion, and foot-floor/hand-object contact if visible.",
+  "object_interactions": "Describe any contact with walls, pillars, doors, furniture, equipment, or other fixed objects. State whether it is repeated/forceful or light/gentle. If none, say none visible.",
   "observation_answers": {{
     "Q1": "Direct factual answer to observation question 1.",
     "Q2": "Direct factual answer to observation question 2 (if present)."
@@ -461,9 +500,11 @@ Step 2 — Check trigger rules:
 
 Step 3 — Check suppress rules:
   For each suppress rule: does the caption describe the suppressed behavior?
+  If the suppress rule conditions contain does_not_apply_when or similar exception terms, check them carefully.
+  Do NOT apply a suppress rule when the caption contains one of its exception behaviors, such as jumping,
+  repeated arm swings, striking, punching, running, falling, crouching, or forceful equipment/fixed-object contact.
   If a suppress rule matches, it overrides a trigger rule UNLESS the trigger
-  rule has stronger visual evidence (e.g., direct physical contact vs. possible
-  proximity).
+  rule has stronger visual evidence (e.g., direct physical contact, repeated arm extension, or forceful object contact vs. possible proximity).
 
 Step 4 — Final decision:
   - YES: at least one trigger rule matched with concrete caption evidence, AND

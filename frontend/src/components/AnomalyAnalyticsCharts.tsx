@@ -199,7 +199,7 @@ export const AnomalyVolumeChart = ({
 export const GateTriggerDonut = ({ data }: { data: GateDistributionItem[] }) => {
   const total = data.reduce((s, d) => s + d.value, 0);
   return (
-    <Card className="bg-card border-border shadow-sm">
+    <Card className="bg-card border-border shadow-sm h-fit self-start">
       <CardHeader className="pb-2">
         <CardTitle className="text-foreground text-base font-semibold">
           Gate Trigger Distribution
@@ -253,7 +253,7 @@ export const GateTriggerDonut = ({ data }: { data: GateDistributionItem[] }) => 
 export const ReasoningOutcomesChart = ({ data }: { data: DecisionCount[] }) => {
   const total = data.reduce((s, d) => s + d.value, 0);
   return (
-    <Card className="bg-card border-border shadow-sm">
+    <Card className="bg-card border-border shadow-sm h-fit self-start">
       <CardHeader className="pb-2">
         <CardTitle className="text-foreground text-base font-semibold">
           VAD Reasoning Outcomes
@@ -304,7 +304,7 @@ export const ReasoningOutcomesChart = ({ data }: { data: DecisionCount[] }) => {
 export const SeverityBarChart = ({ data }: { data: SeverityCount[] }) => {
   const hasData = data.some((d) => d.value > 0);
   return (
-    <Card className="bg-card border-border shadow-sm">
+    <Card className="bg-card border-border shadow-sm h-fit self-start">
       <CardHeader className="pb-2">
         <CardTitle className="text-foreground text-base font-semibold">
           Severity Distribution
@@ -491,7 +491,7 @@ export const EvidenceHealthPanel = ({ health }: { health: EvidenceHealthDetail }
   ];
 
   return (
-    <Card className="bg-card border-border shadow-sm">
+    <Card className="bg-card border-border shadow-sm h-fit self-start">
       <CardHeader className="pb-2">
         <CardTitle className="text-foreground text-base font-semibold">Evidence Health</CardTitle>
         <CardDescription className="text-muted-foreground text-xs">

@@ -6,7 +6,7 @@ export function ReasoningSummaryCards({ summary }: { summary: VadReasoningSummar
   
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 mb-2">
-      <SummaryCard title="Total Jobs" value={summary.total} icon={<Network size={14} />} color="slate" />
+      <SummaryCard title={summary.returned !== undefined && summary.returned !== summary.total ? "Total Matches" : "Total Jobs"} value={summary.total} icon={<Network size={14} />} color="slate" />
       <SummaryCard title="Queued" value={summary.queued} icon={<CircleDashed size={14} />} color="slate" />
       <SummaryCard title="Running" value={summary.running} icon={<Activity size={14} />} color="blue" />
       <SummaryCard title="Succeeded" value={summary.succeeded} icon={<CheckCircle2 size={14} />} color="emerald" />

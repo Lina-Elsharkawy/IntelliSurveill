@@ -1,5 +1,7 @@
 export const VAD_BASE_URL = "http://localhost:8015/vad/rtsp";
 
+export type VadListLimit = number | "all";
+
 export interface VadStatus {
   running: boolean;
   session_id: number | null;
@@ -100,6 +102,7 @@ export interface VadReasoningResult {
   id: number;
   alert_decision: string;
   severity: string;
+  event_type?: string | null;
   confidence: number;
   policy_version: string;
   rules_version: string;
@@ -118,6 +121,8 @@ export interface VadReasoningListItem {
 
 export interface VadReasoningSummary {
   total: number;
+  returned?: number;
+  limit?: number | null;
   queued: number;
   running: number;
   succeeded: number;
@@ -136,7 +141,29 @@ export function normalizeEvidenceUrl(url?: string): string | undefined {
   return url.replace(/https?:\/\/minio:9000/i, 'http://localhost:9000');
 }
 
+
+export interface VadAnomalyAnalyticsParams {
+  timeRange?: string;
+  cutoffTs?: string;
+  gate?: string;
+  decision?: string;
+  severity?: string;
+}
+
 export const vadApi = {
+  async getAnomalyAnalytics(params?: VadAnomalyAnalyticsParams): Promise<any> {
+    const url = new URL(`${VAD_BASE_URL}/analytics/summary`);
+    if (params?.timeRange) url.searchParams.append("time_range", params.timeRange);
+    if (params?.cutoffTs) url.searchParams.append("cutoff_ts", params.cutoffTs);
+    if (params?.gate && params.gate !== "all") url.searchParams.append("gate", params.gate);
+    if (params?.decision && params.decision !== "all") url.searchParams.append("decision", params.decision);
+    if (params?.severity && params.severity !== "all") url.searchParams.append("severity", params.severity);
+
+    const res = await fetch(url.toString());
+    if (!res.ok) throw new Error(`Failed to fetch VAD anomaly analytics: ${res.status} ${res.statusText}`);
+    return res.json();
+  },
+
   async getConfig(): Promise<VadConfig> {
     const res = await fetch(`${VAD_BASE_URL}/config`);
     if (!res.ok) throw new Error("Failed to fetch VAD config");
@@ -167,12 +194,15 @@ export const vadApi = {
     return res.json();
   },
 
-  async getEvents(gate?: string, limit: number = 50): Promise<{ events: VadEvent[] }> {
-    let url = `${VAD_BASE_URL}/events?limit=${limit}`;
-    if (gate) {
-      url += `&gate=${encodeURIComponent(gate)}`;
+  async getEvents(gate?: string, limit: VadListLimit = "all"): Promise<{ events: VadEvent[] }> {
+    const url = new URL(`${VAD_BASE_URL}/events`);
+    if (limit !== undefined && limit !== null) {
+      url.searchParams.append("limit", String(limit));
     }
-    const res = await fetch(url);
+    if (gate && gate !== "all") {
+      url.searchParams.append("gate", gate);
+    }
+    const res = await fetch(url.toString());
     if (!res.ok) throw new Error("Failed to fetch VAD events");
     const data = await res.json();
     return {
@@ -233,7 +263,7 @@ export const vadApi = {
   },
 
   async getReasoningJobs(
-    params?: { status?: string; decision?: string; case_id?: number; limit?: number }
+    params?: { status?: string; decision?: string; case_id?: number; limit?: VadListLimit }
   ): Promise<{ items: VadReasoningListItem[], summary: VadReasoningSummary }> {
     const url = new URL(`${VAD_BASE_URL}/reasoning/jobs`);
     if (params) {
@@ -255,13 +285,24 @@ export const vadApi = {
         running: items.filter(i => i.job.status === 'running').length,
         succeeded: items.filter(i => i.job.status === 'succeeded').length,
         failed: items.filter(i => i.job.status === 'failed').length,
-        final_yes: items.filter(i => (i.result?.python_final_result_json?.final_alert_decision || i.result?.alert_decision) === 'YES').length,
-        final_no: items.filter(i => (i.result?.python_final_result_json?.final_alert_decision || i.result?.alert_decision) === 'NO').length,
-        final_uncertain: items.filter(i => (i.result?.python_final_result_json?.final_alert_decision || i.result?.alert_decision) === 'UNCERTAIN').length,
+        final_yes: items.filter(i => getFinalDecisionFromItem(i) === 'YES').length,
+        final_no: items.filter(i => getFinalDecisionFromItem(i) === 'NO').length,
+        final_uncertain: items.filter(i => getFinalDecisionFromItem(i) === 'UNCERTAIN').length,
       }
     };
   }
 };
+
+function getFinalDecisionFromItem(item: VadReasoningListItem): string | undefined {
+  return (
+    item.result?.python_final_result_json?.final_alert_decision ??
+    item.result?.structured_output_json?.python_final_guardrails?.final_alert_decision ??
+    item.result?.structured_output_json?.python_validation_result?.final_alert_decision ??
+    item.result?.structured_output_json?.python_final_result?.final_alert_decision ??
+    item.result?.alert_decision ??
+    undefined
+  );
+}
 
 export function normalizeReasoningResponse(data: unknown): VadReasoningListItem[] {
   const rawItems = Array.isArray(data)

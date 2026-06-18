@@ -554,6 +554,7 @@ export function useAnomalyAnalytics(filters: AnomalyFilterState, refreshKey: num
   const [rawEvents, setRawEvents] = useState<VadEvent[]>([]);
   const [rawJobs, setRawJobs] = useState<VadReasoningListItem[]>([]);
   const [summary, setSummary] = useState<VadReasoningSummary | null>(null);
+  const [serverData, setServerData] = useState<AnomalyAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -562,26 +563,50 @@ export function useAnomalyAnalytics(filters: AnomalyFilterState, refreshKey: num
     setLoading(true);
     setError(null);
 
-    Promise.all([
-      vadApi.getEvents(undefined, 500),
-      vadApi.getReasoningJobs({ limit: 200 }),
-    ])
-      .then(([eventsRes, reasoningRes]) => {
+    const cutoffTs = getTimeRangeCutoff(filters.timeRange).toISOString();
+
+    // Preferred path: backend-side full DB aggregation. This avoids the old
+    // `/events?limit=500` frontend cap that made "All Data" silently wrong.
+    vadApi.getAnomalyAnalytics({
+      timeRange: filters.timeRange,
+      cutoffTs,
+      gate: filters.gate,
+      decision: filters.decision,
+      severity: filters.severity,
+    })
+      .then((analytics) => {
         if (cancelled) return;
-        setRawEvents(eventsRes.events ?? []);
-        setRawJobs(reasoningRes.items ?? []);
-        setSummary(reasoningRes.summary ?? null);
+        setServerData(analytics as AnomalyAnalyticsData);
+        setRawEvents([]);
+        setRawJobs([]);
+        setSummary((analytics as AnomalyAnalyticsData).pipelineHealth ?? null);
       })
-      .catch((err) => {
-        if (cancelled) return;
-        setError(err.message ?? "Failed to load anomaly analytics data.");
+      .catch(async (serverErr) => {
+        // Graceful fallback for older vad_service containers that do not yet have
+        // /analytics/summary. The fallback now asks the list endpoints for
+        // all rows instead of silently clipping the browser-side dataset.
+        try {
+          const [eventsRes, reasoningRes] = await Promise.all([
+            vadApi.getEvents(undefined, "all"),
+            vadApi.getReasoningJobs({ limit: "all" }),
+          ]);
+          if (cancelled) return;
+          setServerData(null);
+          setRawEvents(eventsRes.events ?? []);
+          setRawJobs(reasoningRes.items ?? []);
+          setSummary(reasoningRes.summary ?? null);
+        } catch (fallbackErr: any) {
+          if (cancelled) return;
+          setServerData(null);
+          setError(fallbackErr?.message ?? serverErr?.message ?? "Failed to load anomaly analytics data.");
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
 
     return () => { cancelled = true; };
-  }, [refreshKey]); // re-fetch whenever refreshKey increments
+  }, [refreshKey, filters.timeRange, filters.gate, filters.decision, filters.severity]);
 
   // ── Time filter ──────────────────────────────────────────────────────────
   const cutoff = useMemo(() => getTimeRangeCutoff(filters.timeRange), [filters.timeRange]);
@@ -629,8 +654,8 @@ export function useAnomalyAnalytics(filters: AnomalyFilterState, refreshKey: num
   }, [rawJobs, cutoff, filters.gate, filters.decision, filters.severity]);
 
   const data = useMemo(
-    () => aggregate(filteredEvents, filteredJobs, summary, filters),
-    [filteredEvents, filteredJobs, summary, filters],
+    () => serverData ?? aggregate(filteredEvents, filteredJobs, summary, filters),
+    [serverData, filteredEvents, filteredJobs, summary, filters],
   );
 
   return { data, loading, error };

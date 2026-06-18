@@ -7,6 +7,28 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"];
+
+function getExtension(key: string): string {
+  const cleanKey = key.split("?")[0].toLowerCase();
+  const dotIndex = cleanKey.lastIndexOf(".");
+  return dotIndex >= 0 ? cleanKey.slice(dotIndex) : "";
+}
+
+function isImageEvidence(key: string): boolean {
+  return IMAGE_EXTENSIONS.includes(getExtension(key));
+}
+
+function isJsonEvidence(key: string): boolean {
+  return getExtension(key) === ".json";
+}
+
+function getOtherEvidenceTitle(key: string): string {
+  if (isJsonEvidence(key)) return "Metadata JSON";
+  if (isImageEvidence(key)) return "Additional Image Evidence";
+  return "Additional Evidence File";
+}
+
 export function EvidenceViewer({ item }: { item: VadReasoningListItem }) {
   const gateName = getGateName(item);
   const evidenceKeys = getEvidenceKeys(item);
@@ -21,7 +43,7 @@ export function EvidenceViewer({ item }: { item: VadReasoningListItem }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [modalImage, setModalImage] = useState<string | null>(null);
   
-  const playIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const playIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { annotatedKey, montageKey, frameKeys, otherKeys } = groupEvidenceKeys(evidenceKeys);
 
@@ -108,12 +130,14 @@ export function EvidenceViewer({ item }: { item: VadReasoningListItem }) {
     } else if (activeGroup?.startsWith("other_")) {
       const idx = parseInt(activeGroup.split("_")[1]);
       currentKey = otherKeys[idx];
-      title = "Additional Evidence";
+      title = getOtherEvidenceTitle(currentKey);
     }
 
     if (!currentKey) return <div className="w-full h-full min-h-[300px] flex items-center justify-center bg-black/40 rounded-lg border border-zinc-800 text-slate-500 text-xs">No media selected</div>;
 
     const url = urls[currentKey];
+    const isImage = isImageEvidence(currentKey);
+    const isJson = isJsonEvidence(currentKey);
     const isError = error || (Object.keys(urls).length > 0 && !url);
 
     return (
@@ -125,7 +149,7 @@ export function EvidenceViewer({ item }: { item: VadReasoningListItem }) {
               <span className="text-sm font-semibold text-red-400 mb-1">Failed to load media</span>
               <span className="text-xs break-all">{currentKey}</span>
             </div>
-          ) : url ? (
+          ) : url && isImage ? (
             <>
               <img src={url} className="max-w-full max-h-full object-contain" alt={title} />
               <div 
@@ -135,6 +159,34 @@ export function EvidenceViewer({ item }: { item: VadReasoningListItem }) {
                 <Maximize2 className="text-white h-8 w-8" />
               </div>
             </>
+          ) : url && isJson ? (
+            <div className="flex flex-col items-center justify-center text-center p-6 max-w-full">
+              <FileJson className="h-10 w-10 text-slate-400 mb-3" />
+              <div className="text-sm font-semibold text-slate-200 mb-1">Metadata JSON file</div>
+              <div className="text-xs text-slate-500 font-mono break-all mb-4 max-w-xl">{currentKey}</div>
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-semibold text-blue-400 hover:text-blue-300 underline underline-offset-4"
+              >
+                Open metadata file
+              </a>
+            </div>
+          ) : url ? (
+            <div className="flex flex-col items-center justify-center text-center p-6 max-w-full">
+              <FileJson className="h-10 w-10 text-slate-400 mb-3" />
+              <div className="text-sm font-semibold text-slate-200 mb-1">Evidence file</div>
+              <div className="text-xs text-slate-500 font-mono break-all mb-4 max-w-xl">{currentKey}</div>
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-semibold text-blue-400 hover:text-blue-300 underline underline-offset-4"
+              >
+                Open file
+              </a>
+            </div>
           ) : (
             <RefreshCw className="h-6 w-6 text-slate-500 animate-spin" />
           )}
@@ -229,7 +281,7 @@ export function EvidenceViewer({ item }: { item: VadReasoningListItem }) {
             <div className="mt-2 flex flex-col gap-1">
               <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-1 mb-1">Other Files</span>
               {otherKeys.map((key, idx) => {
-                const isJson = key.includes('.json');
+                const isJson = isJsonEvidence(key);
                 const id = `other_${idx}`;
                 return (
                   <button 

@@ -1,5 +1,5 @@
 import { VadReasoningListItem } from "@/services/vad_api";
-import { formatJson, getEvidenceKeys } from "./reasoningUtils";
+import { formatJson, getEvidenceKeys, getPythonFinal } from "./reasoningUtils";
 
 export function RawJsonCard({ item }: { item: VadReasoningListItem | null }) {
   if (!item) return null;
@@ -8,7 +8,7 @@ export function RawJsonCard({ item }: { item: VadReasoningListItem | null }) {
   const metadata = formatJson(item.job.metadata_json);
   const vlmReview = formatJson(item.result?.vlm_visual_review_json || item.result?.structured_output_json?.vlm_visual_review);
   const llmReview = formatJson(item.result?.llm_policy_review_json || item.result?.structured_output_json?.llm_policy_review);
-  const pythonFinal = formatJson(item.result?.python_final_result_json || item.result?.structured_output_json?.python_final_result);
+  const pythonFinal = formatJson(getPythonFinal(item));
   const matchedRules = formatJson(item.result?.matched_rules_json);
   const evidenceKeys = formatJson(getEvidenceKeys(item));
 

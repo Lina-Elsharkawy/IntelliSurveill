@@ -861,7 +861,7 @@ class VadDB:
             },
         )
 
-    def get_recent_gate_events(self, conn: psycopg.Connection, *, limit: int = 50, gate_name: str | None = None) -> list[dict[str, Any]]:
+    def get_recent_gate_events(self, conn: psycopg.Connection, *, limit: int | None = 50, gate_name: str | None = None) -> list[dict[str, Any]]:
         query = """
             SELECT e.id, e.event_key, e.gate_name, e.severity, e.start_ts, e.peak_ts, e.peak_score,
                    e.threshold_value, e.persistence_hits, e.persistence_window,
@@ -877,8 +877,10 @@ class VadDB:
         if gate_name:
             query += " AND e.gate_name = %(gate_name)s"
             params["gate_name"] = gate_name
-        query += " ORDER BY e.start_ts DESC LIMIT %(limit)s"
-        params["limit"] = limit
+        query += " ORDER BY e.start_ts DESC"
+        if limit is not None:
+            query += " LIMIT %(limit)s"
+            params["limit"] = int(limit)
         
         rows = conn.execute(query, params).fetchall()
         return [dict(r) for r in rows]
@@ -1068,7 +1070,7 @@ class VadDB:
         conn: psycopg.Connection,
         *,
         status: str | None = None,
-        limit: int = 50,
+        limit: int | None = 50,
     ) -> list[dict[str, Any]]:
         query = """
             SELECT id, case_id, status, reasoner_type, priority, prompt_version,
@@ -1077,11 +1079,14 @@ class VadDB:
             FROM vad_reasoning_jobs
             WHERE 1=1
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {}
         if status:
             query += " AND status = %(status)s"
             params["status"] = status
-        query += " ORDER BY queued_at DESC, id DESC LIMIT %(limit)s"
+        query += " ORDER BY queued_at DESC, id DESC"
+        if limit is not None:
+            query += " LIMIT %(limit)s"
+            params["limit"] = int(limit)
         rows = conn.execute(query, params).fetchall()
         return [dict(r) for r in rows]
 
@@ -1092,8 +1097,16 @@ class VadDB:
         status: str | None = None,
         decision: str | None = None,
         case_id: int | None = None,
-        limit: int = 50,
+        limit: int | None = 50,
     ) -> list[dict[str, Any]]:
+        final_decision_sql = """COALESCE(
+            NULLIF(r.python_final_result_json->>'final_alert_decision', ''),
+            NULLIF(r.structured_output_json->'python_final_guardrails'->>'final_alert_decision', ''),
+            NULLIF(r.structured_output_json->'python_validation_result'->>'final_alert_decision', ''),
+            NULLIF(r.structured_output_json->'python_final_result'->>'final_alert_decision', ''),
+            r.alert_decision
+        )"""
+
         query = """
             SELECT 
                 j.id AS job_id, j.case_id AS j_case_id, j.status AS job_status, j.reasoner_type, 
@@ -1120,7 +1133,7 @@ class VadDB:
             ) r ON true
             WHERE 1=1
         """
-        params: dict[str, Any] = {"limit": limit}
+        params: dict[str, Any] = {}
         
         if status:
             query += " AND j.status = %(status)s"
@@ -1131,10 +1144,13 @@ class VadDB:
             params["case_id"] = case_id
             
         if decision:
-            query += " AND r.alert_decision = %(decision)s"
+            query += f" AND {final_decision_sql} = %(decision)s"
             params["decision"] = decision
             
-        query += " ORDER BY j.queued_at DESC, j.id DESC LIMIT %(limit)s"
+        query += " ORDER BY j.queued_at DESC, j.id DESC"
+        if limit is not None:
+            query += " LIMIT %(limit)s"
+            params["limit"] = int(limit)
         
         rows = conn.execute(query, params).fetchall()
         

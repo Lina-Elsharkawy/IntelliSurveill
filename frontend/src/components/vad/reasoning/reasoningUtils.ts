@@ -28,10 +28,33 @@ export function getTrackId(item: VadReasoningListItem): string {
   const evBundle = item.job?.input_bundle_json?.event;
   return (
     evBundle?.tracker_track_id?.toString() ??
+    evBundle?.track_id?.toString() ??
     item.job?.metadata_json?.tracker_track_id?.toString() ??
     item.job?.input_bundle_json?.track_id?.toString() ??
     item.case?.primary_track_id?.toString() ??
+    item.case?.track_id?.toString() ??
     "Unknown"
+  );
+}
+
+export function getSessionId(item: VadReasoningListItem): string {
+  const evBundle = item.job?.input_bundle_json?.event;
+  return (
+    evBundle?.session_id?.toString() ??
+    item.job?.metadata_json?.session_id?.toString() ??
+    item.case?.session_id?.toString() ??
+    "N/A"
+  );
+}
+
+export function getSourceGateEventId(item: VadReasoningListItem): string {
+  const evBundle = item.job?.input_bundle_json?.event;
+  return (
+    item.job?.metadata_json?.source_gate_event_id?.toString() ??
+    evBundle?.case_id?.toString() ??
+    evBundle?.id?.toString() ??
+    item.case?.event_id?.toString() ??
+    "N/A"
   );
 }
 
@@ -48,7 +71,41 @@ export function getLlmReview(item: VadReasoningListItem): any {
 }
 
 export function getPythonFinal(item: VadReasoningListItem): any {
-  return item.result?.python_final_result_json ?? item.result?.structured_output_json?.python_final_result ?? null;
+  return (
+    item.result?.python_final_result_json ??
+    item.result?.structured_output_json?.python_final_guardrails ??
+    item.result?.structured_output_json?.python_validation_result ??
+    item.result?.structured_output_json?.python_final_result ??
+    null
+  );
+}
+
+export function getNeedsHumanReview(item: VadReasoningListItem): boolean {
+  const pfr = getPythonFinal(item);
+  return Boolean(
+    pfr?.needs_human_review ??
+    item.result?.uncertainty_json?.needs_human_review ??
+    getFinalDecision(item) === "UNCERTAIN"
+  );
+}
+
+export function getFinalEventType(item: VadReasoningListItem): string {
+  const pfr = getPythonFinal(item);
+  return (
+    pfr?.final_event_type ??
+    item.result?.event_type ??
+    item.result?.structured_output_json?.event_type ??
+    "unknown"
+  );
+}
+
+export function getGateCandidateEventType(item: VadReasoningListItem): string {
+  return (
+    item.job?.input_bundle_json?.event?.event_type ??
+    item.job?.input_bundle_json?.event_type ??
+    item.case?.case_type ??
+    "unknown"
+  );
 }
 
 export function getMatchedRules(item: VadReasoningListItem): any {
@@ -73,8 +130,9 @@ export function getSeverity(item: VadReasoningListItem): string {
 
 export function getConfidence(item: VadReasoningListItem): number {
   const pfr = getPythonFinal(item);
-  if (pfr?.final_confidence !== undefined) return pfr.final_confidence;
-  return item.result?.confidence || 0.0;
+  const value = pfr?.final_confidence ?? item.result?.confidence ?? 0.0;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 0.0;
 }
 
 export function getShortReason(item: VadReasoningListItem): string {
@@ -183,9 +241,12 @@ export function generateAnalysisSummary(item: VadReasoningListItem): string {
   const llm = getLlmReview(item);
   const evidence = getEvidenceKeys(item).join(", ");
   
-  const score = item.job.input_bundle_json?.peak_score?.toFixed(2) || "N/A";
-  const threshold = item.job.input_bundle_json?.threshold_value?.toFixed(2) || "N/A";
-  const ratio = item.job.input_bundle_json?.score_ratio?.toFixed(2) || "N/A";
+  const scoreValue = getDeepScore(item);
+  const thresholdValue = getThresholdValue(item);
+  const ratioValue = getScoreRatio(item);
+  const score = scoreValue ? scoreValue.toFixed(2) : "N/A";
+  const threshold = thresholdValue ? thresholdValue.toFixed(2) : "N/A";
+  const ratio = ratioValue ? ratioValue.toFixed(2) : "N/A";
 
   return `VAD Analysis Summary
 ---------------------

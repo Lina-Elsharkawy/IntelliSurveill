@@ -1,0 +1,1629 @@
+===== OLLAMA LOGS LAST 30 MINUTES =====
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+[GIN] 2026/06/18 - 11:59:54 | 200 | 14.870861589s |     172.19.0.18 | POST     "/api/generate"
+[GIN] 2026/06/18 - 12:00:16 | 200 | 22.601746532s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+[GIN] 2026/06/18 - 12:00:34 | 200 | 18.055667407s |     172.19.0.18 | POST     "/api/generate"
+[GIN] 2026/06/18 - 12:00:58 | 200 | 23.876151559s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+[GIN] 2026/06/18 - 12:01:18 | 200 | 19.196641891s |     172.19.0.18 | POST     "/api/generate"
+[GIN] 2026/06/18 - 12:01:42 | 200 | 24.473036497s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+[GIN] 2026/06/18 - 12:02:01 | 200 | 18.858094021s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+[GIN] 2026/06/18 - 12:02:20 | 200 | 19.477998656s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+[GIN] 2026/06/18 - 12:02:39 | 200 | 18.632427003s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+[GIN] 2026/06/18 - 12:02:58 | 200 | 19.246095002s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+[GIN] 2026/06/18 - 12:03:16 | 200 | 17.826507454s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+[GIN] 2026/06/18 - 12:03:41 | 200 | 24.804100887s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+[GIN] 2026/06/18 - 12:04:01 | 200 |   19.7571142s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+[GIN] 2026/06/18 - 12:04:25 | 200 | 24.015704491s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+[GIN] 2026/06/18 - 12:04:44 | 200 | 18.573305386s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+[GIN] 2026/06/18 - 12:05:05 | 200 |  21.56501274s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+[GIN] 2026/06/18 - 12:05:24 | 200 | 18.924970948s |     172.19.0.18 | POST     "/api/generate"
+[GIN] 2026/06/18 - 12:05:48 | 200 |  23.64208062s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+[GIN] 2026/06/18 - 12:06:09 | 200 | 21.610404552s |     172.19.0.18 | POST     "/api/generate"
+[GIN] 2026/06/18 - 12:06:32 | 200 | 22.524524193s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+[GIN] 2026/06/18 - 12:06:52 | 200 | 20.234463876s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+[GIN] 2026/06/18 - 12:07:16 | 200 | 23.449544041s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+[GIN] 2026/06/18 - 12:07:34 | 200 |  18.51589706s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+[GIN] 2026/06/18 - 12:07:56 | 200 | 21.671312349s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+[GIN] 2026/06/18 - 12:08:14 | 200 | 17.822704828s |     172.19.0.18 | POST     "/api/generate"
+[GIN] 2026/06/18 - 12:08:35 | 200 | 21.410913101s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+[GIN] 2026/06/18 - 12:09:03 | 200 | 27.721548883s |     172.19.0.18 | POST     "/api/generate"
+[GIN] 2026/06/18 - 12:09:22 | 200 | 18.673160393s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+[GIN] 2026/06/18 - 12:09:37 | 200 | 14.748099404s |     172.19.0.18 | POST     "/api/generate"
+[GIN] 2026/06/18 - 12:09:53 | 200 | 16.762139831s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+[GIN] 2026/06/18 - 12:10:08 | 200 | 14.307792867s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+[GIN] 2026/06/18 - 12:10:23 | 200 | 15.438666899s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+[GIN] 2026/06/18 - 12:10:37 | 200 | 13.389281156s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+[GIN] 2026/06/18 - 12:10:49 | 200 | 12.503080128s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+[GIN] 2026/06/18 - 12:11:03 | 200 | 13.515580984s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+[GIN] 2026/06/18 - 12:11:17 | 200 | 14.008258102s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+[GIN] 2026/06/18 - 12:11:31 | 200 | 14.138949558s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+[GIN] 2026/06/18 - 12:11:51 | 200 | 19.949437047s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+[GIN] 2026/06/18 - 12:12:04 | 200 | 12.914383732s |     172.19.0.18 | POST     "/api/generate"
+[GIN] 2026/06/18 - 12:12:21 | 200 | 17.387005744s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+[GIN] 2026/06/18 - 12:12:34 | 200 | 13.049467426s |     172.19.0.18 | POST     "/api/generate"
+[GIN] 2026/06/18 - 12:12:48 | 200 | 13.577004822s |     172.19.0.18 | POST     "/api/generate"
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+get_slice_instructions: original size: 1920 x 1080, overview size: 602 x 336, refined size: 1680 x 952, grid size: 4 x 2
+get_slice_instructions: slice 0: x=0, y=0, size=420x476
+get_slice_instructions: slice 1: x=420, y=0, size=420x476
+get_slice_instructions: slice 2: x=840, y=0, size=420x476
+get_slice_instructions: slice 3: x=1260, y=0, size=420x476
+get_slice_instructions: slice 4: x=0, y=476, size=420x476
+get_slice_instructions: slice 5: x=420, y=476, size=420x476
+get_slice_instructions: slice 6: x=840, y=476, size=420x476
+get_slice_instructions: slice 7: x=1260, y=476, size=420x476
+[GIN] 2026/06/18 - 12:13:00 | 200 | 12.023729525s |     172.19.0.18 | POST     "/api/generate"
+[GIN] 2026/06/18 - 12:13:17 | 200 | 16.547874821s |     172.19.0.18 | POST     "/api/generate"

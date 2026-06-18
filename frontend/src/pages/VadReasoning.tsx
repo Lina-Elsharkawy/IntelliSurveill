@@ -9,6 +9,7 @@ import { ReasoningSummaryCards } from "@/components/vad/reasoning/ReasoningSumma
 import { ReasoningFilters, ReasoningFilterState } from "@/components/vad/reasoning/ReasoningFilters";
 import { ReasoningJobTable } from "@/components/vad/reasoning/ReasoningJobTable";
 import { ReasoningDetailPanel } from "@/components/vad/reasoning/ReasoningDetailPanel";
+import { getGateName, getSeverity, getSessionId, getTrackId } from "@/components/vad/reasoning/reasoningUtils";
 
 export default function VadReasoning() {
   const { toast } = useToast();
@@ -38,7 +39,7 @@ export default function VadReasoning() {
         status: filters.status,
         decision: filters.decision,
         case_id: filters.caseId ? parseInt(filters.caseId) : undefined,
-        limit: 100
+        limit: "all"
       });
       
       setRawItems(res.items || []);
@@ -186,15 +187,13 @@ function applyClientFilters(
 
   if (filters.gate && filters.gate !== 'all') {
     result = result.filter(i => {
-      const gateName = i.job?.metadata_json?.source_gate_name ?? i.case?.primary_gate_name ?? "deep";
-      return gateName === filters.gate;
+      return getGateName(i) === filters.gate;
     });
   }
 
   if (filters.severity && filters.severity !== 'all') {
     result = result.filter(i => {
-      const sev = i.result?.python_final_result_json?.final_severity || i.result?.severity || 'LOW';
-      return sev.toUpperCase() === filters.severity.toUpperCase();
+      return getSeverity(i).toUpperCase() === filters.severity.toUpperCase();
     });
   }
 
@@ -209,15 +208,13 @@ function applyClientFilters(
 
   if (filters.sessionId) {
     result = result.filter(i => {
-      const sid = String(i.case?.session_id || "");
-      return sid.includes(filters.sessionId);
+      return getSessionId(i).includes(filters.sessionId);
     });
   }
 
   if (filters.trackId) {
     result = result.filter(i => {
-      const tid = String(i.case?.track_id || "");
-      return tid.includes(filters.trackId);
+      return getTrackId(i).includes(filters.trackId);
     });
   }
 

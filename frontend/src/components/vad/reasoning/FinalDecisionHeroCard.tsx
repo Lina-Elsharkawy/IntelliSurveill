@@ -1,5 +1,19 @@
 import { VadReasoningListItem } from "@/services/vad_api";
-import { getFinalDecision, getSeverity, getConfidence, getFinalRecommendedAction, getShortReason, getGateDisplayName } from "./reasoningUtils";
+import {
+  getFinalDecision,
+  getSeverity,
+  getConfidence,
+  getFinalRecommendedAction,
+  getShortReason,
+  getGateDisplayName,
+  getFinalEventType,
+  getGateCandidateEventType,
+  getNeedsHumanReview,
+  getScoreRatio,
+  getDeepScore,
+  getThresholdValue,
+  getSourceGateEventId,
+} from "./reasoningUtils";
 import { StatusBadge } from "./ReasoningBadges";
 import { formatDistanceToNow } from "date-fns";
 import { AlertTriangle, ShieldAlert, ShieldCheck, HelpCircle, XCircle } from "lucide-react";
@@ -27,13 +41,13 @@ export function FinalDecisionHeroCard({ item }: { item: VadReasoningListItem }) 
   const confidence = getConfidence(item);
   const reason = getShortReason(item);
   const gateDisplayName = getGateDisplayName(item);
-  
-
-  
-  const pfr = item.job.python_final_result_json || {};
-  const vlm = item.job.vlm_result_json || {};
-  const eventType = vlm.event_type || item.job.input_bundle_json?.event?.event_type || "Unknown";
-  const needsHumanReview = pfr.needs_human_review || false;
+  const finalEventType = getFinalEventType(item);
+  const gateCandidateEventType = getGateCandidateEventType(item);
+  const needsHumanReview = getNeedsHumanReview(item);
+  const ratio = getScoreRatio(item);
+  const peakScore = getDeepScore(item);
+  const thresholdValue = getThresholdValue(item);
+  const sourceGateEventId = getSourceGateEventId(item);
 
   let colorClasses = "bg-zinc-900/50 border-zinc-800";
   let titleColor = "text-slate-500";
@@ -114,16 +128,30 @@ export function FinalDecisionHeroCard({ item }: { item: VadReasoningListItem }) 
               <span className="text-xs font-semibold text-slate-300">{gateDisplayName}</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Event Type</span>
-              <span className="text-xs font-semibold text-slate-300 capitalize">{eventType.replace(/_/g, ' ')}</span>
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Final Event Type</span>
+              <span className="text-xs font-semibold text-slate-300 capitalize">{finalEventType.replace(/_/g, ' ')}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Gate Candidate</span>
+              <span className="text-xs font-semibold text-slate-300 capitalize">{gateCandidateEventType.replace(/_/g, ' ')}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Score / Threshold</span>
+              <span className="text-xs font-mono text-slate-300">
+                {peakScore ? peakScore.toFixed(2) : "N/A"} / {thresholdValue ? thresholdValue.toFixed(2) : "N/A"}
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Score Ratio</span>
+              <span className="text-xs font-mono text-slate-300">{ratio ? ratio.toFixed(2) : "N/A"}</span>
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Case ID</span>
-              <span className="text-xs font-mono text-slate-300">#{item.case?.id || "N/A"}</span>
+              <span className="text-xs font-mono text-slate-300">#{item.case?.id || item.job.case_id || "N/A"}</span>
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Event ID</span>
-              <span className="text-xs font-mono text-slate-300">#{item.case?.event_id || "N/A"}</span>
+              <span className="text-xs font-mono text-slate-300">#{sourceGateEventId}</span>
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Status</span>

@@ -185,7 +185,7 @@ function PipelineHealthSection({ summary }: { summary: ReturnType<typeof useAnom
             Reasoning Pipeline Health
           </span>
           <span className="ml-auto text-[11px] text-zinc-600 font-mono">{summary.total} total jobs</span>
-          <span className="text-[10px] text-zinc-700 bg-zinc-800/50 rounded px-1.5 py-0.5">All-time</span>
+          <span className="text-[10px] text-zinc-700 bg-zinc-800/50 rounded px-1.5 py-0.5">Selected range</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {items.map((item) => (
@@ -483,31 +483,32 @@ export default function AnomalyAnalyticsTab() {
         </div>
       </div>
 
-      {/* 6 · Main grid: Volume + right column (donut + outcomes) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* 6 · Analytics charts
+          Keep all cards in one grid. This prevents the left cards from being
+          forced to wait for a stacked right column, which created large
+          vertical dead space under the volume chart. */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         <AnomalyVolumeChart
           data={volumeOverTime}
           timeRange={filters.timeRange}
           totalEvents={kpis.totalEvents}
           dominantGate={kpis.dominantGate ? GATE_LABELS[kpis.dominantGate] : undefined}
         />
-        <div className="flex flex-col gap-5">
-          <GateTriggerDonut data={gateDistribution} />
-          <ReasoningOutcomesChart data={decisionCounts} />
-        </div>
-      </div>
+        <GateTriggerDonut data={gateDistribution} />
 
-      {/* 7 · Second grid: Score ratio + Severity + Evidence */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <ScoreRatioTimeline data={scoreRatioTimeline} />
+        <ReasoningOutcomesChart data={decisionCounts} />
+
+        <div className="lg:col-span-2">
+          <EvidenceHealthPanel health={evidenceHealth} />
+        </div>
         <SeverityBarChart data={severityCounts} />
-        <EvidenceHealthPanel health={evidenceHealth} />
       </div>
 
-      {/* 8 · Pipeline Health */}
+      {/* 7 · Pipeline Health */}
       <PipelineHealthSection summary={pipelineHealth} />
 
-      {/* 9 · Prioritized Events table */}
+      {/* 8 · Prioritized Events table */}
       <div>
         <div className="flex items-center gap-2 mb-2">
           <ShieldAlert size={14} className="text-zinc-500" />

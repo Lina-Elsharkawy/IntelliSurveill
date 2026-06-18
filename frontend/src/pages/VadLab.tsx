@@ -57,7 +57,7 @@ export const VadLab = () => {
       const [statusRes, configRes, eventsRes] = await Promise.all([
         vadApi.getStatus(),
         vadApi.getConfig(),
-        vadApi.getEvents(undefined, 100)
+        vadApi.getEvents(undefined, "all")
       ]);
       setStatus(statusRes);
       setConfig(configRes);

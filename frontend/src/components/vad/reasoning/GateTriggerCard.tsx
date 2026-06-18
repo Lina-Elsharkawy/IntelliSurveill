@@ -1,6 +1,17 @@
 import { VadReasoningListItem } from "@/services/vad_api";
 import { ActivitySquare, AlertTriangle, ShieldX } from "lucide-react";
-import { getDeepScore, getThresholdValue, getScoreRatio, getRatioBand, getGateName, getGateBadgeVariant, getTrackId } from "./reasoningUtils";
+import {
+  getDeepScore,
+  getThresholdValue,
+  getScoreRatio,
+  getRatioBand,
+  getGateName,
+  getGateBadgeVariant,
+  getTrackId,
+  getSessionId,
+  getGateCandidateEventType,
+  getVlmReview,
+} from "./reasoningUtils";
 
 export function GateTriggerCard({ item }: { item: VadReasoningListItem }) {
   if (!item) return null;
@@ -12,11 +23,9 @@ export function GateTriggerCard({ item }: { item: VadReasoningListItem }) {
   const gateName = getGateName(item);
   const badgeVariant = getGateBadgeVariant(item);
   const trackId = getTrackId(item);
-  const sessionId = item.case?.session_id || "N/A";
-  
-  const pfr = item.job.python_final_result_json || {};
-  const vlm = item.job.vlm_result_json || {};
-  const eventType = vlm.event_type || item.job.input_bundle_json?.event?.event_type || "Unknown";
+  const sessionId = getSessionId(item);
+  const vlm = getVlmReview(item) || {};
+  const eventType = getGateCandidateEventType(item);
   
   // Extract correlation metadata if available
   const meta = item.job.metadata_json || {};
