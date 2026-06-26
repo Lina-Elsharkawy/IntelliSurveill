@@ -1,0 +1,40 @@
+{
+  "schema_version": "homography_macro_gmm_gate_stage3_pose_v1.1",
+  "verdict": "usable_but_needs_visual_review",
+  "important_warning": "Normal-only false alarms do not prove anomaly recall. Visually inspect top-scoring normal tubelets and test abnormal clips.",
+  "homography_units_warning": "If the homography used arbitrary 8x6 floor units, do not call scores exact m/s.",
+  "primary_threshold": 16.30177521856949,
+  "primary_false_alarm_report": {
+    "threshold_percentile": 99.7,
+    "threshold": 16.30177521856949,
+    "normal_test_tubelets": 5759.0,
+    "false_alarm_tubelets_before_persistence": 13.0,
+    "false_alarm_rate_before_persistence": 0.002257336343115124,
+    "false_alarm_events_after_persistence": 1.0,
+    "normal_test_videos": 7.0,
+    "normal_test_tracks": 569.0
+  },
+  "selected_features": [
+    "macro_speed_mean_mps",
+    "macro_speed_median_mps",
+    "macro_speed_p95_mps",
+    "macro_accel_p95_mps2",
+    "macro_straightness_ratio",
+    "macro_direction_change_mean_rad",
+    "macro_stationary_step_ratio"
+  ],
+  "excluded_spiky_features": [
+    "macro_speed_max_mps",
+    "macro_accel_max_mps2",
+    "macro_direction_change_max_rad"
+  ],
+  "stage3_groundpoint_columns_present": [
+    "groundpoint_valid_pose_ratio",
+    "groundpoint_frozen_ratio",
+    "groundpoint_bbox_fallback_ratio"
+  ],
+  "missing_stage3_groundpoint_columns": [],
+  "dropped_quality_rows": 0,
+  "max_bbox_fallback_ratio": 1.0,
+  "max_frozen_ratio": 1.0
+}

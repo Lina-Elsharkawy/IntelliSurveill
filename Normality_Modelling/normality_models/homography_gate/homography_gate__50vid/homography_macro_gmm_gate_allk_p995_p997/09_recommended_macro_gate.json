@@ -1,0 +1,119 @@
+{
+  "schema_version": "homography_macro_gmm_gate_stage3_pose_v1.1",
+  "branch_name": "homography_macro_gate",
+  "model_type": "RobustScaler + GMM",
+  "input_features": [
+    "macro_speed_mean_mps",
+    "macro_speed_median_mps",
+    "macro_speed_p95_mps",
+    "macro_accel_p95_mps2",
+    "macro_straightness_ratio",
+    "macro_direction_change_mean_rad",
+    "macro_stationary_step_ratio"
+  ],
+  "expected_point_field": "ground_points_xy",
+  "expected_groundpoint_policy": "ankle_midpoint_or_single_ankle_else_freeze_last_valid_else_bbox_bottom",
+  "offline_feature_contract": {
+    "trajectory_smoothing": "median_savgol",
+    "trajectory_smoothing_window": 5,
+    "trajectory_smoothing_polyorder": 2,
+    "max_plausible_speed_mps": 3.0,
+    "max_plausible_accel_mps2": 6.0
+  },
+  "split_unit": "video_id",
+  "split": {
+    "train": [
+      "20260329_091145_tp00070.mp4",
+      "20260329_151410_tp00075.mp4",
+      "20260331_100731_tp00085.mp4",
+      "20260318_133129_tp00058.mp4",
+      "20260319_114626_tp00063.mp4",
+      "20260318_105945_tp00056.mp4",
+      "20260330_163251_tp00083.mp4",
+      "20260329_125235_tp00073.mp4",
+      "20260315_164044_tp00039.mp4",
+      "20260318_144928_tp00059.mp4",
+      "20260329_163101_tp00076.mp4",
+      "20260316_113834_tp00042.mp4",
+      "20260328_124451_tp00069.mp4",
+      "20260316_135625_tp00044.mp4",
+      "20260318_094559_tp00055.mp4",
+      "20260316_091611_tp00040.mp4",
+      "20260317_155412_tp00053.mp4",
+      "20260330_140516_tp00081.mp4",
+      "20260317_132711_tp00051.mp4",
+      "20260330_101231_tp00078.mp4",
+      "20260328_083038_tp00068.mp4",
+      "20260329_113749_tp00072.mp4",
+      "20260318_160632_tp00060.mp4",
+      "20260330_124800_tp00080.mp4",
+      "20260316_150949_tp00045.mp4",
+      "20260315_140839_tp00037.mp4",
+      "20260330_113045_tp00079.mp4",
+      "20260330_151820_tp00082.mp4",
+      "20260317_143753_tp00052.mp4",
+      "20260329_102853_tp00071.mp4",
+      "20260316_103018_tp00041.mp4"
+    ],
+    "calibration": [
+      "20260317_122808_tp00050.mp4",
+      "20260316_162442_tp00046.mp4",
+      "20260318_121418_tp00057.mp4",
+      "20260318_081214_tp00054.mp4",
+      "20260315_093203_tp00034.mp4",
+      "20260317_090032_tp00047.mp4",
+      "20260317_112759_tp00049.mp4"
+    ],
+    "normal_test": [
+      "20260331_083223_tp00084.mp4",
+      "20260315_130536_tp00036.mp4",
+      "20260330_084016_tp00077.mp4",
+      "20260329_140358_tp00074.mp4",
+      "20260315_104219_tp00035.mp4",
+      "20260317_101644_tp00048.mp4",
+      "20260316_124453_tp00043.mp4"
+    ]
+  },
+  "split_counts": {
+    "train": {
+      "videos": 31,
+      "tubelets": 12088
+    },
+    "calibration": {
+      "videos": 7,
+      "tubelets": 5657
+    },
+    "normal_test": {
+      "videos": 7,
+      "tubelets": 5759
+    }
+  },
+  "primary_components": 10,
+  "covariance_type": "full",
+  "reg_covar": 1e-06,
+  "use_pca": false,
+  "pca_components": null,
+  "smoothing_sigma": 2.0,
+  "threshold_source": "calibration split only",
+  "threshold_percentile": 99.7,
+  "threshold": 16.30177521856949,
+  "persistence_window": 5,
+  "persistence_required_hits": 3,
+  "min_event_gap_sec": 5.0,
+  "normal_test_result": {
+    "threshold_percentile": 99.7,
+    "threshold": 16.30177521856949,
+    "normal_test_tubelets": 5759.0,
+    "false_alarm_tubelets_before_persistence": 13.0,
+    "false_alarm_rate_before_persistence": 0.002257336343115124,
+    "false_alarm_events_after_persistence": 1.0,
+    "normal_test_videos": 7.0,
+    "normal_test_tracks": 569.0
+  },
+  "verdict": "usable_but_needs_visual_review",
+  "model_paths": {
+    "scaler": "D:\\Embeddings_Distribution\\normality_models\\homography_gate\\homography_gate_live_parity_stage3_pose_contract_fixed_50vid\\homography_macro_gmm_gate_allk_p995_p997\\models\\macro_robust_scaler.joblib",
+    "pca": null,
+    "gmm": "D:\\Embeddings_Distribution\\normality_models\\homography_gate\\homography_gate_live_parity_stage3_pose_contract_fixed_50vid\\homography_macro_gmm_gate_allk_p995_p997\\models\\macro_gmm_components_10.joblib"
+  }
+}

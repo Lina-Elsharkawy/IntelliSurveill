@@ -1,0 +1,335 @@
+{
+  "model": "pose_micro_gmm",
+  "feature_source": "D:\\Embeddings_Distribution\\normality_models\\pose_gate\\pose_micro_backend_parity_50vid_yolov8s_5fps_24f_s6",
+  "threshold_source": "calibration split only",
+  "threshold_percentiles": [
+    95.0,
+    97.5,
+    99.0,
+    99.5,
+    99.7,
+    99.9
+  ],
+  "primary_components": 5,
+  "primary_threshold_percentile": 99.5,
+  "primary_threshold": 56.37553239948739,
+  "thresholds_by_components_and_percentiles": {
+    "1": {
+      "p95": {
+        "percentile": 95.0,
+        "threshold": 53.28282716093404,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p97_5": {
+        "percentile": 97.5,
+        "threshold": 78.34338052670113,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99": {
+        "percentile": 99.0,
+        "threshold": 129.59148846917512,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_5": {
+        "percentile": 99.5,
+        "threshold": 178.5388467053037,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_7": {
+        "percentile": 99.7,
+        "threshold": 204.88702143444482,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_9": {
+        "percentile": 99.9,
+        "threshold": 257.0529552293734,
+        "score_source": "calibration_pose_score_raw"
+      }
+    },
+    "2": {
+      "p95": {
+        "percentile": 95.0,
+        "threshold": 36.779829095261704,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p97_5": {
+        "percentile": 97.5,
+        "threshold": 47.179164911293675,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99": {
+        "percentile": 99.0,
+        "threshold": 67.89945110668039,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_5": {
+        "percentile": 99.5,
+        "threshold": 87.32214920098335,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_7": {
+        "percentile": 99.7,
+        "threshold": 99.14170414696508,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_9": {
+        "percentile": 99.9,
+        "threshold": 123.41785649159992,
+        "score_source": "calibration_pose_score_raw"
+      }
+    },
+    "3": {
+      "p95": {
+        "percentile": 95.0,
+        "threshold": 35.60700795941087,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p97_5": {
+        "percentile": 97.5,
+        "threshold": 42.85128388875656,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99": {
+        "percentile": 99.0,
+        "threshold": 53.9112027116559,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_5": {
+        "percentile": 99.5,
+        "threshold": 65.52721803771243,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_7": {
+        "percentile": 99.7,
+        "threshold": 74.70222867609,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_9": {
+        "percentile": 99.9,
+        "threshold": 87.58928179075521,
+        "score_source": "calibration_pose_score_raw"
+      }
+    },
+    "5": {
+      "p95": {
+        "percentile": 95.0,
+        "threshold": 37.89069165896422,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p97_5": {
+        "percentile": 97.5,
+        "threshold": 42.77644463172736,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99": {
+        "percentile": 99.0,
+        "threshold": 50.46460686830478,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_5": {
+        "percentile": 99.5,
+        "threshold": 56.37553239948739,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_7": {
+        "percentile": 99.7,
+        "threshold": 61.11580840650926,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_9": {
+        "percentile": 99.9,
+        "threshold": 73.07969356460089,
+        "score_source": "calibration_pose_score_raw"
+      }
+    },
+    "8": {
+      "p95": {
+        "percentile": 95.0,
+        "threshold": 33.168735926695206,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p97_5": {
+        "percentile": 97.5,
+        "threshold": 39.96487783911566,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99": {
+        "percentile": 99.0,
+        "threshold": 49.837841934984624,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_5": {
+        "percentile": 99.5,
+        "threshold": 57.955531828500796,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_7": {
+        "percentile": 99.7,
+        "threshold": 65.92055946719101,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_9": {
+        "percentile": 99.9,
+        "threshold": 76.66803981714668,
+        "score_source": "calibration_pose_score_raw"
+      }
+    },
+    "10": {
+      "p95": {
+        "percentile": 95.0,
+        "threshold": 33.79615994592123,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p97_5": {
+        "percentile": 97.5,
+        "threshold": 39.705160008208175,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99": {
+        "percentile": 99.0,
+        "threshold": 47.09013545516157,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_5": {
+        "percentile": 99.5,
+        "threshold": 55.92417953053325,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_7": {
+        "percentile": 99.7,
+        "threshold": 59.895896197073824,
+        "score_source": "calibration_pose_score_raw"
+      },
+      "p99_9": {
+        "percentile": 99.9,
+        "threshold": 74.98896477798999,
+        "score_source": "calibration_pose_score_raw"
+      }
+    }
+  },
+  "thresholds_by_components": {
+    "1": 178.5388467053037,
+    "2": 87.32214920098335,
+    "3": 65.52721803771243,
+    "5": 56.37553239948739,
+    "8": 57.955531828500796,
+    "10": 55.92417953053325
+  },
+  "score_definition": "negative GMM log likelihood; higher = more abnormal",
+  "split_info": {
+    "seed": 42,
+    "split_unit": "video_id",
+    "num_videos_total": 46,
+    "num_train_videos": 32,
+    "num_calibration_videos": 7,
+    "num_normal_test_videos": 7,
+    "train_videos": [
+      "20260315_140839_tp00037.mp4",
+      "20260315_152628_tp00038.mp4",
+      "20260315_164044_tp00039.mp4",
+      "20260316_091611_tp00040.mp4",
+      "20260316_103018_tp00041.mp4",
+      "20260316_124453_tp00043.mp4",
+      "20260316_135625_tp00044.mp4",
+      "20260317_122808_tp00050.mp4",
+      "20260317_132711_tp00051.mp4",
+      "20260317_143753_tp00052.mp4",
+      "20260317_155412_tp00053.mp4",
+      "20260318_094559_tp00055.mp4",
+      "20260318_105945_tp00056.mp4",
+      "20260318_133129_tp00058.mp4",
+      "20260318_144928_tp00059.mp4",
+      "20260318_160632_tp00060.mp4",
+      "20260319_114626_tp00063.mp4",
+      "20260319_125921_tp00064.mp4",
+      "20260328_083038_tp00068.mp4",
+      "20260328_124451_tp00069.mp4",
+      "20260329_091145_tp00070.mp4",
+      "20260329_102853_tp00071.mp4",
+      "20260329_113749_tp00072.mp4",
+      "20260329_140358_tp00074.mp4",
+      "20260330_084016_tp00077.mp4",
+      "20260330_101231_tp00078.mp4",
+      "20260330_113045_tp00079.mp4",
+      "20260330_124800_tp00080.mp4",
+      "20260330_140516_tp00081.mp4",
+      "20260330_151820_tp00082.mp4",
+      "20260330_163251_tp00083.mp4",
+      "20260331_100731_tp00085.mp4"
+    ],
+    "calibration_videos": [
+      "20260315_093203_tp00034.mp4",
+      "20260316_162442_tp00046.mp4",
+      "20260317_090032_tp00047.mp4",
+      "20260317_112759_tp00049.mp4",
+      "20260318_081214_tp00054.mp4",
+      "20260318_121418_tp00057.mp4",
+      "20260329_151410_tp00075.mp4"
+    ],
+    "normal_test_videos": [
+      "20260315_104219_tp00035.mp4",
+      "20260315_130536_tp00036.mp4",
+      "20260316_113834_tp00042.mp4",
+      "20260317_101644_tp00048.mp4",
+      "20260329_125235_tp00073.mp4",
+      "20260329_163101_tp00076.mp4",
+      "20260331_083223_tp00084.mp4"
+    ],
+    "tubelets_by_split": {
+      "train": 26793,
+      "normal_test": 11956,
+      "calibration": 9105
+    }
+  },
+  "cleaning_report": {
+    "total_rows": 50999,
+    "dropped_nonfinite": 0,
+    "dropped_negative": 0,
+    "dropped_all_zero": 2932,
+    "dropped_pose_valid_frame_ratio_zero": 3145,
+    "kept_rows": 47854
+  },
+  "feature_names": [
+    "pose_valid_frame_ratio",
+    "pose_mean_keypoint_conf",
+    "pose_valid_keypoint_ratio_mean",
+    "pose_wrist_speed_mean",
+    "pose_wrist_speed_p95",
+    "pose_wrist_speed_max",
+    "pose_ankle_speed_mean",
+    "pose_ankle_speed_p95",
+    "pose_ankle_speed_max",
+    "pose_limb_speed_mean",
+    "pose_limb_speed_p95",
+    "pose_limb_speed_max",
+    "pose_limb_accel_mean",
+    "pose_limb_accel_p95",
+    "pose_limb_accel_max",
+    "pose_torso_center_speed_mean",
+    "pose_torso_center_speed_p95",
+    "pose_torso_center_speed_max",
+    "pose_body_angle_change_mean",
+    "pose_body_angle_change_p95",
+    "pose_body_angle_change_max",
+    "pose_crouch_change_mean",
+    "pose_crouch_change_p95",
+    "pose_crouch_change_max",
+    "pose_arm_extension_change_mean",
+    "pose_arm_extension_change_p95",
+    "pose_arm_extension_change_max",
+    "pose_asymmetry_motion_mean",
+    "pose_asymmetry_motion_p95",
+    "pose_asymmetry_motion_max"
+  ],
+  "pose_temporal_config": {
+    "target_sample_fps": 5.0,
+    "tubelet_frames": 24,
+    "stride": 6,
+    "target_window_duration_sec": 4.8,
+    "extraction_summary_expected_sample_fps": null,
+    "extraction_summary_expected_tubelet_frames": null,
+    "extraction_summary_expected_stride": null,
+    "extraction_summary_fps_tolerance": null,
+    "extraction_summary_allow_sample_gaps": null
+  }
+}

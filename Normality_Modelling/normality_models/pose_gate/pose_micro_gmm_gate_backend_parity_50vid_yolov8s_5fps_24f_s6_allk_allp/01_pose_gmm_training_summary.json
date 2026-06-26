@@ -1,0 +1,112 @@
+{
+  "script": "04g_build_pose_micro_gmm_gate_ALLK_ALLP.py",
+  "schema_version": "pose_micro_gmm_gate_allk_allp_v1",
+  "input_dir": "D:\\Embeddings_Distribution\\normality_models\\pose_gate\\pose_micro_backend_parity_50vid_yolov8s_5fps_24f_s6",
+  "output_dir": "D:\\Embeddings_Distribution\\normality_models\\pose_gate\\pose_micro_gmm_gate_backend_parity_50vid_yolov8s_5fps_24f_s6_allk_allp",
+  "total_rows_after_filtering": 47854,
+  "feature_dim": 30,
+  "components_to_test": [
+    1,
+    2,
+    3,
+    5,
+    8,
+    10
+  ],
+  "threshold_percentiles": [
+    95.0,
+    97.5,
+    99.0,
+    99.5,
+    99.7,
+    99.9
+  ],
+  "primary_components": 5,
+  "primary_threshold_percentile": 99.5,
+  "primary_threshold": 56.37553239948739,
+  "settings": {
+    "train_ratio": 0.7,
+    "calib_ratio": 0.15,
+    "random_seed": 42,
+    "covariance_type": "full",
+    "reg_covar": 1e-06,
+    "max_iter": 500,
+    "smoothing_sigma": 2.0,
+    "persistence_hits": 3,
+    "persistence_window": 5,
+    "min_event_gap_sec": 5.0
+  },
+  "split_info": {
+    "seed": 42,
+    "split_unit": "video_id",
+    "num_videos_total": 46,
+    "num_train_videos": 32,
+    "num_calibration_videos": 7,
+    "num_normal_test_videos": 7,
+    "train_videos": [
+      "20260315_140839_tp00037.mp4",
+      "20260315_152628_tp00038.mp4",
+      "20260315_164044_tp00039.mp4",
+      "20260316_091611_tp00040.mp4",
+      "20260316_103018_tp00041.mp4",
+      "20260316_124453_tp00043.mp4",
+      "20260316_135625_tp00044.mp4",
+      "20260317_122808_tp00050.mp4",
+      "20260317_132711_tp00051.mp4",
+      "20260317_143753_tp00052.mp4",
+      "20260317_155412_tp00053.mp4",
+      "20260318_094559_tp00055.mp4",
+      "20260318_105945_tp00056.mp4",
+      "20260318_133129_tp00058.mp4",
+      "20260318_144928_tp00059.mp4",
+      "20260318_160632_tp00060.mp4",
+      "20260319_114626_tp00063.mp4",
+      "20260319_125921_tp00064.mp4",
+      "20260328_083038_tp00068.mp4",
+      "20260328_124451_tp00069.mp4",
+      "20260329_091145_tp00070.mp4",
+      "20260329_102853_tp00071.mp4",
+      "20260329_113749_tp00072.mp4",
+      "20260329_140358_tp00074.mp4",
+      "20260330_084016_tp00077.mp4",
+      "20260330_101231_tp00078.mp4",
+      "20260330_113045_tp00079.mp4",
+      "20260330_124800_tp00080.mp4",
+      "20260330_140516_tp00081.mp4",
+      "20260330_151820_tp00082.mp4",
+      "20260330_163251_tp00083.mp4",
+      "20260331_100731_tp00085.mp4"
+    ],
+    "calibration_videos": [
+      "20260315_093203_tp00034.mp4",
+      "20260316_162442_tp00046.mp4",
+      "20260317_090032_tp00047.mp4",
+      "20260317_112759_tp00049.mp4",
+      "20260318_081214_tp00054.mp4",
+      "20260318_121418_tp00057.mp4",
+      "20260329_151410_tp00075.mp4"
+    ],
+    "normal_test_videos": [
+      "20260315_104219_tp00035.mp4",
+      "20260315_130536_tp00036.mp4",
+      "20260316_113834_tp00042.mp4",
+      "20260317_101644_tp00048.mp4",
+      "20260329_125235_tp00073.mp4",
+      "20260329_163101_tp00076.mp4",
+      "20260331_083223_tp00084.mp4"
+    ],
+    "tubelets_by_split": {
+      "train": 26793,
+      "normal_test": 11956,
+      "calibration": 9105
+    }
+  },
+  "cleaning_report": {
+    "total_rows": 50999,
+    "dropped_nonfinite": 0,
+    "dropped_negative": 0,
+    "dropped_all_zero": 2932,
+    "dropped_pose_valid_frame_ratio_zero": 3145,
+    "kept_rows": 47854
+  }
+}

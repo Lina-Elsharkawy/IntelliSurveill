@@ -1,0 +1,83 @@
+{
+  "verdict": "not_proven_or_problematic",
+  "important_limit": "This is normal-only validation. It can prove stability and low false alarms, but it cannot prove anomaly recall without abnormal test clips or visual inspection of top outliers.",
+  "primary_k": 5,
+  "selected_score_column": "deep_knn_score_k5_gauss_s2_0",
+  "selected_gaussian_sigma_tubelets": 2.0,
+  "calibration_vs_normal_test": {
+    "calibration_median_raw": 0.06562173366546631,
+    "normal_test_median_raw": 0.06380632147192955,
+    "median_ratio_test_over_calibration": 0.9723351991461919,
+    "calibration_p99_raw": 0.1514391143620015,
+    "normal_test_p99_raw": 0.13894351616501832,
+    "p99_ratio_test_over_calibration": 0.917487643468955,
+    "ks_statistic_raw": 0.09559372995583626
+  },
+  "selected_false_alarm_evaluation": {
+    "k": 5,
+    "score_mode": "gaussian_sigma_2",
+    "threshold_source_mode": "gaussian_sigma_2",
+    "gaussian_sigma_tubelets": 2.0,
+    "threshold_percentile": 99.5,
+    "threshold_key": "p99_5",
+    "threshold_value": 0.13715376859580033,
+    "normal_test_tubelets": 5770,
+    "false_alarm_tubelets_before_persistence": 18,
+    "false_alarm_rate_percent_before_persistence": 0.3119584055459272,
+    "max_false_alarm_streak_before_persistence": 5,
+    "persistence_window": 5,
+    "persistence_required_hits": 3,
+    "min_event_gap_sec": 5.0,
+    "false_alarm_events_after_persistence": 4
+  },
+  "artifact_correlation_abs_pearson": {
+    "mean_conf": 0.2325451302446961,
+    "min_conf": 0.18066476282753066,
+    "mean_bbox_area_ratio": 0.06797363259787369,
+    "mean_iou": 0.1282779305875651,
+    "max_center_jump_ratio": 0.1814816980211103,
+    "clip_span_sec": 0.0728492298023492,
+    "clip_duration_sec": 0.0728492298023492
+  },
+  "max_artifact_correlation_abs_pearson": 0.2325451302446961,
+  "top_abnormal_normal_concentration": {
+    "top_n": 100,
+    "top_video_counts": {
+      "20260315_130536_tp00036.mp4": 73,
+      "20260317_101644_tp00048.mp4": 24,
+      "20260315_104219_tp00035.mp4": 2,
+      "20260329_140358_tp00074.mp4": 1
+    },
+    "top_track_counts": {
+      "20260317_101644_tp00048.mp4|1495": 13,
+      "20260315_130536_tp00036.mp4|6485": 12,
+      "20260315_130536_tp00036.mp4|6476": 11,
+      "20260315_130536_tp00036.mp4|4393": 9,
+      "20260315_130536_tp00036.mp4|6633": 6,
+      "20260315_130536_tp00036.mp4|6620": 6,
+      "20260315_130536_tp00036.mp4|4303": 5,
+      "20260317_101644_tp00048.mp4|1329": 4,
+      "20260315_130536_tp00036.mp4|6646": 4,
+      "20260317_101644_tp00048.mp4|1511": 4
+    },
+    "top_video_concentration": 0.73
+  },
+  "passed_checks": [
+    "Embedding validity is clean: less than or equal to 1% removed during validation.",
+    "Calibration and normal-test score distributions are similar; threshold transfer looks stable.",
+    "Deep scores are not strongly correlated with obvious detection-quality metadata."
+  ],
+  "warnings": [
+    "Top abnormal-normal tubelets are concentrated in a few videos; inspect whether these videos contain unusual normal behavior or scene bias."
+  ],
+  "failed_checks": [
+    "Selected threshold produced too many persistent false-alarm events on held-out normal videos."
+  ],
+  "how_to_decide_if_videomae_is_right": [
+    "Held-out normal videos should have low persistent false alarms.",
+    "Calibration and normal-test score distributions should be similar, not shifted by scene/camera.",
+    "High scores should not be strongly explained by low confidence, tiny boxes, bad IoU, or track jumps.",
+    "Top abnormal-normal tubelets must look visually unusual or semantically difficult, not merely broken crops.",
+    "When abnormal test clips are available, their smoothed scores should rise clearly above the calibrated normal threshold before deployment."
+  ]
+}

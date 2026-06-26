@@ -1,0 +1,82 @@
+{
+  "schema_version": "camera_homography_calibration_v1.0",
+  "created_at_unix": 1779377313.4775448,
+  "camera_id": "camera_001",
+  "description": "Homography maps image pixel coordinates to world/floor coordinates. Coordinates should be meters if entered as meters.",
+  "homography_npy": "D:\\Embeddings_Distribution\\calibration\\camera_001_homography.npy",
+  "reference_frame": "D:\\Embeddings_Distribution\\calibration\\camera_001_reference_frame.jpg",
+  "validation_image": "D:\\Embeddings_Distribution\\calibration\\camera_001_homography_validation.jpg",
+  "points_csv": "D:\\Embeddings_Distribution\\calibration\\camera_001_points.csv",
+  "world_scale_m_per_unit": 1.0,
+  "H": [
+    [
+      0.006387766730385748,
+      0.002198499660593465,
+      -3.6624234582135227
+    ],
+    [
+      -2.444855581552482e-05,
+      -0.0112585599530489,
+      11.792919813230908
+    ],
+    [
+      3.002078185931175e-05,
+      5.210238812844241e-05,
+      1.0
+    ]
+  ],
+  "diagnostics": {
+    "num_points": 4,
+    "method": "direct",
+    "inliers": 4,
+    "mean_world_error_m": 2.208300939173339e-15,
+    "median_world_error_m": 2.0874022536530377e-15,
+    "max_world_error_m": 3.3746891284985135e-15,
+    "determinant": -7.624305870636667e-05
+  },
+  "points": [
+    {
+      "point_id": 1,
+      "image_x": 403.5,
+      "image_y": 493.5,
+      "world_x": 0.0,
+      "world_y": 6.0,
+      "projected_world_x": 1.2837101208887677e-15,
+      "projected_world_y": 6.0,
+      "world_error_m": 1.2837101208887677e-15
+    },
+    {
+      "point_id": 2,
+      "image_x": 1761.0,
+      "image_y": 469.5,
+      "world_x": 8.0,
+      "world_y": 6.0,
+      "projected_world_x": 7.999999999999998,
+      "projected_world_y": 6.0,
+      "world_error_m": 1.7763568394002505e-15
+    },
+    {
+      "point_id": 3,
+      "image_x": 1594.5,
+      "image_y": 1044.0,
+      "world_x": 8.0,
+      "world_y": 0.0,
+      "projected_world_x": 7.999999999999998,
+      "projected_world_y": 1.6115544033009994e-15,
+      "world_error_m": 2.3984476679058245e-15
+    },
+    {
+      "point_id": 4,
+      "image_x": 213.0,
+      "image_y": 1047.0,
+      "world_x": 0.0,
+      "world_y": 0.0,
+      "projected_world_x": -4.185786703744003e-16,
+      "projected_world_y": 3.3486293629952026e-15,
+      "world_error_m": 3.3746891284985135e-15
+    }
+  ],
+  "usage": {
+    "single_homography_command": "python .\\04d_extract_homography_macro_features.py --tracks_jsonl \"D:\\Embeddings_Distribution\\normality_models\\motion_tubelets_v1\\motion_tubelet_tracks.jsonl\" --output_dir \"D:\\Embeddings_Distribution\\normality_models\\homography_macro_50vid_v1\" --homography_npy \"D:\\Embeddings_Distribution\\calibration\\camera_001_homography.npy\" --world_scale_m_per_unit 1.0 --overwrite"
+  }
+}

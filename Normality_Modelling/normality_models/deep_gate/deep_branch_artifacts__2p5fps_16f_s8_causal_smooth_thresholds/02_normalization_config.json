@@ -1,0 +1,7 @@
+{
+  "normalization": "l2",
+  "epsilon": 1e-12,
+  "post_l2_norm_min": 0.9999997615814209,
+  "post_l2_norm_max": 1.000000238418579,
+  "post_l2_norm_mean": 1.0
+}

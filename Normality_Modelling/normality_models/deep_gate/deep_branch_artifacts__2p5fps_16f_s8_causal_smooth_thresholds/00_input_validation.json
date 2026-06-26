@@ -1,0 +1,20 @@
+{
+  "raw_embedding_shape": [
+    23516,
+    768
+  ],
+  "raw_metadata_rows": 23516,
+  "metadata_rows_with_valid_person_embedding_index": 23516,
+  "aligned_rows_before_cleaning": 23516,
+  "removed_non_finite": 0,
+  "removed_near_zero_norm": 0,
+  "removed_near_zero_std": 0,
+  "removed_person_valid_false": 0,
+  "rows_after_cleaning": 23516,
+  "embedding_norm_min": 12.521894454956055,
+  "embedding_norm_max": 14.452458381652832,
+  "embedding_norm_mean": 13.76952838897705,
+  "embedding_norm_median": 13.803947448730469,
+  "embedding_norm_std": 0.24365997314453125,
+  "missing_recommended_metadata_columns": []
+}

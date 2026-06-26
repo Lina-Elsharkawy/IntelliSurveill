@@ -1,0 +1,20 @@
+{
+  "schema_version": "homography_macro_gmm_gate_stage3_pose_v1.1",
+  "thresholds": {
+    "p99_5": {
+      "percentile": 99.5,
+      "threshold": 14.5168879100055,
+      "score_source": "calibration_macro_score_smooth"
+    },
+    "p99_7": {
+      "percentile": 99.7,
+      "threshold": 16.30177521856949,
+      "score_source": "calibration_macro_score_smooth"
+    }
+  },
+  "primary_threshold_key": "p99_7",
+  "primary_threshold_percentile": 99.7,
+  "primary_threshold": 16.30177521856949,
+  "score_direction": "higher_is_more_anomalous",
+  "threshold_source": "calibration_macro_score_smooth"
+}

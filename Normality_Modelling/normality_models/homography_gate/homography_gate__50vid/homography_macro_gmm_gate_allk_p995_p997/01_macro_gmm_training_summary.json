@@ -1,0 +1,89 @@
+{
+  "script": "04e_build_homography_macro_gmm_gate_STAGE3_POSE.py",
+  "schema_version": "homography_macro_gmm_gate_stage3_pose_v1.1",
+  "created_at_unix": 1780736095.7242146,
+  "input_dir": "D:\\Embeddings_Distribution\\normality_models\\homography_gate\\homography_gate_live_parity_stage3_pose_contract_fixed_50vid\\homography_macro_features",
+  "output_dir": "D:\\Embeddings_Distribution\\normality_models\\homography_gate\\homography_gate_live_parity_stage3_pose_contract_fixed_50vid\\homography_macro_gmm_gate_allk_p995_p997",
+  "total_rows_after_filtering": 23504,
+  "dropped_nonfinite_rows": 0,
+  "dropped_quality_rows": 0,
+  "all_feature_dim": 28,
+  "selected_features": [
+    "macro_speed_mean_mps",
+    "macro_speed_median_mps",
+    "macro_speed_p95_mps",
+    "macro_accel_p95_mps2",
+    "macro_straightness_ratio",
+    "macro_direction_change_mean_rad",
+    "macro_stationary_step_ratio"
+  ],
+  "split_counts": {
+    "train": {
+      "videos": 31,
+      "tubelets": 12088
+    },
+    "calibration": {
+      "videos": 7,
+      "tubelets": 5657
+    },
+    "normal_test": {
+      "videos": 7,
+      "tubelets": 5759
+    }
+  },
+  "settings": {
+    "input_dir": "D:\\Embeddings_Distribution\\normality_models\\homography_gate\\homography_gate_live_parity_stage3_pose_contract_fixed_50vid\\homography_macro_features",
+    "output_dir": "D:\\Embeddings_Distribution\\normality_models\\homography_gate\\homography_gate_live_parity_stage3_pose_contract_fixed_50vid\\homography_macro_gmm_gate_allk_p995_p997",
+    "features_npy": null,
+    "metadata_csv": null,
+    "feature_names_json": null,
+    "selected_features": null,
+    "require_stage3_groundpoints": true,
+    "max_bbox_fallback_ratio": 1.0,
+    "max_frozen_ratio": 1.0,
+    "train_ratio": 0.7,
+    "calibration_ratio": 0.15,
+    "normal_test_ratio": 0.15,
+    "random_seed": 42,
+    "components_to_test": [
+      1,
+      2,
+      3,
+      5,
+      8,
+      10
+    ],
+    "primary_components": 10,
+    "covariance_type": "full",
+    "reg_covar": 1e-06,
+    "max_iter": 500,
+    "n_init": 5,
+    "use_pca": false,
+    "pca_components": 5,
+    "threshold_percentiles": [
+      99.5,
+      99.7
+    ],
+    "primary_threshold_percentile": 99.7,
+    "smoothing_sigma": 2.0,
+    "persistence_window": 5,
+    "persistence_required_hits": 3,
+    "min_event_gap_sec": 5.0,
+    "make_plots": false,
+    "overwrite": true
+  },
+  "primary_components": 10,
+  "primary_threshold_key": "p99_7",
+  "primary_threshold": 16.30177521856949,
+  "primary_false_alarm_report": {
+    "threshold_percentile": 99.7,
+    "threshold": 16.30177521856949,
+    "normal_test_tubelets": 5759.0,
+    "false_alarm_tubelets_before_persistence": 13.0,
+    "false_alarm_rate_before_persistence": 0.002257336343115124,
+    "false_alarm_events_after_persistence": 1.0,
+    "normal_test_videos": 7.0,
+    "normal_test_tracks": 569.0
+  },
+  "verdict": "usable_but_needs_visual_review"
+}

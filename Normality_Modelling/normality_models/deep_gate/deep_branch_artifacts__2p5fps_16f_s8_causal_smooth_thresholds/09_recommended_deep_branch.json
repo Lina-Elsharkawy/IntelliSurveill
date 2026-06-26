@@ -1,0 +1,44 @@
+{
+  "selected_model": "deep_knn_l2",
+  "selected_k": 5,
+  "selected_threshold_percentile": 99.5,
+  "selected_threshold_key": "p99_5",
+  "selected_threshold_value": 0.13715376859580033,
+  "selected_threshold_source_mode": "gaussian_sigma_2",
+  "normalization": "l2",
+  "distance_metric": "euclidean",
+  "score_method": "mean_distance_to_k_neighbors",
+  "smoothing_or_event_logic": {
+    "method": "gaussian_then_persistence",
+    "gaussian_sigma_tubelets": 2.0,
+    "persistence_window": 5,
+    "persistence_required_hits": 3,
+    "min_event_gap_sec": 5.0
+  },
+  "normal_test_evaluation_for_selected_threshold": {
+    "k": 5,
+    "score_mode": "gaussian_sigma_2",
+    "threshold_source_mode": "gaussian_sigma_2",
+    "gaussian_sigma_tubelets": 2.0,
+    "threshold_percentile": 99.5,
+    "threshold_key": "p99_5",
+    "threshold_value": 0.13715376859580033,
+    "normal_test_tubelets": 5770,
+    "false_alarm_tubelets_before_persistence": 18,
+    "false_alarm_rate_percent_before_persistence": 0.3119584055459272,
+    "max_false_alarm_streak_before_persistence": 5,
+    "persistence_window": 5,
+    "persistence_required_hits": 3,
+    "min_event_gap_sec": 5.0,
+    "false_alarm_events_after_persistence": 4
+  },
+  "artifacts": {
+    "knn_index": "D:\\Embeddings_Distribution\\normality_models\\deep_gate\\deep_branch_artifacts_v5_liveparity_2p5fps_16f_s8_causal_smooth_thresholds\\models\\03_knn_index.joblib",
+    "thresholds": "D:\\Embeddings_Distribution\\normality_models\\deep_gate\\deep_branch_artifacts_v5_liveparity_2p5fps_16f_s8_causal_smooth_thresholds\\04_thresholds.json",
+    "calibration_scores": "D:\\Embeddings_Distribution\\normality_models\\deep_gate\\deep_branch_artifacts_v5_liveparity_2p5fps_16f_s8_causal_smooth_thresholds\\scores\\04_calibration_scores.csv",
+    "normal_test_scores_raw": "D:\\Embeddings_Distribution\\normality_models\\deep_gate\\deep_branch_artifacts_v5_liveparity_2p5fps_16f_s8_causal_smooth_thresholds\\scores\\05_normal_test_scores.csv",
+    "normal_test_scores_with_gaussian": "D:\\Embeddings_Distribution\\normality_models\\deep_gate\\deep_branch_artifacts_v5_liveparity_2p5fps_16f_s8_causal_smooth_thresholds\\scores\\05_normal_test_scores_with_gaussian.csv",
+    "top_abnormal_normal_tubelets": "D:\\Embeddings_Distribution\\normality_models\\deep_gate\\deep_branch_artifacts_v5_liveparity_2p5fps_16f_s8_causal_smooth_thresholds\\06_top_abnormal_normal_tubelets.csv",
+    "videomae_suitability_report": "D:\\Embeddings_Distribution\\normality_models\\deep_gate\\deep_branch_artifacts_v5_liveparity_2p5fps_16f_s8_causal_smooth_thresholds\\07_videomae_suitability_report.json"
+  }
+}

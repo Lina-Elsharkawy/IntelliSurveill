@@ -1,0 +1,44 @@
+{
+  "script": "04d_extract_homography_macro_features_STAGE3_POSE_CONTRACT_FIXED.py",
+  "schema_version": "homography_macro_features_v1.0",
+  "created_at_unix": 1780735983.3105042,
+  "elapsed_sec": 42.97710299491882,
+  "tracks_jsonl": "D:\\Embeddings_Distribution\\normality_models\\motion_tubelets\\motion_tubelets_homography_live_parity_2p5fps_16f_s8_50vid_stage3_pose\\motion_tubelet_tracks_stage3_pose.jsonl",
+  "output_dir": "D:\\Embeddings_Distribution\\normality_models\\homography_gate\\homography_gate_live_parity_stage3_pose_contract_fixed_50vid\\homography_macro_features",
+  "settings": {
+    "point_field": "ground_points_xy",
+    "default_camera_id": "camera_001",
+    "world_scale_m_per_unit": 1.0,
+    "stationary_speed_threshold_mps": 0.05,
+    "max_reasonable_speed_mps": 3.0,
+    "min_valid_point_ratio": 0.9,
+    "min_valid_step_ratio": 0.8,
+    "limit_tubelets": null
+  },
+  "homographies": {
+    "camera_001": {
+      "camera_id": "camera_001",
+      "world_scale_m_per_unit": 1.0,
+      "description": "single_homography_npy:D:\\Embeddings_Distribution\\calibration\\camera_001_homography.npy",
+      "determinant": -7.624305870636667e-05
+    }
+  },
+  "totals": {
+    "jsonl_rows_total": 23516,
+    "processed_tubelets": 23516,
+    "accepted_tubelets": 23504,
+    "failed_tubelets": 12,
+    "feature_dim": 28
+  },
+  "camera_counts": {
+    "camera_001": 23504
+  },
+  "video_count": 45,
+  "outputs": {
+    "features_npy": "D:\\Embeddings_Distribution\\normality_models\\homography_gate\\homography_gate_live_parity_stage3_pose_contract_fixed_50vid\\homography_macro_features\\homography_macro_features.npy",
+    "metadata_csv": "D:\\Embeddings_Distribution\\normality_models\\homography_gate\\homography_gate_live_parity_stage3_pose_contract_fixed_50vid\\homography_macro_features\\homography_macro_metadata.csv",
+    "feature_names_json": "D:\\Embeddings_Distribution\\normality_models\\homography_gate\\homography_gate_live_parity_stage3_pose_contract_fixed_50vid\\homography_macro_features\\homography_macro_feature_names.json",
+    "failed_csv": "D:\\Embeddings_Distribution\\normality_models\\homography_gate\\homography_gate_live_parity_stage3_pose_contract_fixed_50vid\\homography_macro_features\\homography_macro_failed.csv",
+    "summary_json": "D:\\Embeddings_Distribution\\normality_models\\homography_gate\\homography_gate_live_parity_stage3_pose_contract_fixed_50vid\\homography_macro_features\\homography_macro_extraction_summary.json"
+  }
+}

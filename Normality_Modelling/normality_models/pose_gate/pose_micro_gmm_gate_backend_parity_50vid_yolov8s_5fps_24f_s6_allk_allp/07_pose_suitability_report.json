@@ -1,0 +1,46 @@
+{
+  "verdict": "needs_tuning_or_visual_review",
+  "important_interpretation": "This only proves behavior on held-out normal videos. It does not prove abnormal detection yet. Next step is visual review of top normal-test pose outliers and abnormal-video testing.",
+  "feature_shape": [
+    47854,
+    30
+  ],
+  "metadata_rows": 47854,
+  "extraction_failed_rows": null,
+  "primary_components": 5,
+  "primary_threshold": 56.37553239948739,
+  "pose_temporal_config": {
+    "target_sample_fps": 5.0,
+    "tubelet_frames": 24,
+    "stride": 6,
+    "target_window_duration_sec": 4.8
+  },
+  "normal_test_report": {
+    "tubelets": 11956,
+    "threshold": 56.37553239948739,
+    "false_alarm_tubelets_before_persistence": 131,
+    "false_alarm_rate_before_persistence": 0.01095684175309468,
+    "false_alarm_tubelets_after_smoothing": 54,
+    "false_alarm_rate_after_smoothing": 0.0045165607226497154,
+    "false_alarm_tubelets_after_persistence": 36,
+    "false_alarm_rate_after_persistence": 0.003011040481766477,
+    "false_alarm_events_after_persistence": 12,
+    "videos": 7,
+    "tracks": 527
+  },
+  "calibration_report": {
+    "tubelets": 9105,
+    "threshold": 56.37553239948739,
+    "false_alarm_tubelets_before_persistence": 46,
+    "false_alarm_rate_before_persistence": 0.005052169137836354,
+    "false_alarm_tubelets_after_smoothing": 11,
+    "false_alarm_rate_after_smoothing": 0.0012081274025260845,
+    "false_alarm_tubelets_after_persistence": 1,
+    "false_alarm_rate_after_persistence": 0.00010982976386600769,
+    "false_alarm_events_after_persistence": 1,
+    "videos": 7,
+    "tracks": 404
+  },
+  "speed_note": "Pose extraction completed with model=yolov8s-pose.pt, tubelets_per_sec=unknown.",
+  "pose_quality_note": "Rows with all-zero features or zero pose_valid_frame_ratio were dropped before training. Top outliers must be visually reviewed because pose anomalies can be caused by keypoint noise, occlusion, or bad crops."
+}

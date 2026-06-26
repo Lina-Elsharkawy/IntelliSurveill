@@ -1,0 +1,117 @@
+{
+  "gate_name": "pose_micro_gmm_gate",
+  "reason_when_fired": "rare_pose_articulation",
+  "feature_extractor": {
+    "model": "yolov8s-pose.pt",
+    "device_used_for_extraction": "cuda",
+    "imgsz": 256,
+    "conf": 0.25,
+    "kpt_conf": 0.3,
+    "crop_pad_ratio": 0.25,
+    "min_crop_size": 192,
+    "target_sample_fps": 5.0,
+    "tubelet_frames": 24,
+    "stride": 6,
+    "target_window_duration_sec": 4.8,
+    "feature_dim": 30,
+    "feature_names": [
+      "pose_valid_frame_ratio",
+      "pose_mean_keypoint_conf",
+      "pose_valid_keypoint_ratio_mean",
+      "pose_wrist_speed_mean",
+      "pose_wrist_speed_p95",
+      "pose_wrist_speed_max",
+      "pose_ankle_speed_mean",
+      "pose_ankle_speed_p95",
+      "pose_ankle_speed_max",
+      "pose_limb_speed_mean",
+      "pose_limb_speed_p95",
+      "pose_limb_speed_max",
+      "pose_limb_accel_mean",
+      "pose_limb_accel_p95",
+      "pose_limb_accel_max",
+      "pose_torso_center_speed_mean",
+      "pose_torso_center_speed_p95",
+      "pose_torso_center_speed_max",
+      "pose_body_angle_change_mean",
+      "pose_body_angle_change_p95",
+      "pose_body_angle_change_max",
+      "pose_crouch_change_mean",
+      "pose_crouch_change_p95",
+      "pose_crouch_change_max",
+      "pose_arm_extension_change_mean",
+      "pose_arm_extension_change_p95",
+      "pose_arm_extension_change_max",
+      "pose_asymmetry_motion_mean",
+      "pose_asymmetry_motion_p95",
+      "pose_asymmetry_motion_max"
+    ],
+    "important": "Production inference must use the same pose model and feature extraction settings used for calibration."
+  },
+  "normality_model": {
+    "scaler": "D:\\Embeddings_Distribution\\normality_models\\pose_gate\\pose_micro_gmm_gate_backend_parity_50vid_yolov8s_5fps_24f_s6_allk_allp\\models\\pose_robust_scaler.joblib",
+    "gmm": "D:\\Embeddings_Distribution\\normality_models\\pose_gate\\pose_micro_gmm_gate_backend_parity_50vid_yolov8s_5fps_24f_s6_allk_allp\\models\\pose_gmm_components_5.joblib",
+    "components": 5,
+    "covariance_type": "full",
+    "reg_covar": 1e-06,
+    "score_definition": "negative GMM log likelihood; higher = more abnormal",
+    "threshold": 56.37553239948739,
+    "threshold_percentile": 99.5
+  },
+  "postprocessing": {
+    "smoothing_sigma": 2.0,
+    "persistence_hits": 3,
+    "persistence_window": 5,
+    "min_event_gap_sec": 5.0
+  },
+  "decision": {
+    "gate_fires_if": "smoothed pose score exceeds threshold persistently",
+    "final_pipeline_logic": "Independent gate. Do not fuse raw score with deep or velocity branches yet."
+  },
+  "validation_status": {
+    "verdict": "needs_tuning_or_visual_review",
+    "important_interpretation": "This only proves behavior on held-out normal videos. It does not prove abnormal detection yet. Next step is visual review of top normal-test pose outliers and abnormal-video testing.",
+    "feature_shape": [
+      47854,
+      30
+    ],
+    "metadata_rows": 47854,
+    "extraction_failed_rows": null,
+    "primary_components": 5,
+    "primary_threshold": 56.37553239948739,
+    "pose_temporal_config": {
+      "target_sample_fps": 5.0,
+      "tubelet_frames": 24,
+      "stride": 6,
+      "target_window_duration_sec": 4.8
+    },
+    "normal_test_report": {
+      "tubelets": 11956,
+      "threshold": 56.37553239948739,
+      "false_alarm_tubelets_before_persistence": 131,
+      "false_alarm_rate_before_persistence": 0.01095684175309468,
+      "false_alarm_tubelets_after_smoothing": 54,
+      "false_alarm_rate_after_smoothing": 0.0045165607226497154,
+      "false_alarm_tubelets_after_persistence": 36,
+      "false_alarm_rate_after_persistence": 0.003011040481766477,
+      "false_alarm_events_after_persistence": 12,
+      "videos": 7,
+      "tracks": 527
+    },
+    "calibration_report": {
+      "tubelets": 9105,
+      "threshold": 56.37553239948739,
+      "false_alarm_tubelets_before_persistence": 46,
+      "false_alarm_rate_before_persistence": 0.005052169137836354,
+      "false_alarm_tubelets_after_smoothing": 11,
+      "false_alarm_rate_after_smoothing": 0.0012081274025260845,
+      "false_alarm_tubelets_after_persistence": 1,
+      "false_alarm_rate_after_persistence": 0.00010982976386600769,
+      "false_alarm_events_after_persistence": 1,
+      "videos": 7,
+      "tracks": 404
+    },
+    "speed_note": "Pose extraction completed with model=yolov8s-pose.pt, tubelets_per_sec=unknown.",
+    "pose_quality_note": "Rows with all-zero features or zero pose_valid_frame_ratio were dropped before training. Top outliers must be visually reviewed because pose anomalies can be caused by keypoint noise, occlusion, or bad crops."
+  }
+}

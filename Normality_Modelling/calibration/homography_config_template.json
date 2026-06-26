@@ -1,0 +1,20 @@
+{
+  "description": "Template. Homography must map image pixel coordinates (x,y) to floor/world coordinates. Prefer meters.",
+  "default_camera_id": "camera_001",
+  "homographies": {
+    "camera_001": {
+      "homography_npy": "camera_001_homography.npy",
+      "world_scale_m_per_unit": 1.0,
+      "description": "image pixels -> floor coordinates in meters"
+    }
+  },
+  "video_id_to_camera_id": {
+    "20260315_093203_tp00034": "camera_001",
+    "20260315_104219_tp00035": "camera_001"
+  },
+  "calibration_notes": {
+    "image_points": "Use floor contact points visible in the video frame, e.g. tile/lab floor corners.",
+    "world_points": "Corresponding real floor coordinates in meters on a flat 2D plane.",
+    "opencv_hint": "H, mask = cv2.findHomography(image_points_px, world_points_m, method=0)"
+  }
+}
