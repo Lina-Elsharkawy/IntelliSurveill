@@ -70,3 +70,5 @@ pgdata/Normality_Modelling/anomaly_dataset/outputs/
 Normality_Modelling/normality_models/**/plots/
 Normality_Modelling/processed_dataset_deep_from_motion_tubelets_liveparity_2p5fps_16f_s8_50vid/
 Normality_Modelling/normality_models/motion_tubelets/
+Normality_Modelling/anomaly_dataset/outputs/
+Normality_Modelling/live_tests/
