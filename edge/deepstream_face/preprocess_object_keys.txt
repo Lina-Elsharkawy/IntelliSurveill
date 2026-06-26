@@ -1,0 +1,163 @@
+
+
+====================================================================================================
+/opt/nvidia/deepstream/deepstream-6.0/sources/gst-plugins/gst-nvdspreprocess/nvdspreprocess_property_parser.cpp
+====================================================================================================
+
+--- match around line 503 ---
+00500:         sum_total_rois += num_roi_per_stream;
+00501:         num_units += num_roi_per_stream;
+00502: 
+00503:         GST_DEBUG ("Parsing roi-params source_index = %ld num-roi = %d roilistlen = %ld\n",
+00504:             source_index, num_roi_per_stream, roi_list_len);
+00505: 
+00506:         for (guint i = 0; i < roi_list_len; i=i+4) {
+00507:           NvDsRoiMeta roi_info;
+00508: 
+
+--- match around line 520 ---
+00517: 
+00518:         if (preprocess_group->src_ids[0] == -1 && source_index != 0) {
+00519:           GST_ELEMENT_WARNING (nvdspreprocess, RESOURCE, FAILED,
+00520:             ("Only roi-params-0 will get used\n"), (nullptr));
+00521:         } else {
+00522:           preprocess_group->framemeta_map.emplace(source_index, preprocess_frame);
+00523:         }
+00524: 
+00525:         GST_CAT_INFO (NVDSPREPROCESS_CFG_PARSER_CAT, "Parsed '%s' in group '%s'\n",
+
+--- match around line 536 ---
+00533:     auto get_preprocess_frame_meta = preprocess_group->framemeta_map.find(0);
+00534:     if (get_preprocess_frame_meta == preprocess_group->framemeta_map.end()) {
+00535:       GST_ELEMENT_ERROR (nvdspreprocess, RESOURCE, FAILED,
+00536:           ("For src-ids = -1 roi-params-0 is required\n"), (nullptr));
+00537:       ret = FALSE;
+00538:       goto done;
+00539:     }
+00540:     for (int i = 1; i< nvdspreprocess->tensor_params.network_input_shape[0]; i++) {
+00541:       preprocess_group->framemeta_map.emplace(i, preprocess_group->framemeta_map[0]);
+
+
+====================================================================================================
+/opt/nvidia/deepstream/deepstream-6.0/sources/gst-plugins/gst-nvdspreprocess/nvdspreprocess_property_parser.h
+====================================================================================================
+
+--- match around line 37 ---
+00034: #define _PATH_MAX 4096
+00035: 
+00036: #define NVDSPREPROCESS_PROPERTY "property"
+00037: #define NVDSPREPROCESS_PROPERTY_TARGET_IDS "target-unique-ids"
+00038: #define NVDSPREPROCESS_PROPERTY_ENABLE "enable"
+00039: #define NVDSPREPROCESS_PROPERTY_GPU_ID "gpu-id"
+00040: #define NVDSPREPROCESS_PROPERTY_PROCESSING_WIDTH "processing-width"
+00041: #define NVDSPREPROCESS_PROPERTY_PROCESSING_HEIGHT "processing-height"
+00042: #define NVDSPREPROCESS_PROPERTY_MAINTAIN_ASPECT_RATIO "maintain-aspect-ratio"
+
+--- match around line 63 ---
+00060: 
+00061: #define NVDSPREPROCESS_GROUP "group-"
+00062: #define NVDSPREPROCESS_GROUP_SRC_IDS "src-ids"
+00063: #define NVDSPREPROCESS_GROUP_PROCESS_ON_ROI "process-on-roi"
+00064: #define NVDSPREPROCESS_GROUP_ROI_PARAMS_SRC "roi-params-src"
+00065: #define NVDSPREPROCESS_GROUP_CUSTOM_INPUT_PREPROCESS_FUNCTION "custom-input-transformation-function"
+00066: 
+00067: /**
+00068:  * Get GstNvDsPreProcessMemory structure associated with buffer allocated using
+
+--- match around line 64 ---
+00061: #define NVDSPREPROCESS_GROUP "group-"
+00062: #define NVDSPREPROCESS_GROUP_SRC_IDS "src-ids"
+00063: #define NVDSPREPROCESS_GROUP_PROCESS_ON_ROI "process-on-roi"
+00064: #define NVDSPREPROCESS_GROUP_ROI_PARAMS_SRC "roi-params-src"
+00065: #define NVDSPREPROCESS_GROUP_CUSTOM_INPUT_PREPROCESS_FUNCTION "custom-input-transformation-function"
+00066: 
+00067: /**
+00068:  * Get GstNvDsPreProcessMemory structure associated with buffer allocated using
+00069:  * GstNvDsPreProcessAllocator.
+
+
+====================================================================================================
+/opt/nvidia/deepstream/deepstream-6.0/sources/gst-plugins/gst-nvdspreprocess/gstnvdspreprocess.cpp
+====================================================================================================
+
+--- match around line 1096 ---
+01093:   gst_buffer_unref ((GstBuffer *)preprocess_batchmeta->private_data); //unref conversion pool buffer
+01094: 
+01095:   for (auto &roi_meta : preprocess_batchmeta->roi_vector) {
+01096:     g_list_free(roi_meta.classifier_meta_list);
+01097:     g_list_free(roi_meta.roi_user_meta_list);
+01098:   }
+01099: 
+01100:   delete preprocess_batchmeta;
+01101: }
+
+--- match around line 1152 ---
+01149: 
+01150:   /* Set user meta below */
+01151:   user_meta->user_meta_data = preprocess_batchmeta;
+01152:   user_meta->base_meta.meta_type = (NvDsMetaType) NVDS_PREPROCESS_BATCH_META;
+01153:   user_meta->base_meta.copy_func = NULL;
+01154:   user_meta->base_meta.release_func = release_user_meta_at_batch_level;
+01155:   user_meta->base_meta.batch_meta = batch_meta;
+01156: 
+01157:   nvds_add_user_meta_to_batch (batch_meta, user_meta);
+
+--- match around line 1345 ---
+01342:           /* Adding a Unit (ROI/Crop/Full Frame) to the current batch. Set the frames members. */
+01343:           NvDsPreProcessUnit unit;
+01344:           unit.converted_frame_ptr = memory->frame_memory_ptrs[idx];
+01345:           unit.obj_meta = nullptr;
+01346:           unit.frame_meta = frame_meta;
+01347:           unit.frame_num = unit.frame_meta->frame_num;
+01348:           unit.batch_index = batch_index;
+01349:           unit.input_surf_params = in_surf->surfaceList + batch_index;
+01350:           unit.roi_meta = roi_meta;
+
+--- match around line 1351 ---
+01348:           unit.batch_index = batch_index;
+01349:           unit.input_surf_params = in_surf->surfaceList + batch_index;
+01350:           unit.roi_meta = roi_meta;
+01351:           unit.roi_meta.classifier_meta_list = NULL;
+01352:           unit.roi_meta.roi_user_meta_list = NULL;
+01353: 
+01354:           batch->units.push_back (unit);
+01355: 
+01356:           if (preprocess_group->process_on_roi) {
+
+
+====================================================================================================
+/opt/nvidia/deepstream/deepstream-6.0/sources/gst-plugins/gst-nvdspreprocess/gstnvdspreprocess.h
+====================================================================================================
+
+--- match around line 137 ---
+00134:   gboolean processing_width;
+00135:   /** for config param : processsing-height*/
+00136:   gboolean processing_height;
+00137:   /** for config param : target-unique-ids */
+00138:   gboolean target_unique_ids;
+00139:   /** for config param : network-input-order */
+00140:   gboolean network_input_order;
+00141:   /** for config param : network-input-shape */
+00142:   gboolean network_input_shape;
+
+--- match around line 155 ---
+00152:   gboolean custom_tensor_function_name;
+00153:   /** for config param : src-ids */
+00154:   gboolean src_ids;
+00155:   /** for config param : process-on-rois */
+00156:   gboolean process_on_roi;
+00157:   /** for config param : roi-params-src */
+00158:   gboolean roi_params_src;
+00159:   /** for config param : scaling-pool-interpolation-filter */
+00160:   gboolean scaling_pool_interpolation_filter;
+
+--- match around line 157 ---
+00154:   gboolean src_ids;
+00155:   /** for config param : process-on-rois */
+00156:   gboolean process_on_roi;
+00157:   /** for config param : roi-params-src */
+00158:   gboolean roi_params_src;
+00159:   /** for config param : scaling-pool-interpolation-filter */
+00160:   gboolean scaling_pool_interpolation_filter;
+00161:   /** for config param : scaling-pool-memory-type */
+00162:   gboolean scaling_pool_memory_type;

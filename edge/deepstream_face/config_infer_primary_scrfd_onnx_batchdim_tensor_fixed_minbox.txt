@@ -1,0 +1,37 @@
+[property]
+gpu-id=0
+
+onnx-file=/opt/face_models/onnx/det_10g_ds_batchdim.onnx
+model-engine-file=/opt/face_models/trt/det_10g_ds_batchdim_fixed_fp16.engine
+
+batch-size=1
+network-mode=2
+network-type=0
+process-mode=1
+gie-unique-id=1
+
+infer-dims=3;640;640
+
+model-color-format=0
+net-scale-factor=0.0078125
+offsets=127.5;127.5;127.5
+
+maintain-aspect-ratio=0
+symmetric-padding=0
+
+custom-lib-path=/opt/deepstream_face/libnvdsinfer_custom_scrfd_fixed_minbox.so
+parse-bbox-func-name=NvDsInferParseCustomSCRFDFixed
+
+num-detected-classes=1
+
+# Important for Step 06B:
+# We keep object boxes AND expose tensors so Python can decode landmarks.
+output-tensor-meta=1
+output-blob-names=448;451;454;471;474;477;494;497;500
+
+[class-attrs-all]
+pre-cluster-threshold=0.50
+nms-iou-threshold=0.40
+topk=100
+detected-min-w=70
+detected-min-h=70

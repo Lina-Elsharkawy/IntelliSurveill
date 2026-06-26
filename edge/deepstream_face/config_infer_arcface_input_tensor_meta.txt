@@ -1,0 +1,15 @@
+[property]
+gpu-id=0
+model-engine-file=/opt/face_models/trt/w600k_r50_fp16.engine
+
+batch-size=1
+network-mode=2
+network-type=100
+process-mode=1
+gie-unique-id=2
+
+# Critical: consume tensor produced by nvdspreprocess.
+input-tensor-meta=1
+
+output-tensor-meta=1
+output-blob-names=683

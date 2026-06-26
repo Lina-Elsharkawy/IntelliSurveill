@@ -1,0 +1,35 @@
+[property]
+enable=1
+target-unique-ids=2
+
+network-input-order=0
+network-input-shape=1;3;112;112
+
+# DeepStream 6.0.1 requires processing size to match network input.
+# The custom tensor code maps the original full-resolution NvBufSurface safely.
+processing-width=112
+processing-height=112
+
+scaling-buf-pool-size=4
+tensor-buf-pool-size=4
+
+network-color-format=0
+tensor-data-type=0
+tensor-name=input.1
+
+scaling-pool-memory-type=0
+scaling-pool-compute-hw=0
+scaling-filter=1
+
+custom-lib-path=/opt/deepstream_face/step10_fullres/libnvdspreprocess_arcface_fullres_cpu.so
+custom-tensor-preparation-function=CustomTensorPreparation
+
+[user-configs]
+pixel-normalization-factor=0.0078125
+offsets=127.5;127.5;127.5
+
+[group-0]
+src-ids=0
+custom-input-transformation-function=CustomTransformation
+process-on-roi=0
+roi-params-src-0=0;0;640;480

@@ -1,0 +1,1647 @@
+
+
+====================================================================================================
+/opt/nvidia/deepstream/deepstream-6.0/sources/gst-plugins/gst-nvdspreprocess/include/nvdspreprocess_interface.h
+====================================================================================================
+/*
+ * Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * @file nvdspreprocess_interface.h
+ * <b>NVIDIA DeepStream GStreamer NvDsPreProcess API Specification </b>
+ *
+ * @b Description: This file specifies the APIs and function definitions for
+ * the DeepStream GStreamer NvDsPreProcess Plugin.
+ */
+
+/**
+ * @defgroup gstreamer_nvdspreprocess_api NvDsPreProcess Plugin
+ * Defines an API for the GStreamer NvDsPreProcess plugin.
+ * @ingroup custom_gstreamer
+ * @{
+ */
+
+#ifndef __NVDSPREPROCESS_INTERFACE_H__
+#define __NVDSPREPROCESS_INTERFACE_H__
+
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include "nvbufsurface.h"
+#include "nvbufsurftransform.h"
+#include "gstnvdsmeta.h"
+
+#include "nvds_roi_meta.h"
+#include "nvtx3/nvToolsExt.h"
+#include <unordered_map>
+
+/**
+ * Context for custom library
+ */
+typedef struct CustomCtx CustomCtx;
+
+/**
+ * Enum for the status codes returned by NvDsPreProcessImpl.
+ */
+typedef enum
+{
+  /** NvDsPreprocess operation succeeded. */
+  NVDSPREPROCESS_SUCCESS = 0,
+  /** Failed to configure the tensor_impl instance possibly due to an
+     *  erroneous initialization property. */
+  NVDSPREPROCESS_CONFIG_FAILED,
+  /** Custom Library interface implementation failed. */
+  NVDSPREPROCESS_CUSTOM_LIB_FAILED,
+  /** Custom Group Transformation failed. */
+  NVDSPREPROCESS_CUSTOM_TRANSFORMATION_FAILED,
+  /** Custom Tensor Preparation failed. */
+  NVDSPREPROCESS_CUSTOM_TENSOR_FAILED,
+  /** Invalid parameters were supplied. */
+  NVDSPREPROCESS_INVALID_PARAMS,
+  /** Output parsing failed. */
+  NVDSPREPROCESS_OUTPUT_PARSING_FAILED,
+  /** CUDA error was encountered. */
+  NVDSPREPROCESS_CUDA_ERROR,
+  /** TensorRT interface failed. */
+  NVDSPREPROCESS_TENSORRT_ERROR,
+  /** Resource error was encountered. */
+  NVDSPREPROCESS_RESOURCE_ERROR,
+  /** Tensor Yet not ready to be attached as meta */
+  NVDSPREPROCESS_TENSOR_NOT_READY,
+} NvDsPreProcessStatus;
+
+/**
+ * Enum for the network input order according to which
+ * network shape will be provided to prepare raw tensor
+ * for inferencing.
+ */
+typedef enum
+{
+  /** Specifies NCHW network input order */
+  NvDsPreProcessNetworkInputOrder_kNCHW = 0,
+  /** Specifies NHWC network input order */
+  NvDsPreProcessNetworkInputOrder_kNHWC,
+  /** Specifies any other custom input order handled by custom lib*/
+  NvDsPreProcessNetworkInputOrder_CUSTOM,
+} NvDsPreProcessNetworkInputOrder;
+
+/**
+ * Defines model color formats
+ */
+typedef enum
+{
+  /** Specifies 24-bit interleaved R-G-B format. */
+  NvDsPreProcessFormat_RGB,
+  /** Specifies 24-bit interleaved B-G-R format. */
+  NvDsPreProcessFormat_BGR,
+  /** Specifies 8-bit Luma format. */
+  NvDsPreProcessFormat_GRAY,
+  /** Specifies 32-bit interleaved R-G-B-A format. */
+  NvDsPreProcessFormat_RGBA,
+  /** Specifies 32-bit interleaved B-G-R-x format. */
+  NvDsPreProcessFormat_BGRx,
+  /** NCHW planar */
+  NvDsPreProcessFormat_Tensor,
+  NvDsPreProcessFormat_Unknown = 0xFFFFFFFF,
+} NvDsPreProcessFormat;
+
+/**
+ * custom transformation parameter for calling nvbufsurftransform
+ * api for scaling and converting the ROIs to the network resolutions
+ * to be used by custom lib.
+ */
+typedef struct
+{
+  /** transform config params for nvbufsurftransform api*/
+  NvBufSurfTransformConfigParams transform_config_params;
+  /** transform params for nvbufsurftransform api*/
+  NvBufSurfTransformParams transform_params;
+  /** sync objects for async transform */
+  NvBufSurfTransformSyncObj_t sync_obj;
+} CustomTransformParams;
+
+/**
+ * Holds model parameters for tensor preparation
+ */
+typedef struct
+{
+  /** network order at which model will work */
+  NvDsPreProcessNetworkInputOrder network_input_order;
+  /** Hold the network shape - interpreted based on network input order
+   *  For resnet10 : NCHW = infer-batch-size;height;width;num-channels */
+  std::vector<int> network_input_shape;
+  /** Holds the network input format. */
+  NvDsPreProcessFormat network_color_format;
+  /** size of tensor buffer */
+  guint64 buffer_size = 1;
+  /** DataType for tensor formation */
+  NvDsDataType data_type;
+  /** Memory Type for tensor formation */
+  NvBufSurfaceMemType memory_type;
+  /** Name of the tensor same as input layer name of model */
+  std::string tensor_name;
+} NvDsPreProcessTensorParams;
+
+/**
+ * Holds information about the model network.
+ */
+typedef struct
+{
+  /** Holds the input width for the model. */
+  unsigned int width;
+  /** Holds the input height for the model. */
+  unsigned int height;
+  /** Holds the number of input channels for the model. */
+  unsigned int channels;
+} NvDsPreProcessNetworkSize;
+
+/**
+ * Tensor params for Custom sequence processing for 3d conv network
+ */
+typedef struct
+{
+  /** vector of rois which can be modified by custom lib */
+  std::vector<NvDsRoiMeta> roi_vector;
+} CustomSeqProcTensorParams;
+
+/**
+ * Tensor params passed to custom library for tensor preparation
+ */
+typedef struct
+{
+  /** tensor params from plugin */
+  NvDsPreProcessTensorParams params;
+  /** Additional Custom Parameters */
+  CustomSeqProcTensorParams seq_params;
+} CustomTensorParams;
+
+/**
+ * Custom Initialization parameter for custom library
+ */
+typedef struct
+{
+  /** unique id of the preprocess plugin */
+  guint unique_id;
+  /** tensor params from read from config file */
+  NvDsPreProcessTensorParams tensor_params;
+  /** User config map key-value pair */
+  std::unordered_map <std::string, std::string> user_configs;
+  /** nvdspreprocess config file path */
+  gchar *config_file_path;
+} CustomInitParams;
+
+/**
+ * Custom Buffer passed to the custom lib for preparing tensor.
+ */
+struct NvDsPreProcessCustomBuf
+{
+  /** memory ptr where to store prepared tensor */
+  void *memory_ptr;
+};
+
+/**
+ * class for acquiring and releasing a buffer from tensor pool
+ * by custom lib.
+ */
+class NvDsPreProcessAcquirer
+{
+public:
+  /** method to acquire a buffer from buffer pool */
+  virtual NvDsPreProcessCustomBuf *acquire() = 0;
+  /** method to release buffer from buffer pool */
+  virtual gboolean release(NvDsPreProcessCustomBuf *) = 0;
+};
+
+/**
+ * A preprocess unit for processing which can be Frame/ROI.
+ */
+typedef struct
+{
+  /** NvDsObjectParams belonging to the object to be classified. */
+  NvDsObjectMeta *obj_meta = nullptr;
+  /** NvDsFrameMeta of the frame being preprocessed */
+  NvDsFrameMeta *frame_meta = nullptr;
+  /** Index of the frame in the batched input GstBuffer. Not required for
+   * classifiers. */
+  guint batch_index = 0;
+  /** Frame number of the frame from the source. */
+  gulong frame_num = 0;
+  /** The buffer structure the object / frame was converted from. */
+  NvBufSurfaceParams *input_surf_params = nullptr;
+  /** Pointer to the converted frame memory. This memory contains the frame
+   * converted to RGB/RGBA and scaled to network resolution. This memory is
+   * given to Output loop as input for mean subtraction and normalization and
+   * Tensor Buffer formation for inferencing. */
+  gpointer converted_frame_ptr = nullptr;
+  /** New meta for rois provided */
+  NvDsRoiMeta roi_meta;
+
+} NvDsPreProcessUnit;
+
+/**
+ * Holds information about the batch of frames to be inferred.
+ */
+typedef struct
+{
+  /** Vector of units in the batch. Can be for Frame/ROI/Crop */
+  std::vector<NvDsPreProcessUnit> units;
+  /** Pointer to the input GstBuffer. */
+  GstBuffer *inbuf = nullptr;
+  /** Batch number of the input batch. */
+  gulong inbuf_batch_num = 0;
+  /** Boolean indicating that the output thread should only push the buffer to
+   * downstream element. If set to true, a corresponding batch has not been
+   * queued at the input of NvDsPreProcessContext and hence dequeuing of output is
+   * not required. */
+  gboolean push_buffer = FALSE;
+  /** Boolean marking this batch as an event marker. This is only used for
+   * synchronization. The output loop does not process on the batch.
+   */
+  gboolean event_marker = FALSE;
+  /** Buffer containing the intermediate conversion output for the batch. */
+  GstBuffer *converted_buf = nullptr;
+  /** scaling pool color format */
+  NvDsPreProcessFormat scaling_pool_format;
+  /** Deepstream batch meta */
+  NvDsBatchMeta *batch_meta;
+  /** Holds the pitch of the buffer */
+  uint32_t pitch;
+  /** nvtx buf range */
+  nvtxRangeId_t nvtx_complete_buf_range = 0;
+} NvDsPreProcessBatch;
+
+#endif //__NVDSPREPROCESS_INTERFACE_H__
+
+/** @} */
+
+====================================================================================================
+/opt/nvidia/deepstream/deepstream-6.0/sources/gst-plugins/gst-nvdspreprocess/include/nvdspreprocess_meta.h
+====================================================================================================
+/*
+ * Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * @file nvdspreprocess_meta.h
+ * <b>NVIDIA DeepStream GStreamer NvDsPreProcess meta Specification </b>
+ *
+ * @b Description: This file specifies the metadata attached by
+ * the DeepStream GStreamer NvDsPreProcess Plugin.
+ */
+
+/**
+ * @defgroup   gstreamer_nvdspreprocess_api  NvDsPreProcess Plugin
+ * Defines an API for the GStreamer NvDsPreProcess plugin.
+ * @ingroup custom_gstreamer
+ * @{
+ */
+
+#ifndef __NVDSPREPROCESS_META_H__
+#define __NVDSPREPROCESS_META_H__
+
+#include <vector>
+#include <string>
+#include "nvbufsurface.h"
+#include "nvds_roi_meta.h"
+
+/**
+ * tensor meta containing prepared tensor and related info
+ * inside preprocess user meta which is attached at batch level
+ */
+typedef struct
+{
+  /** raw tensor buffer preprocessed for infer */
+  void *raw_tensor_buffer;
+
+  /** size of raw tensor buffer */
+  guint64 buffer_size;
+
+  /** raw tensor buffer shape */
+  std::vector<int> tensor_shape;
+
+  /** model datatype for which tensor prepared */
+  NvDsDataType data_type;
+
+  /** to be same as model input layer name */
+  std::string tensor_name;
+
+  /** gpu-id on which tensor prepared */
+  guint gpu_id;
+
+  /** pointer to buffer from tensor pool */
+  void *private_data;
+
+} NvDsPreProcessTensorMeta;
+
+/**
+ * preprocess meta as a user meta which is attached at
+ * batch level
+ */
+typedef struct
+{
+  /** target unique ids for which meta is prepared */
+  std::vector<guint64> target_unique_ids;
+
+  /** pointer to tensor meta */
+  NvDsPreProcessTensorMeta *tensor_meta;
+
+  /** list of roi vectors per batch */
+  std::vector<NvDsRoiMeta> roi_vector;
+
+  /** pointer to buffer from scaling pool*/
+  void *private_data;
+
+} GstNvDsPreProcessBatchMeta;
+
+#endif /* __NVDSPREPROCESS_META_H__ */
+
+
+====================================================================================================
+/opt/nvidia/deepstream/deepstream-6.0/sources/gst-plugins/gst-nvdspreprocess/nvdspreprocess_lib/nvdspreprocess_lib.h
+====================================================================================================
+/*
+ * Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * @file nvdspreprocess_lib.h
+ * <b>NVIDIA DeepStream Preprocess lib specifications </b>
+ *
+ * @b Description: This file defines common elements used in the API
+ * exposed by the Gst-nvdspreprocess plugin.
+ */
+
+/**
+ * @defgroup  gstreamer_nvdspreprocess_api NvDsPreProcess Plugin
+ * Defines an API for the GStreamer NvDsPreProcess custom lib.
+ * @ingroup custom_gstreamer
+ * @{
+ */
+
+#ifndef __NVDSPREPROCESS_LIB__
+#define __NVDSPREPROCESS_LIB__
+
+#include "nvbufsurface.h"
+#include "nvbufsurftransform.h"
+#include "nvdspreprocess_interface.h"
+
+/** Maximum file path length */
+#define _PATH_MAX 4096
+
+/** pixel-normalization-factor config parameter */
+#define NVDSPREPROCESS_USER_CONFIGS_PIXEL_NORMALIZATION_FACTOR "pixel-normalization-factor"
+
+/** mean-file config parameter */
+#define NVDSPREPROCESS_USER_CONFIGS_MEAN_FILE "mean-file"
+
+/** offsets config parameter */
+#define NVDSPREPROCESS_USER_CONFIGS_OFFSETS "offsets"
+
+/**
+ * Custom transformation function for group
+ */
+extern "C"
+NvDsPreProcessStatus CustomTransformation(NvBufSurface *in_surf,
+                                          NvBufSurface *out_surf,
+                                          CustomTransformParams &params);
+
+/**
+ * Custom Asynchronus group transformation function
+ */
+extern "C"
+NvDsPreProcessStatus CustomAsyncTransformation(NvBufSurface *in_surf,
+                                          NvBufSurface *out_surf,
+                                          CustomTransformParams &params);
+
+/**
+ * Custom tensor preparation function for NCHW/NHWC network order
+ */
+extern "C"
+NvDsPreProcessStatus CustomTensorPreparation(CustomCtx *ctx, NvDsPreProcessBatch *batch, NvDsPreProcessCustomBuf *&buf,
+                                             CustomTensorParams &tensorParam, NvDsPreProcessAcquirer *acquirer);
+
+/**
+ * custom library initialization function
+ */
+extern "C"
+CustomCtx *initLib(CustomInitParams initparams);
+
+/**
+ * custom library deinitialization function
+ */
+extern "C"
+void deInitLib(CustomCtx *ctx);
+
+#endif
+
+
+====================================================================================================
+/opt/nvidia/deepstream/deepstream-6.0/sources/gst-plugins/gst-nvdspreprocess/nvdspreprocess_lib/nvdspreprocess_lib.cpp
+====================================================================================================
+/*
+ * Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+#include <iostream>
+#include <fstream>
+#include <thread>
+#include <string.h>
+#include <queue>
+#include <mutex>
+#include <stdexcept>
+#include <condition_variable>
+
+#include "nvbufsurface.h"
+#include "nvbufsurftransform.h"
+
+#include "nvdspreprocess_lib.h"
+#include "nvdspreprocess_impl.h"
+
+struct CustomCtx
+{
+  /** Custom initialization parameters */
+  CustomInitParams initParams;
+  /** Custom mean subtraction and normalization parameters */
+  CustomMeanSubandNormParams custom_mean_norm_params;
+  /** unique pointer to tensor_impl class instance */
+  std::unique_ptr <NvDsPreProcessTensorImpl> tensor_impl;
+};
+
+/* Get the absolute path of a file mentioned in the config given a
+ * file path absolute/relative to the config file. */
+static gboolean
+get_absolute_file_path (
+    const gchar * cfg_file_path, const gchar * file_path,
+    char *abs_path_str)
+{
+  gchar abs_cfg_path[_PATH_MAX + 1];
+  gchar abs_real_file_path[_PATH_MAX + 1];
+  gchar *abs_file_path;
+  gchar *delim;
+
+  /* Absolute path. No need to resolve further. */
+  if (file_path[0] == '/') {
+    /* Check if the file exists, return error if not. */
+    if (!realpath (file_path, abs_real_file_path)) {
+      return FALSE;
+    }
+    g_strlcpy (abs_path_str, abs_real_file_path, _PATH_MAX);
+    return TRUE;
+  }
+
+  /* Get the absolute path of the config file. */
+  if (!realpath (cfg_file_path, abs_cfg_path)) {
+    return FALSE;
+  }
+
+  /* Remove the file name from the absolute path to get the directory of the
+   * config file. */
+  delim = g_strrstr (abs_cfg_path, "/");
+  *(delim + 1) = '\0';
+
+  /* Get the absolute file path from the config file's directory path and
+   * relative file path. */
+  abs_file_path = g_strconcat (abs_cfg_path, file_path, nullptr);
+
+  /* Resolve the path.*/
+  if (realpath (abs_file_path, abs_real_file_path) == nullptr) {
+    /* Ignore error if file does not exist and use the unresolved path. */
+    if (errno == ENOENT)
+      g_strlcpy (abs_real_file_path, abs_file_path, _PATH_MAX);
+    else
+      return FALSE;
+  }
+
+  g_free (abs_file_path);
+
+  g_strlcpy (abs_path_str, abs_real_file_path, _PATH_MAX);
+  return TRUE;
+}
+
+NvDsPreProcessStatus
+CustomTensorPreparation(CustomCtx *ctx, NvDsPreProcessBatch *batch, NvDsPreProcessCustomBuf *&buf,
+                        CustomTensorParams &tensorParam, NvDsPreProcessAcquirer *acquirer)
+{
+  NvDsPreProcessStatus status = NVDSPREPROCESS_TENSOR_NOT_READY;
+
+  /** acquire a buffer from tensor pool */
+  buf = acquirer->acquire();
+
+  /** Prepare Tensor */
+  status = ctx->tensor_impl->prepare_tensor(batch, buf->memory_ptr);
+  if (status != NVDSPREPROCESS_SUCCESS) {
+    printf ("Custom Lib: Tensor Preparation failed\n");
+    acquirer->release(buf);
+  }
+
+  /** synchronize cuda stream */
+  status = ctx->tensor_impl->syncStream();
+  if (status != NVDSPREPROCESS_SUCCESS) {
+    printf ("Custom Lib: Cuda Stream Synchronization failed\n");
+    acquirer->release(buf);
+  }
+
+  tensorParam.params.network_input_shape[0] = (int)batch->units.size();
+
+  if (status != NVDSPREPROCESS_SUCCESS) {
+    printf ("CustomTensorPreparation failed\n");
+    acquirer->release(buf);
+  }
+
+  return status;
+}
+
+NvDsPreProcessStatus
+CustomTransformation(NvBufSurface *in_surf, NvBufSurface *out_surf, CustomTransformParams &params)
+{
+  NvBufSurfTransform_Error err;
+
+  err = NvBufSurfTransformSetSessionParams(&params.transform_config_params);
+  if (err != NvBufSurfTransformError_Success)
+  {
+      printf("NvBufSurfTransformSetSessionParams failed with error %d\n", err);
+      return NVDSPREPROCESS_CUSTOM_TRANSFORMATION_FAILED;
+  }
+
+  /* Batched tranformation. */
+  err = NvBufSurfTransform(in_surf, out_surf, &params.transform_params);
+
+  if (err != NvBufSurfTransformError_Success)
+  {
+      printf("NvBufSurfTransform failed with error %d\n", err);
+      return NVDSPREPROCESS_CUSTOM_TRANSFORMATION_FAILED;
+  }
+
+  return NVDSPREPROCESS_SUCCESS;
+}
+
+NvDsPreProcessStatus
+CustomAsyncTransformation(NvBufSurface *in_surf, NvBufSurface *out_surf, CustomTransformParams &params)
+{
+  NvBufSurfTransform_Error err;
+
+  err = NvBufSurfTransformSetSessionParams(&params.transform_config_params);
+  if (err != NvBufSurfTransformError_Success)
+  {
+      printf("NvBufSurfTransformSetSessionParams failed with error %d\n", err);
+      return NVDSPREPROCESS_CUSTOM_TRANSFORMATION_FAILED;
+  }
+
+  /* Async Batched tranformation. */
+  err = NvBufSurfTransformAsync(in_surf, out_surf, &params.transform_params, &params.sync_obj);
+
+  if (err != NvBufSurfTransformError_Success)
+  {
+      printf("NvBufSurfTransform failed with error %d\n", err);
+      return NVDSPREPROCESS_CUSTOM_TRANSFORMATION_FAILED;
+  }
+
+  return NVDSPREPROCESS_SUCCESS;
+}
+
+CustomCtx *initLib(CustomInitParams initparams)
+{
+  CustomCtx *ctx =  new CustomCtx;
+  NvDsPreProcessStatus status;
+
+  ctx->custom_mean_norm_params.pixel_normalization_factor =
+      std::stof(initparams.user_configs[NVDSPREPROCESS_USER_CONFIGS_PIXEL_NORMALIZATION_FACTOR]);
+
+  if (!initparams.user_configs[NVDSPREPROCESS_USER_CONFIGS_MEAN_FILE].empty()) {
+    gchar *abs_path = new gchar[_PATH_MAX];
+    if (!get_absolute_file_path (initparams.config_file_path,
+          initparams.user_configs[NVDSPREPROCESS_USER_CONFIGS_MEAN_FILE].c_str(), abs_path)) {
+      printf("Error: Could not parse mean image file path\n");
+      return nullptr;
+    }
+    if (!ctx->custom_mean_norm_params.meanImageFilePath.empty()) {
+      ctx->custom_mean_norm_params.meanImageFilePath.clear();
+    }
+    ctx->custom_mean_norm_params.meanImageFilePath.append(abs_path);
+    delete abs_path;
+  }
+
+  std::string offsets_str = initparams.user_configs[NVDSPREPROCESS_USER_CONFIGS_OFFSETS];
+
+  if (!offsets_str.empty()) {
+    std::string delimiter = ";";
+    size_t pos = 0;
+    std::string token;
+
+    while ((pos = offsets_str.find(delimiter)) != std::string::npos) {
+        token = offsets_str.substr(0, pos);
+        ctx->custom_mean_norm_params.offsets.push_back(std::stof(token));
+        offsets_str.erase(0, pos + delimiter.length());
+    }
+    ctx->custom_mean_norm_params.offsets.push_back(std::stof(offsets_str));
+
+    printf("Using offsets : %f,%f,%f\n", ctx->custom_mean_norm_params.offsets[0],
+          ctx->custom_mean_norm_params.offsets[1], ctx->custom_mean_norm_params.offsets[2]);
+  }
+
+  status = normalization_mean_subtraction_impl_initialize(&ctx->custom_mean_norm_params,
+          &initparams.tensor_params, ctx->tensor_impl, initparams.unique_id);
+
+  if (status != NVDSPREPROCESS_SUCCESS) {
+    printf("normalization_mean_subtraction_impl_initialize failed\n");
+    return nullptr;
+  }
+
+  ctx->initParams = initparams;
+
+  return ctx;
+}
+
+void deInitLib(CustomCtx *ctx)
+{
+  delete ctx;
+}
+
+====================================================================================================
+/opt/nvidia/deepstream/deepstream-6.0/sources/gst-plugins/gst-nvdspreprocess/config_preprocess.txt
+====================================================================================================
+################################################################################
+# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+################################################################################
+
+# The values in the config file are overridden by values set through GObject
+# properties.
+
+[property]
+enable=1
+target-unique-ids=1
+    # 0=NCHW, 1=NHWC, 2=CUSTOM
+network-input-order=0
+    # tensor shape based on network-input-order
+network-input-shape=7;3;368;640
+processing-width=640
+processing-height=368
+scaling-buf-pool-size=6
+tensor-buf-pool-size=6
+    # 0=RGB, 1=BGR, 2=GRAY
+network-color-format=0
+    # 0=FP32, 1=UINT8, 2=INT8, 3=UINT32, 4=INT32, 5=FP16
+tensor-data-type=0
+tensor-name=input_1
+    # 0=NVBUF_MEM_DEFAULT 1=NVBUF_MEM_CUDA_PINNED 2=NVBUF_MEM_CUDA_DEVICE 3=NVBUF_MEM_CUDA_UNIFIED 4=NVBUF_MEM_SURFACE_ARRAY
+scaling-pool-memory-type=0
+    # 0=NvBufSurfTransformCompute_Default 1=NvBufSurfTransformCompute_GPU 2=NvBufSurfTransformCompute_VIC
+scaling-pool-compute-hw=0
+    # Scaling Interpolation method
+    # 0=NvBufSurfTransformInter_Nearest 1=NvBufSurfTransformInter_Bilinear 2=NvBufSurfTransformInter_Algo1
+    # 3=NvBufSurfTransformInter_Algo2 4=NvBufSurfTransformInter_Algo3 5=NvBufSurfTransformInter_Algo4
+    # 6=NvBufSurfTransformInter_Default
+scaling-filter=0
+
+custom-lib-path=/opt/nvidia/deepstream/deepstream-6.0/lib/gst-plugins/libcustom2d_preprocess.so
+custom-tensor-preparation-function=CustomTensorPreparation
+
+[user-configs]
+pixel-normalization-factor=0.003921568
+#offsets=
+#mean-file=
+
+[group-0]
+src-ids=0;1
+custom-input-transformation-function=CustomAsyncTransformation
+process-on-roi=1
+roi-params-src-0=0;540;900;500;960;0;900;500
+roi-params-src-1=0;540;900;500;960;0;900;500
+
+[group-1]
+src-ids=2
+custom-input-transformation-function=CustomAsyncTransformation
+process-on-roi=1
+roi-params-src-2=0;540;900;500;960;0;900;500
+
+[group-2]
+src-ids=3
+custom-input-transformation-function=CustomAsyncTransformation
+process-on-roi=0
+roi-params-src-3=0;540;900;500;960;0;900;500
+
+
+====================================================================================================
+/opt/nvidia/deepstream/deepstream-6.0/sources/apps/sample_apps/deepstream-preprocess-test/test/config_preprocess_classifier_resnet50.txt
+====================================================================================================
+################################################################################
+# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+################################################################################
+
+# The values in the config file are overridden by values set through GObject
+# properties.
+# For resnet50-onnx-classifier
+
+[property]
+enable=1
+target-unique-ids=1
+    # 0=NCHW, 1=NHWC, 2=CUSTOM
+network-input-order=0
+    # tensor shape based on network-input-order
+network-input-shape= 4;3;224;224
+processing-width=224
+processing-height=224
+scaling-buf-pool-size=6
+tensor-buf-pool-size=6
+    # 0=RGB, 1=BGR, 2=GRAY
+network-color-format=0
+    # 0=FP32, 1=UINT8, 2=INT8, 3=UINT32, 4=INT32, 5=FP16
+tensor-data-type=0
+tensor-name=gpu_0/data_0
+    # 0=NVBUF_MEM_DEFAULT 1=NVBUF_MEM_CUDA_PINNED 2=NVBUF_MEM_CUDA_DEVICE 3=NVBUF_MEM_CUDA_UNIFIED
+scaling-pool-memory-type=0
+    # 0=NvBufSurfTransformCompute_Default 1=NvBufSurfTransformCompute_GPU 2=NvBufSurfTransformCompute_VIC
+scaling-pool-compute-hw=0
+    # Scaling Interpolation method
+    # 0=NvBufSurfTransformInter_Nearest 1=NvBufSurfTransformInter_Bilinear 2=NvBufSurfTransformInter_Algo1
+    # 3=NvBufSurfTransformInter_Algo2 4=NvBufSurfTransformInter_Algo3 5=NvBufSurfTransformInter_Algo4
+    # 6=NvBufSurfTransformInter_Default
+scaling-filter=0
+custom-lib-path=/opt/nvidia/deepstream/deepstream-6.0/lib/gst-plugins/libcustom2d_preprocess.so
+custom-tensor-preparation-function=CustomTensorPreparation
+
+[user-configs]
+pixel-normalization-factor=0.01735207
+offsets=123.67;116.28;103.53
+
+[group-0]
+src-ids=0;1
+custom-input-transformation-function=CustomAsyncTransformation
+process-on-roi=1
+roi-params-src-0=0;0;100;100
+roi-params-src-1=0;0;1900;1000
+
+[group-1]
+src-ids=2
+custom-input-transformation-function=CustomAsyncTransformation
+process-on-roi=1
+roi-params-src-2=0;0;1900;1000
+
+[group-2]
+src-ids=3
+custom-input-transformation-function=CustomAsyncTransformation
+process-on-roi=0
+roi-params-src-3=0;540;900;500;960;0;900;500
+
+
+====================================================================================================
+/opt/nvidia/deepstream/deepstream-6.0/sources/apps/sample_apps/deepstream-preprocess-test/deepstream_preprocess_test.cpp
+====================================================================================================
+/*
+ * Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+#include <gst/gst.h>
+#include <glib.h>
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+#include <sys/time.h>
+#include <cuda_runtime_api.h>
+#include <fstream>
+#include <string>
+
+#include "gstnvdsmeta.h"
+#include "nvdspreprocess_meta.h"
+#include "gstnvdsinfer.h"
+
+#ifndef PLATFORM_TEGRA
+#include "gst-nvmessage.h"
+#endif
+
+#define MAX_DISPLAY_LEN 64
+
+/** Defines the maximum size of an array for storing a text result. */
+#define MAX_LABEL_SIZE 128
+
+#define PGIE_CLASS_ID_VEHICLE 0
+#define PGIE_CLASS_ID_PERSON 2
+
+/* By default, OSD process-mode is set to CPU_MODE. To change mode, set as:
+ * 1: GPU mode (for Tesla only)
+ * 2: HW mode (For Jetson only)
+ */
+#define OSD_PROCESS_MODE 0
+
+/* By default, OSD will not display text. To display text, change this to 1 */
+#define OSD_DISPLAY_TEXT 1
+
+/* The muxer output resolution must be set if the input streams will be of
+ * different resolution. The muxer will scale all the input frames to this
+ * resolution. */
+#define MUXER_OUTPUT_WIDTH 1920
+#define MUXER_OUTPUT_HEIGHT 1080
+
+/* Muxer batch formation timeout, for e.g. 40 millisec. Should ideally be set
+ * based on the fastest source's framerate. */
+#define MUXER_BATCH_TIMEOUT_USEC 40000
+
+#define TILED_OUTPUT_WIDTH 1280
+#define TILED_OUTPUT_HEIGHT 720
+
+/* NVIDIA Decoder source pad memory feature. This feature signifies that source
+ * pads having this capability will push GstBuffers containing cuda buffers. */
+#define GST_CAPS_FEATURES_NVMM "memory:NVMM"
+
+gchar pgie_classes_str[4][32] = {"Vehicle", "TwoWheeler", "Person",
+                                 "RoadSign"};
+
+#define FPS_PRINT_INTERVAL 300
+
+std::vector<std::vector<std::string>> m_Labels;
+
+gboolean
+parse_labels_file(const std::string &labelsFilePath, std::vector<std::vector<std::string>> &m_Labels);
+
+gboolean
+parse_labels_file(const std::string &labelsFilePath, std::vector<std::vector<std::string>> &m_Labels)
+{
+  std::ifstream labels_file(labelsFilePath);
+  std::string delim{';'};
+
+  if (!labels_file.is_open())
+  {
+    g_print("Could not open labels file:%s", labelsFilePath.c_str());
+    return FALSE;
+  }
+  while (labels_file.good() && !labels_file.eof())
+  {
+    std::string line, word;
+    std::vector<std::string> l;
+    size_t pos = 0, oldpos = 0;
+
+    std::getline(labels_file, line, '\n');
+    if (line.empty())
+      continue;
+
+    while ((pos = line.find(delim, oldpos)) != std::string::npos)
+    {
+      word = line.substr(oldpos, pos - oldpos);
+      l.push_back(word);
+      oldpos = pos + delim.length();
+    }
+    l.push_back(line.substr(oldpos));
+    m_Labels.push_back(l);
+  }
+
+  if (labels_file.bad())
+  {
+    g_print("Failed to parse labels file:%s, iostate:%d",
+            labelsFilePath.c_str(), (int)labels_file.rdstate());
+    return FALSE;
+  }
+  return TRUE;
+}
+#if 0
+static GstPadProbeReturn
+pgie_sink_pad_buffer_probe (GstPad * pad, GstPadProbeInfo * info,
+    gpointer u_data)
+{
+    GstBuffer *buf = (GstBuffer *) info->data;
+    NvDsMetaList * l_user_meta = NULL;
+    NvDsUserMeta *user_meta = NULL;
+
+    NvDsBatchMeta *batch_meta = gst_buffer_get_nvds_batch_meta (buf);
+
+    for (l_user_meta = batch_meta->batch_user_meta_list; l_user_meta != NULL;
+        l_user_meta = l_user_meta->next) 
+    {
+      user_meta = (NvDsUserMeta *)(l_user_meta->data);
+      if (user_meta->base_meta.meta_type == NVDS_PREPROCESS_BATCH_META) 
+      {
+        GstNvDsPreProcessBatchMeta *preprocess_batchmeta =
+            (GstNvDsPreProcessBatchMeta *) (user_meta->user_meta_data);
+        if (preprocess_batchmeta->tensor_meta->raw_tensor_buffer) {
+          g_print("received preprocess meta\n");
+        }
+      }
+    }
+    return GST_PAD_PROBE_OK;
+}
+#endif
+/* tiler_sink_pad_buffer_probe  will extract metadata received on OSD sink pad
+ * and update params for drawing rectangle, object information etc. */
+
+static GstPadProbeReturn
+pgie_src_pad_buffer_probe(GstPad *pad, GstPadProbeInfo *info,
+                          gpointer u_data)
+{
+  GstBuffer *buf = (GstBuffer *)info->data;
+  guint num_rects = 0;
+  NvDsObjectMeta *obj_meta = NULL;
+  NvDsMetaList *l_frame = NULL;
+  NvDsMetaList *l_obj = NULL;
+  NvDsDisplayMeta *display_meta = NULL;
+
+  NvDsBatchMeta *batch_meta = gst_buffer_get_nvds_batch_meta(buf);
+
+  for (l_frame = batch_meta->frame_meta_list; l_frame != NULL;
+       l_frame = l_frame->next)
+  {
+    NvDsFrameMeta *frame_meta = (NvDsFrameMeta *)(l_frame->data);
+    //int offset = 0;
+    for (l_obj = frame_meta->obj_meta_list; l_obj != NULL;
+         l_obj = l_obj->next)
+    {
+      obj_meta = (NvDsObjectMeta *)(l_obj->data);
+      num_rects++;
+
+      NvDsMetaList *l_classifier = NULL;
+      for (l_classifier = obj_meta->classifier_meta_list; l_classifier != NULL;
+           l_classifier = l_classifier->next)
+      {
+        NvDsClassifierMeta *classifier_meta = (NvDsClassifierMeta *)(l_classifier->data);
+        NvDsLabelInfoList *l_label;
+        for (l_label = classifier_meta->label_info_list; l_label != NULL;
+             l_label = l_classifier->next)
+        {
+          NvDsLabelInfo *label_info = (NvDsLabelInfo *)l_label->data;
+
+          display_meta = nvds_acquire_display_meta_from_pool(batch_meta);
+          display_meta->num_labels = 1;
+          NvOSD_TextParams *txt_params = &display_meta->text_params[0];
+          txt_params->display_text = (char *)g_malloc0(MAX_LABEL_SIZE);
+
+          snprintf(txt_params->display_text, MAX_LABEL_SIZE, "%s", label_info->result_label);
+          //printf("%s\n", label_info->result_label);
+          /* Now set the offsets where the string should appear */
+          txt_params->x_offset = 10;
+          txt_params->y_offset = 12;
+
+          /* Font , font-color and font-size */
+          txt_params->font_params.font_name = (char *)"Serif";
+          txt_params->font_params.font_size = 10;
+          txt_params->font_params.font_color.red = 1.0;
+          txt_params->font_params.font_color.green = 1.0;
+          txt_params->font_params.font_color.blue = 1.0;
+          txt_params->font_params.font_color.alpha = 1.0;
+
+          /* Text background color */
+          txt_params->set_bg_clr = 1;
+          txt_params->text_bg_clr.red = 0.0;
+          txt_params->text_bg_clr.green = 0.0;
+          txt_params->text_bg_clr.blue = 0.0;
+          txt_params->text_bg_clr.alpha = 1.0;
+
+          nvds_add_display_meta_to_frame(frame_meta, display_meta);
+        }
+      }
+    }
+    g_print("Source ID = %d Frame Number = %d Number of objects = %d\n",
+            frame_meta->source_id, frame_meta->frame_num, num_rects);
+#if 0
+        display_meta = nvds_acquire_display_meta_from_pool(batch_meta);
+        NvOSD_TextParams *txt_params  = &display_meta->text_params;
+        txt_params->display_text = g_malloc0 (MAX_DISPLAY_LEN);
+        offset = snprintf(txt_params->display_text, MAX_DISPLAY_LEN, "Person = %d ", person_count);
+        offset = snprintf(txt_params->display_text + offset , MAX_DISPLAY_LEN, "Vehicle = %d ", vehicle_count);
+
+        /* Now set the offsets where the string should appear */
+        txt_params->x_offset = 10;
+        txt_params->y_offset = 12;
+
+        /* Font , font-color and font-size */
+        txt_params->font_params.font_name = "Serif";
+        txt_params->font_params.font_size = 10;
+        txt_params->font_params.font_color.red = 1.0;
+        txt_params->font_params.font_color.green = 1.0;
+        txt_params->font_params.font_color.blue = 1.0;
+        txt_params->font_params.font_color.alpha = 1.0;
+
+        /* Text background color */
+        txt_params->set_bg_clr = 1;
+        txt_params->text_bg_clr.red = 0.0;
+        txt_params->text_bg_clr.green = 0.0;
+        txt_params->text_bg_clr.blue = 0.0;
+        txt_params->text_bg_clr.alpha = 1.0;
+
+        nvds_add_display_meta_to_frame(frame_meta, display_meta);
+#endif
+  }
+
+#if 1
+  NvDsMetaList *l_user_meta = NULL;
+  NvDsUserMeta *user_meta = NULL;
+  for (l_user_meta = batch_meta->batch_user_meta_list; l_user_meta != NULL;
+       l_user_meta = l_user_meta->next)
+  {
+    user_meta = (NvDsUserMeta *)(l_user_meta->data);
+    if (user_meta->base_meta.meta_type == NVDS_PREPROCESS_BATCH_META)
+    {
+      GstNvDsPreProcessBatchMeta *preprocess_batchmeta =
+          (GstNvDsPreProcessBatchMeta *)(user_meta->user_meta_data);
+      guint roi_cnt = 0;
+      for (auto &roi_meta : preprocess_batchmeta->roi_vector)
+      {
+        NvDsMetaList *l_user = NULL;
+        for (l_user = roi_meta.roi_user_meta_list; l_user != NULL;
+             l_user = l_user->next)
+        {
+          NvDsUserMeta *user_meta = (NvDsUserMeta *)(l_user->data);
+          if (user_meta->base_meta.meta_type == NVDSINFER_SEGMENTATION_META)
+          {
+            NvDsInferSegmentationMeta *segmeta = (NvDsInferSegmentationMeta *)(user_meta->user_meta_data);
+            std::vector<float> temp(segmeta->width * segmeta->height);
+            for (size_t i = 0; i < temp.size(); i++)
+            {
+              temp[i] = segmeta->class_map[i];
+            }
+            std::ofstream outfile("segout_frame_" +
+                                  std::to_string(roi_meta.frame_meta->frame_num) + "_src_" +
+                                  std::to_string(roi_meta.frame_meta->source_id) + "_roi_" +
+                                  std::to_string(roi_cnt) + "_" +
+                                  std::to_string(segmeta->width) + "x" +
+                                  std::to_string(segmeta->height) + ".bin");
+            outfile.write((char *)temp.data(), sizeof(float) * temp.size());
+            outfile.close();
+          }
+          if (user_meta->base_meta.meta_type == NVDSINFER_TENSOR_OUTPUT_META)
+          {
+            NvDsInferTensorMeta *tensor_meta = (NvDsInferTensorMeta *)(user_meta->user_meta_data);
+            gfloat max_prob = 0;
+            gint class_id = -1;
+            gfloat *buffer = (gfloat *)tensor_meta->out_buf_ptrs_host[0];
+            for (size_t i = 0; i < tensor_meta->output_layers_info[0].inferDims.d[0]; i++)
+            {
+              if (buffer[i] > max_prob)
+              {
+                max_prob = buffer[i];
+                class_id = i;
+              }
+            }
+            printf("frame %d src %d roi %d label %s\n", roi_meta.frame_meta->frame_num, roi_meta.frame_meta->source_id,
+                   roi_cnt, m_Labels[0][class_id].c_str());
+          }
+        }
+        roi_cnt++;
+
+        NvDsMetaList *l_classifier = NULL;
+        for (l_classifier = roi_meta.classifier_meta_list; l_classifier != NULL;
+             l_classifier = l_classifier->next)
+        {
+          NvDsClassifierMeta *classifier_meta = (NvDsClassifierMeta *)(l_classifier->data);
+          NvDsLabelInfoList *l_label;
+          for (l_label = classifier_meta->label_info_list; l_label != NULL;
+               l_label = l_classifier->next)
+          {
+            NvDsLabelInfo *label_info = (NvDsLabelInfo *)l_label->data;
+
+            display_meta = nvds_acquire_display_meta_from_pool(batch_meta);
+            display_meta->num_labels = 1;
+
+            NvOSD_TextParams *txt_params = &display_meta->text_params[0];
+            txt_params->display_text = (char *)g_malloc0(MAX_LABEL_SIZE);
+
+            snprintf(txt_params->display_text, sizeof(label_info->result_label), "%s", label_info->result_label);
+            printf("%s\n", label_info->result_label);
+            /* Now set the offsets where the string should appear */
+            txt_params->x_offset = 10;
+            txt_params->y_offset = 12;
+
+            /* Font , font-color and font-size */
+            txt_params->font_params.font_name = (char *)"Serif";
+            txt_params->font_params.font_size = 10;
+            txt_params->font_params.font_color.red = 1.0;
+            txt_params->font_params.font_color.green = 1.0;
+            txt_params->font_params.font_color.blue = 1.0;
+            txt_params->font_params.font_color.alpha = 1.0;
+
+            /* Text background color */
+            txt_params->set_bg_clr = 1;
+            txt_params->text_bg_clr.red = 0.0;
+            txt_params->text_bg_clr.green = 0.0;
+            txt_params->text_bg_clr.blue = 0.0;
+            txt_params->text_bg_clr.alpha = 1.0;
+
+            nvds_add_display_meta_to_frame(roi_meta.frame_meta, display_meta);
+          }
+        }
+      }
+    }
+  }
+#endif
+  return GST_PAD_PROBE_OK;
+}
+
+static gboolean
+bus_call(GstBus *bus, GstMessage *msg, gpointer data)
+{
+  GMainLoop *loop = (GMainLoop *)data;
+  switch (GST_MESSAGE_TYPE(msg))
+  {
+  case GST_MESSAGE_EOS:
+    g_print("End of stream\n");
+    g_main_loop_quit(loop);
+    break;
+  case GST_MESSAGE_WARNING:
+  {
+    gchar *debug;
+    GError *error;
+    gst_message_parse_warning(msg, &error, &debug);
+    g_printerr("WARNING from element %s: %s\n",
+               GST_OBJECT_NAME(msg->src), error->message);
+    g_free(debug);
+    g_printerr("Warning: %s\n", error->message);
+    g_error_free(error);
+    break;
+  }
+  case GST_MESSAGE_ERROR:
+  {
+    gchar *debug;
+    GError *error;
+    gst_message_parse_error(msg, &error, &debug);
+    g_printerr("ERROR from element %s: %s\n",
+               GST_OBJECT_NAME(msg->src), error->message);
+    if (debug)
+      g_printerr("Error details: %s\n", debug);
+    g_free(debug);
+    g_error_free(error);
+    g_main_loop_quit(loop);
+    break;
+  }
+#ifndef PLATFORM_TEGRA
+  case GST_MESSAGE_ELEMENT:
+  {
+    if (gst_nvmessage_is_stream_eos(msg))
+    {
+      guint stream_id;
+      if (gst_nvmessage_parse_stream_eos(msg, &stream_id))
+      {
+        g_print("Got EOS from stream %d\n", stream_id);
+      }
+    }
+    break;
+  }
+#endif
+  default:
+    break;
+  }
+  return TRUE;
+}
+
+static void
+cb_newpad(GstElement *decodebin, GstPad *decoder_src_pad, gpointer data)
+{
+  g_print("In cb_newpad\n");
+  GstCaps *caps = gst_pad_get_current_caps(decoder_src_pad);
+  const GstStructure *str = gst_caps_get_structure(caps, 0);
+  const gchar *name = gst_structure_get_name(str);
+  GstElement *source_bin = (GstElement *)data;
+  GstCapsFeatures *features = gst_caps_get_features(caps, 0);
+
+  /* Need to check if the pad created by the decodebin is for video and not
+   * audio. */
+  if (!strncmp(name, "video", 5))
+  {
+    /* Link the decodebin pad only if decodebin has picked nvidia
+     * decoder plugin nvdec_*. We do this by checking if the pad caps contain
+     * NVMM memory features. */
+    if (gst_caps_features_contains(features, GST_CAPS_FEATURES_NVMM))
+    {
+      /* Get the source bin ghost pad */
+      GstPad *bin_ghost_pad = gst_element_get_static_pad(source_bin, "src");
+      if (!gst_ghost_pad_set_target(GST_GHOST_PAD(bin_ghost_pad),
+                                    decoder_src_pad))
+      {
+        g_printerr("Failed to link decoder src pad to source bin ghost pad\n");
+      }
+      gst_object_unref(bin_ghost_pad);
+    }
+    else
+    {
+      g_printerr("Error: Decodebin did not pick nvidia decoder plugin.\n");
+    }
+  }
+}
+
+static void
+decodebin_child_added(GstChildProxy *child_proxy, GObject *object,
+                      gchar *name, gpointer user_data)
+{
+  g_print("Decodebin child added: %s\n", name);
+  if (g_strrstr(name, "decodebin") == name)
+  {
+    g_signal_connect(G_OBJECT(object), "child-added",
+                     G_CALLBACK(decodebin_child_added), user_data);
+  }
+}
+
+static GstElement *
+create_source_bin(guint index, gchar *uri)
+{
+  GstElement *bin = NULL, *uri_decode_bin = NULL;
+  gchar bin_name[16] = {};
+
+  g_snprintf(bin_name, 15, "source-bin-%02d", index);
+  /* Create a source GstBin to abstract this bin's content from the rest of the
+   * pipeline */
+  bin = gst_bin_new(bin_name);
+
+  /* Source element for reading from the uri.
+   * We will use decodebin and let it figure out the container format of the
+   * stream and the codec and plug the appropriate demux and decode plugins. */
+  uri_decode_bin = gst_element_factory_make("uridecodebin", "uri-decode-bin");
+
+  if (!bin || !uri_decode_bin)
+  {
+    g_printerr("One element in source bin could not be created.\n");
+    return NULL;
+  }
+
+  /* We set the input uri to the source element */
+  g_object_set(G_OBJECT(uri_decode_bin), "uri", uri, NULL);
+
+  /* Connect to the "pad-added" signal of the decodebin which generates a
+   * callback once a new pad for raw data has beed created by the decodebin */
+  g_signal_connect(G_OBJECT(uri_decode_bin), "pad-added",
+                   G_CALLBACK(cb_newpad), bin);
+  g_signal_connect(G_OBJECT(uri_decode_bin), "child-added",
+                   G_CALLBACK(decodebin_child_added), bin);
+
+  gst_bin_add(GST_BIN(bin), uri_decode_bin);
+
+  /* We need to create a ghost pad for the source bin which will act as a proxy
+   * for the video decoder src pad. The ghost pad will not have a target right
+   * now. Once the decode bin creates the video decoder and generates the
+   * cb_newpad callback, we will set the ghost pad target to the video decoder
+   * src pad. */
+  if (!gst_element_add_pad(bin, gst_ghost_pad_new_no_target("src",
+                                                            GST_PAD_SRC)))
+  {
+    g_printerr("Failed to add ghost pad in source bin\n");
+    return NULL;
+  }
+
+  return bin;
+}
+
+int main(int argc, char *argv[])
+{
+  GMainLoop *loop = NULL;
+  GstElement *pipeline = NULL, *streammux = NULL, *sink = NULL, *pgie = NULL,
+             *preprocess = NULL, *queue1, *queue2, *queue3, *queue4, *queue5, *queue6,
+             *nvvidconv = NULL, *nvosd = NULL, *tiler = NULL;
+  GstElement *transform = NULL;
+  GstBus *bus = NULL;
+  guint bus_watch_id;
+  GstPad *pgie_src_pad = NULL;
+  //  GstPad *pgie_sink_pad = NULL;
+  guint i, num_sources;
+  guint tiler_rows, tiler_columns;
+  gchar *nvdspreprocess_config_file = NULL;
+  gchar *nvinfer_config_file = NULL;
+
+  int current_device = -1;
+  cudaGetDevice(&current_device);
+  struct cudaDeviceProp prop;
+  cudaGetDeviceProperties(&prop, current_device);
+
+  /* Check input arguments */
+  if (argc < 4)
+  {
+    g_printerr("Usage: %s <nvdspreprocess-config-file> <nvinfer-config-file> <uri1> [uri2] ... [uriN] \n", argv[0]);
+    return -1;
+  }
+  num_sources = argc - 3;
+
+  nvdspreprocess_config_file = realpath(argv[1], NULL);
+  nvinfer_config_file = realpath(argv[2], NULL);
+
+  //parse_labels_file("resnet50/imagenet1000_labels.txt", m_Labels);
+
+  /* Standard GStreamer initialization */
+  gst_init(&argc, &argv);
+  loop = g_main_loop_new(NULL, FALSE);
+
+  /* Create gstreamer elements */
+  /* Create Pipeline element that will form a connection of other elements */
+  pipeline = gst_pipeline_new("preprocess-test-pipeline");
+
+  /* Create nvstreammux instance to form batches from one or more sources. */
+  streammux = gst_element_factory_make("nvstreammux", "stream-muxer");
+
+  if (!pipeline || !streammux)
+  {
+    g_printerr("One element could not be created. Exiting.\n");
+    return -1;
+  }
+  gst_bin_add(GST_BIN(pipeline), streammux);
+
+  for (i = 0; i < num_sources; i++)
+  {
+    GstPad *sinkpad, *srcpad;
+    gchar pad_name[16] = {};
+    GstElement *source_bin = create_source_bin(i, argv[i + 3]);
+
+    if (!source_bin)
+    {
+      g_printerr("Failed to create source bin. Exiting.\n");
+      return -1;
+    }
+
+    gst_bin_add(GST_BIN(pipeline), source_bin);
+
+    g_snprintf(pad_name, 15, "sink_%u", i);
+    sinkpad = gst_element_get_request_pad(streammux, pad_name);
+    if (!sinkpad)
+    {
+      g_printerr("Streammux request sink pad failed. Exiting.\n");
+      return -1;
+    }
+
+    srcpad = gst_element_get_static_pad(source_bin, "src");
+    if (!srcpad)
+    {
+      g_printerr("Failed to get src pad of source bin. Exiting.\n");
+      return -1;
+    }
+
+    if (gst_pad_link(srcpad, sinkpad) != GST_PAD_LINK_OK)
+    {
+      g_printerr("Failed to link source bin to stream muxer. Exiting.\n");
+      return -1;
+    }
+
+    gst_object_unref(srcpad);
+    gst_object_unref(sinkpad);
+  }
+
+  /* to preprocess the rois and form a raw tensor for inferencing */
+  preprocess = gst_element_factory_make("nvdspreprocess", "preprocess-plugin");
+
+  /* Use nvinfer to infer on batched frame. */
+  pgie = gst_element_factory_make("nvinfer", "primary-nvinference-engine");
+
+  /* Add queue elements between every two elements */
+  queue1 = gst_element_factory_make("queue", "queue1");
+  queue2 = gst_element_factory_make("queue", "queue2");
+  queue3 = gst_element_factory_make("queue", "queue3");
+  queue4 = gst_element_factory_make("queue", "queue4");
+  queue5 = gst_element_factory_make("queue", "queue5");
+  queue6 = gst_element_factory_make("queue", "queue6");
+
+  /* Use nvtiler to composite the batched frames into a 2D tiled array based
+   * on the source of the frames. */
+  tiler = gst_element_factory_make("nvmultistreamtiler", "nvtiler");
+
+  /* Use convertor to convert from NV12 to RGBA as required by nvosd */
+  nvvidconv = gst_element_factory_make("nvvideoconvert", "nvvideo-converter");
+
+  /* Create OSD to draw on the converted RGBA buffer */
+  nvosd = gst_element_factory_make("nvdsosd", "nv-onscreendisplay");
+
+  /* Finally render the osd output */
+  if (prop.integrated)
+  {
+    transform = gst_element_factory_make("nvegltransform", "nvegl-transform");
+  }
+  sink = gst_element_factory_make("nveglglessink", "nvvideo-renderer");
+
+  if (!preprocess || !pgie || !tiler || !nvvidconv || !nvosd || !sink)
+  {
+    g_printerr("One element could not be created. Exiting.\n");
+    return -1;
+  }
+
+  if (!transform && prop.integrated)
+  {
+    g_printerr("One tegra element could not be created. Exiting.\n");
+    return -1;
+  }
+
+  g_object_set(G_OBJECT(streammux), "batch-size", num_sources, NULL);
+
+  g_object_set(G_OBJECT(streammux), "width", MUXER_OUTPUT_WIDTH, "height",
+               MUXER_OUTPUT_HEIGHT,
+               "batched-push-timeout", MUXER_BATCH_TIMEOUT_USEC, NULL);
+
+  g_object_set(G_OBJECT(preprocess), "config-file", nvdspreprocess_config_file, NULL);
+  //  g_object_set (G_OBJECT (preprocess), "config-file", "config_preprocess.txt", NULL);
+  //  g_object_set (G_OBJECT (preprocess), "config-file", "config_preprocess_classifier.txt", NULL);
+  //  g_object_set (G_OBJECT (preprocess), "config-file", "config_preprocess_seg.txt", NULL);
+  //  g_object_set (G_OBJECT (preprocess), "config-file", "config_preprocess_carcolor.txt", NULL);
+  //  g_object_set (G_OBJECT (preprocess), "config-file", "config_preprocess_gray.txt", NULL);
+
+  /* Configure the nvinfer element using the nvinfer config file. */
+  g_object_set(G_OBJECT(pgie), "input-tensor-meta", TRUE,
+               "config-file-path", nvinfer_config_file, NULL);
+  //      "config-file-path", "ds_preproc_pgie_config.txt", NULL);
+  //      "config-file-path", "resnet50/config_infer_primary_resnet50.txt", NULL);
+  //      "config-file-path", "dstest_segmentation_config_semantic.txt", NULL);
+  //      "config-file-path", "Secondary_CarColor/config_infer_secondary_carcolor.txt", NULL);
+  //      "config-file-path", "mnist_onnx_gray/config_infer_primary_mnist.txt", NULL);
+
+  g_print("num-sources = %d\n", num_sources);
+
+  tiler_rows = (guint)sqrt(num_sources);
+  tiler_columns = (guint)ceil(1.0 * num_sources / tiler_rows);
+  /* we set the tiler properties here */
+  g_object_set(G_OBJECT(tiler), "rows", tiler_rows, "columns", tiler_columns,
+               "width", TILED_OUTPUT_WIDTH, "height", TILED_OUTPUT_HEIGHT, NULL);
+
+  g_object_set(G_OBJECT(nvosd), "process-mode", OSD_PROCESS_MODE,
+               "display-text", OSD_DISPLAY_TEXT, NULL);
+
+  g_object_set(G_OBJECT(sink), "qos", 0, NULL);
+
+  /* we add a message handler */
+  bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
+  bus_watch_id = gst_bus_add_watch(bus, bus_call, loop);
+  gst_object_unref(bus);
+
+  /* Set up the pipeline */
+  /* we add all elements into the pipeline */
+  if (prop.integrated)
+  {
+    gst_bin_add_many(GST_BIN(pipeline), queue1, preprocess, queue2, pgie, queue3, tiler, queue4,
+                     nvvidconv, queue5, nvosd, queue6, transform, sink, NULL);
+    /* we link the elements together
+    * nvstreammux -> nvinfer -> nvtiler -> nvvidconv -> nvosd -> video-renderer */
+    if (!gst_element_link_many(streammux, queue1, preprocess, queue2, pgie, queue3, tiler, queue4,
+                               nvvidconv, queue5, nvosd, queue6, transform, sink, NULL))
+    {
+      g_printerr("Elements could not be linked. Exiting.\n");
+      return -1;
+    }
+  }
+  else
+  {
+    gst_bin_add_many(GST_BIN(pipeline), queue1, preprocess, queue2, pgie, queue3, tiler,
+                     queue4, nvvidconv, queue5, nvosd, queue6, sink, NULL);
+    /* we link the elements together
+    * nvstreammux -> nvinfer -> nvtiler -> nvvidconv -> nvosd -> video-renderer */
+    if (!gst_element_link_many(streammux, queue1, preprocess, queue2, pgie, queue3, tiler,
+                               queue4, nvvidconv, queue5, nvosd, queue6, sink, NULL))
+    {
+      g_printerr("Elements could not be linked. Exiting.\n");
+      return -1;
+    }
+  }
+#if 0
+  pgie_sink_pad = gst_element_get_static_pad (pgie, "sink");
+  if (!pgie_sink_pad)
+    g_print ("Unable to get pgie sink pad\n");
+  else
+    gst_pad_add_probe (pgie_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
+        pgie_sink_pad_buffer_probe, NULL, NULL);
+  gst_object_unref (pgie_sink_pad);
+#endif
+  /* Lets add probe to get informed of the meta data generated, we add probe to
+   * the sink pad of the osd element, since by that time, the buffer would have
+   * had got all the metadata. */
+  pgie_src_pad = gst_element_get_static_pad(pgie, "src");
+  if (!pgie_src_pad)
+    g_print("Unable to get pgie src pad\n");
+  else
+    gst_pad_add_probe(pgie_src_pad, GST_PAD_PROBE_TYPE_BUFFER,
+                      pgie_src_pad_buffer_probe, NULL, NULL);
+  gst_object_unref(pgie_src_pad);
+
+  /* Set the pipeline to "playing" state */
+  g_print("Now playing:");
+  for (i = 0; i < num_sources; i++)
+  {
+    g_print(" %s,", argv[i + 3]);
+  }
+  g_print("\n");
+  gst_element_set_state(pipeline, GST_STATE_PLAYING);
+
+  /* Wait till pipeline encounters an error or EOS */
+  g_print("Running...\n");
+  g_main_loop_run(loop);
+
+  /* Out of the main loop, clean up nicely */
+  g_print("Returned, stopping playback\n");
+  gst_element_set_state(pipeline, GST_STATE_NULL);
+  g_print("Deleting pipeline\n");
+  gst_object_unref(GST_OBJECT(pipeline));
+  g_source_remove(bus_watch_id);
+  g_main_loop_unref(loop);
+  return 0;
+}
